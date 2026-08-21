@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>造境 · SCAPE — 程序化声景</title>
+<style>
+  :root {
+    --dock: rgba(12,16,22,0.72);
+    --line: rgba(255,255,255,0.14);
+    --txt: #e8ecf1;
+    --dim: rgba(232,236,241,0.55);
+    --gold: #e8c07a;
+    --cyan: #8fd8cf;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: "Songti SC", "STSong", "SimSun", "Noto Serif SC", Georgia, serif;
+    background: #0a0e14; color: var(--txt);
+    -webkit-user-select: none; user-select: none; touch-action: none;
+  }
+  #cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* ---------- 标题 / 时间 ---------- */
+  .masthead { position: fixed; top: 24px; left: 30px; z-index: 5; pointer-events: none; }
+  .masthead h1 { font-size: clamp(24px, 3.4vw, 36px); font-weight: 600; letter-spacing: 0.16em; text-shadow: 0 2px 18px rgba(0,0,0,0.5); }
+  .masthead h1 .en { font-size: 0.55em; font-style: italic; letter-spacing: 0.1em; color: var(--gold); margin-left: 0.5em; }
+  .masthead .clock { margin-top: 4px; font-size: 15px; letter-spacing: 0.3em; color: var(--dim); text-shadow: 0 1px 10px rgba(0,0,0,0.6); }
+
+  .topright { position: fixed; top: 24px; right: 28px; z-index: 6; display: flex; gap: 10px; align-items: center; }
+  .btn-ghost {
+    border: 1px solid var(--line); background: var(--dock); backdrop-filter: blur(8px);
+    color: var(--txt); font-family: inherit; font-size: 12.5px; letter-spacing: 0.12em;
+    padding: 7px 14px; border-radius: 999px; cursor: pointer; transition: all .2s;
+  }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+  .timer-badge { position: relative; }
+  .timer-badge .ring { width: 18px; height: 18px; vertical-align: -4px; margin-right: 7px; }
+  .timer-badge.on { border-color: var(--gold); color: var(--gold); }
+
+  /* ---------- 底部控制台 ---------- */
+  .dock {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+    z-index: 6; display: flex; flex-direction: column; gap: 12px; align-items: center;
+    max-width: min(96vw, 900px);
+  }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .chip {
+    border: 1px solid var(--line); background: var(--dock); backdrop-filter: blur(8px);
+    color: var(--dim); font-family: inherit; font-size: 12.5px; letter-spacing: 0.14em;
+    padding: 7px 16px; border-radius: 999px; cursor: pointer; transition: all .2s;
+  }
+  .chip:hover, .chip.on { color: var(--gold); border-color: var(--gold); }
+
+  .board {
+    display: flex; gap: 6px; align-items: stretch; flex-wrap: wrap; justify-content: center;
+    padding: 14px 16px 12px; border: 1px solid var(--line); border-radius: 16px;
+    background: var(--dock); backdrop-filter: blur(14px);
+    box-shadow: 0 12px 44px rgba(0,0,0,0.4);
+  }
+  .ch { display: flex; flex-direction: column; align-items: center; gap: 7px; width: 86px; padding: 4px 2px; }
+  .ch .ic { width: 30px; height: 30px; opacity: 0.42; transition: opacity .25s, filter .25s; }
+  .ch.on .ic { opacity: 1; filter: drop-shadow(0 0 7px rgba(232,192,122,0.55)); }
+  .ch .nm { font-size: 11.5px; letter-spacing: 0.2em; color: var(--dim); white-space: nowrap; }
+  .ch.on .nm { color: var(--txt); }
+  .ch input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 74px; height: 2px;
+    background: var(--line); border-radius: 2px; outline: none; cursor: pointer;
+  }
+  .ch input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%;
+    background: var(--txt); border: none; cursor: grab;
+  }
+  .ch input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--txt); border: none; }
+  .vsep { width: 1px; background: var(--line); margin: 6px 4px; }
+  .timecol { display: flex; flex-direction: column; align-items: center; gap: 7px; width: 96px; }
+  .timecol .ic { width: 30px; height: 30px; }
+  .timecol .nm { font-size: 11.5px; letter-spacing: 0.2em; color: var(--dim); }
+  .timecol input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 84px; height: 2px;
+    background: linear-gradient(90deg, #1a2340, #7fb0e8, #f5d9a0, #e88d5a, #2a2a55, #141a30);
+    border-radius: 2px; outline: none; cursor: pointer;
+  }
+  .timecol input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%;
+    background: #fff; border: 2px solid var(--gold); cursor: grab;
+  }
+  .timecol input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2px solid var(--gold); }
+
+  .hint {
+    position: fixed; left: 50%; bottom: 190px; transform: translateX(-50%);
+    z-index: 5; font-size: 12.5px; letter-spacing: 0.3em; color: var(--dim);
+    text-shadow: 0 1px 10px rgba(0,0,0,0.7); pointer-events: none;
+    transition: opacity 2s; white-space: nowrap;
+  }
+  .hint.gone { opacity: 0; }
+
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  @media (max-width: 720px) {
+    .board { gap: 2px; padding: 10px 8px 8px; }
+    .ch { width: 74px; }
+    .ch input[type=range] { width: 60px; }
+    .timecol input[type=range] { width: 70px; }
+    .masthead { top: 14px; left: 16px; }
+    .topright { top: 14px; right: 14px; }
+    .hint { bottom: 230px; font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<header class="masthead">
+  <h1>造境<span class="en">SCAPE</span></h1>
+  <div class="clock" id="clock">14:00</div>
+</header>
+
+<div class="topright">
+  <button class="btn-ghost timer-badge" id="timerBtn">
+    <svg class="ring" viewBox="0 0 20 20"><circle id="ringBg" cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2"/><circle id="ringFg" cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="50.3" stroke-dashoffset="50.3" transform="rotate(-90 10 10)"/></svg><span id="timerTxt">25:00</span>
+  </button>
+  <button class="btn-ghost" id="langBtn">EN</button>
+</div>
+
+<div class="dock">
+  <div class="presets" id="presets"></div>
+  <div class="board" id="board"></div>
+</div>
+
+<div class="hint" id="hint"></div>
+
+<script>
+'use strict';
+window.addEventListener('error', e => {
+  const b = document.createElement('div');
+  b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99;background:#401414;color:#ffb4b4;font-size:12px;padding:8px 12px';
+  b.textContent = 'ERR: ' + e.message;
+  document.body.appendChild(b);
+});
+
+/* ================= i18n ================= */
+const I18N = {
+  zh: {
+    sub: '程序化声景 · 声音与画面皆由数学生成',
+    channels: { rain: '雨', wind: '风', fire: '篝火', stream: '溪流', cricket: '夜虫', thunder: '雷' },
+    time: '时刻', presets: {
+      rainy: '雨夜读书', morning: '山涧清晨', fireside: '炉边听风', valley: '午后山谷'
+    },
+    hint: '拨动天气与时刻 · 声画同源',
+    timer: ['专注 25 分', '专注 45 分', '专注 60 分', '取消计时'],
+    timeNames: ['夜', '晨', '昼', '暮'],
+    sndTip: '点任意滑杆开启声音'
+  },
+  en: {
+    sub: 'Procedural soundscape — sound and scene, both born of math',
+    channels: { rain: 'RAIN', wind: 'WIND', fire: 'FIRE', stream: 'STREAM', cricket: 'CRICKETS', thunder: 'THUNDER' },
+    time: 'HOUR', presets: {
+      rainy: 'Rainy Night', morning: 'Mountain Dawn', fireside: 'Fireside', valley: 'Valley Noon'
+    },
+    hint: 'DIAL WEATHER & HOUR — SOUND AND SCENE ARE ONE',
+    timer: ['FOCUS 25', 'FOCUS 45', 'FOCUS 60', 'CANCEL'],
+    timeNames: ['NIGHT', 'DAWN', 'DAY', 'DUSK'],
+    sndTip: 'touch any dial to start sound'
+  }
+};
+let lang = localStorage.getItem('scape-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+const T = () => I18N[lang];
+
+/* ================= 状态 ================= */
+const S = {
+  rain: 0, wind: 0.15, fire: 0, stream: 0.3, cricket: 0, thunder: 0,
+  time: 14, master: 0.8
+};
+const CH_ORDER = ['rain', 'wind', 'fire', 'stream', 'cricket', 'thunder'];
+
+/* ================= 音频引擎（全合成） ================= */
+let AC = null, master = null, nodes = {};
+function noiseBuffer(kind) {
+  const len = AC.sampleRate * 2;
+  const buf = AC.createBuffer(1, len, AC.sampleRate);
+  const d = buf.getChannelData(0);
+  if (kind === 'white') {
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  } else { // brown
+    let last = 0;
+    for (let i = 0; i < len; i++) {
+      const w = Math.random() * 2 - 1;
+      last = (last + 0.02 * w) / 1.02;
+      d[i] = last * 3.5;
+    }
+  }
+  return buf;
+}
+function loopSrc(buf) {
+  const s = AC.createBufferSource();
+  s.buffer = buf; s.loop = true; s.start();
+  return s;
+}
+function initAudio() {
+  if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
+  AC = new (window.AudioContext || window.webkitAudioContext)();
+  const comp = AC.createDynamicsCompressor();
+  comp.threshold.value = -18; comp.ratio.value = 6;
+  master = AC.createGain(); master.gain.value = S.master;
+  master.connect(comp); comp.connect(AC.destination);
+
+  const white = noiseBuffer('white'), brown = noiseBuffer('brown');
+
+  // 雨：白噪声低通
+  {
+    const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900;
+    const g = AC.createGain(); g.gain.value = 0;
+    loopSrc(white).connect(f); f.connect(g); g.connect(master);
+    nodes.rain = { f, g };
+  }
+  // 风：布朗噪声 + 截止游走
+  {
+    const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 300;
+    const g = AC.createGain(); g.gain.value = 0;
+    loopSrc(brown).connect(f); f.connect(g); g.connect(master);
+    // 啸鸣：窄带通
+    const wf = AC.createBiquadFilter(); wf.type = 'bandpass'; wf.frequency.value = 950; wf.Q.value = 9;
+    const wg = AC.createGain(); wg.gain.value = 0;
+    loopSrc(white).connect(wf); wf.connect(wg); wg.connect(master);
+    nodes.wind = { f, g, wf, wg, walk: 300 };
+  }
+  // 篝火：布朗垫底
+  {
+    const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 380;
+    const g = AC.createGain(); g.gain.value = 0;
+    loopSrc(brown).connect(f); f.connect(g); g.connect(master);
+    nodes.fire = { g };
+  }
+  // 溪流：带通
+  {
+    const f = AC.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 720; f.Q.value = 1.4;
+    const g = AC.createGain(); g.gain.value = 0;
+    const src = loopSrc(white);
+    const pre = AC.createBiquadFilter(); pre.type = 'lowpass'; pre.frequency.value = 2400;
+    src.connect(pre); pre.connect(f); f.connect(g); g.connect(master);
+    nodes.stream = { f, g };
+  }
+  updateAudio(0);
+}
+function chanGain(k) {
+  switch (k) {
+    case 'rain': return S.rain * 0.42;
+    case 'wind': return S.wind * 0.5;
+    case 'fire': return S.fire * 0.3;
+    case 'stream': return S.stream * 0.26;
+    default: return 0;
+  }
+}
+function updateAudio(smooth = 0.5) {
+  if (!AC) return;
+  const t = AC.currentTime;
+  const set = (p, v) => p.setTargetAtTime(v, t, smooth);
+  set(nodes.rain.g.gain, chanGain('rain'));
+  set(nodes.rain.f.frequency, 500 + S.rain * 2800);
+  set(nodes.wind.g.gain, chanGain('wind'));
+  set(nodes.wind.wg.gain, Math.max(0, S.wind - 0.55) * 0.1);
+  set(nodes.fire.g.gain, chanGain('fire'));
+  set(nodes.stream.g.gain, chanGain('stream'));
+  if (master) set(master.gain, S.master);
+}
+/* 一次性音效 */
+function plink() { // 雨滴
+  const t = AC.currentTime;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = 'sine'; o.frequency.value = 2400 + Math.random() * 3200;
+  g.gain.setValueAtTime(0.0012 + Math.random() * 0.004, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.08);
+}
+function crackle() { // 火爆裂
+  const t = AC.currentTime;
+  const len = 0.05, buf = AC.createBuffer(1, AC.sampleRate * len, AC.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2.2);
+  const s = AC.createBufferSource(); s.buffer = buf;
+  const f = AC.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1400;
+  const g = AC.createGain(); g.gain.value = 0.02 + Math.random() * 0.05;
+  s.connect(f); f.connect(g); g.connect(master); s.start(t);
+}
+function cricketChirp() { // 虫鸣：4 连拍
+  const t0 = AC.currentTime;
+  const pan = AC.createStereoPanner ? AC.createStereoPanner() : null;
+  if (pan) pan.pan.value = Math.random() * 1.6 - 0.8;
+  const out = pan || master;
+  if (pan) pan.connect(master);
+  const base = 4100 + Math.random() * 500;
+  for (let i = 0; i < 4; i++) {
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = 'sine'; o.frequency.value = base;
+    const t = t0 + i * 0.052;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.022, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.05);
+  }
+}
+function thunderRumble() { // 雷声 + 闪电
+  const t = AC.currentTime;
+  const len = 3.2, buf = AC.createBuffer(1, AC.sampleRate * len, AC.sampleRate);
+  const d = buf.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < d.length; i++) {
+    const w = Math.random() * 2 - 1;
+    last = (last + 0.04 * w) / 1.04;
+    d[i] = last * 4 * Math.pow(1 - i / d.length, 1.4);
+  }
+  const s = AC.createBufferSource(); s.buffer = buf;
+  const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 140;
+  const g = AC.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.55, t + 0.06);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 3.0);
+  s.connect(f); f.connect(g); g.connect(master); s.start(t);
+  flash = 1; nextThunder = performance.now() + (14 + Math.random() * 30) * 1000 / Math.max(S.thunder, 0.05);
+}
+function bell() { // 计时结束钟声
+  const t = AC.currentTime;
+  [880, 1108.7, 1318.5].forEach((fq, i) => {
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = 'sine'; o.frequency.value = fq;
+    const st = t + i * 0.5;
+    g.gain.setValueAtTime(0.0001, st);
+    g.gain.exponentialRampToValueAtTime(0.2, st + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, st + 2.4);
+    o.connect(g); g.connect(master); o.start(st); o.stop(st + 2.5);
+  });
+}
+
+/* ================= 场景生成 ================= */
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let W = 0, H = 0, dpr = 1;
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* 天空调色关键帧：t, [top, mid, hor], 光照 */
+const SKY = [
+  { t: 0,  top: [8, 10, 24],    mid: [14, 18, 38],   hor: [24, 28, 52],   L: 0.04 },
+  { t: 4.5,top: [10, 12, 30],   mid: [22, 24, 52],   hor: [56, 42, 60],   L: 0.08 },
+  { t: 6,  top: [46, 58, 96],   mid: [176, 120, 108],hor: [244, 168, 110],L: 0.45 },
+  { t: 8,  top: [96, 148, 200], mid: [156, 196, 228],hor: [232, 214, 178],L: 0.9 },
+  { t: 12, top: [88, 142, 208], mid: [150, 194, 232],hor: [214, 226, 224],L: 1 },
+  { t: 16, top: [92, 138, 198], mid: [168, 186, 216],hor: [238, 208, 158],L: 0.92 },
+  { t: 18.4,top: [70, 82, 140], mid: [216, 130, 104],hor: [248, 158, 92], L: 0.55 },
+  { t: 20, top: [24, 26, 58],   mid: [66, 48, 84],   hor: [140, 84, 78],  L: 0.16 },
+  { t: 22, top: [10, 12, 28],   mid: [16, 20, 42],   hor: [28, 30, 54],   L: 0.05 },
+  { t: 24, top: [8, 10, 24],    mid: [14, 18, 38],   hor: [24, 28, 52],   L: 0.04 }
+];
+function lerpC(a, b, t) {
+  return [0, 1, 2].map(i => Math.round(a[i] + (b[i] - a[i]) * t));
+}
+function skyAt(time) {
+  let i = 0;
+  while (i < SKY.length - 1 && SKY[i + 1].t < time) i++;
+  const a = SKY[i], b = SKY[Math.min(i + 1, SKY.length - 1)];
+  const f = b.t === a.t ? 0 : (time - a.t) / (b.t - a.t);
+  return { top: lerpC(a.top, b.top, f), mid: lerpC(a.mid, b.mid, f), hor: lerpC(a.hor, b.hor, f), L: a.L + (b.L - a.L) * f };
+}
+const rgb = c => `rgb(${c[0]},${c[1]},${c[2]})`;
+
+/* 山脊（离屏） */
+let ridges = [];
+function makeRidge(w, h, seed, yBase, amp, color) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const g = c.getContext('2d');
+  const rnd = mulberry32(seed);
+  g.fillStyle = color;
+  g.beginPath();
+  g.moveTo(0, h);
+  let y = yBase + (rnd() - 0.5) * amp * 0.4;
+  const pts = [[0, y]];
+  const n = 9;
+  for (let i = 1; i <= n; i++) {
+    y = yBase + (rnd() - 0.5) * amp;
+    pts.push([w * i / n, y]);
+  }
+  // Catmull-Rom 平滑
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    g.moveTo(p1[0], p1[1]);
+    for (let s = 0; s <= 8; s++) {
+      const t = s / 8, t2 = t * t, t3 = t2 * t;
+      const x = 0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3);
+      const yy = 0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3);
+      g.lineTo(x, yy);
+    }
+  }
+  g.lineTo(w, h); g.lineTo(0, h);
+  g.closePath(); g.fill();
+  return c;
+}
+function rebuildScenery() {
+  ridges = [
+    makeRidge(W, H, 71, H * 0.52, H * 0.09, 'rgba(0,0,0,0.24)'),
+    makeRidge(W, H, 72, H * 0.62, H * 0.10, 'rgba(0,0,0,0.42)'),
+    makeRidge(W, H, 73, H * 0.74, H * 0.08, 'rgba(0,0,0,0.66)')
+  ];
+  stars = [];
+  const rnd = mulberry32(99);
+  for (let i = 0; i < 130; i++)
+    stars.push({ x: rnd() * W, y: rnd() * H * 0.55, r: rnd() * 1.3 + 0.3, p: rnd() * Math.PI * 2 });
+  clouds = [];
+  for (let i = 0; i < 7; i++) {
+    const puffs = [];
+    const pn = 4 + Math.floor(rnd() * 4);
+    for (let j = 0; j < pn; j++)
+      puffs.push({ dx: (rnd() - 0.5) * 160, dy: (rnd() - 0.5) * 34, r: 34 + rnd() * 46 });
+    clouds.push({ x: rnd() * W, y: H * (0.1 + rnd() * 0.26), s: 0.6 + rnd() * 0.8, v: 4 + rnd() * 9, puffs });
+  }
+  raindrops = [];
+  for (let i = 0; i < 240; i++)
+    raindrops.push({ x: Math.random() * W * 1.2 - W * 0.1, y: Math.random() * H, v: 620 + Math.random() * 380, l: 9 + Math.random() * 13 });
+  embers = [];
+}
+let stars = [], clouds = [], raindrops = [], embers = [];
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  rebuildScenery();
+}
+window.addEventListener('resize', resize);
+
+/* ================= 主渲染 ================= */
+let flash = 0, nextThunder = Infinity, time = 0;
+function scene(dt) {
+  time += dt;
+  const sky = skyAt(S.time);
+  const darken = 1 - S.rain * 0.38 - S.thunder * 0.12;
+  const L = Math.max(0.03, sky.L * Math.max(0.45, darken));
+
+  // 天空
+  const g = ctx.createLinearGradient(0, 0, 0, H * 0.8);
+  g.addColorStop(0, rgb(sky.top.map(v => v * Math.max(0.5, darken))));
+  g.addColorStop(0.62, rgb(sky.mid.map(v => v * Math.max(0.5, darken))));
+  g.addColorStop(1, rgb(sky.hor.map(v => v * Math.max(0.55, darken))));
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // 星
+  const starA = Math.max(0, 1 - sky.L * 1.8);
+  if (starA > 0.01) {
+    for (const st of stars) {
+      const tw = 0.4 + 0.6 * Math.abs(Math.sin(time * 1.4 + st.p));
+      ctx.fillStyle = `rgba(240,244,255,${(starA * tw * 0.85).toFixed(3)})`;
+      ctx.fillRect(st.x, st.y, st.r, st.r);
+    }
+  }
+
+  // 日 / 月
+  const drawOrb = (tCenter, isSun) => {
+    const ang = (S.time - tCenter) / 12 * Math.PI;  // -π..π
+    const x = W / 2 + Math.sin(ang) * W * 0.42;
+    const y = H * 0.62 - Math.cos(ang) * H * 0.5;
+    if (y > H * 0.72) return;
+    const r = isSun ? 30 : 22;
+    const glow = ctx.createRadialGradient(x, y, 0, x, y, r * 5);
+    glow.addColorStop(0, isSun ? 'rgba(255,222,150,0.55)' : 'rgba(210,224,255,0.3)');
+    glow.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(x - r * 5, y - r * 5, r * 10, r * 10);
+    ctx.fillStyle = isSun ? '#ffe9b8' : '#e7ecf7';
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    if (!isSun) { // 月牙
+      ctx.fillStyle = `rgb(${sky.top.join(',')})`;
+      ctx.beginPath(); ctx.arc(x + 9, y - 6, r * 0.86, 0, Math.PI * 2); ctx.fill();
+    }
+  };
+  drawOrb(12, true);   // 太阳正午最高
+  drawOrb(0, false);   // 月亮午夜最高
+
+  // 云（两层速度，雨大时更暗更密）
+  const cloudA = 0.3 + S.rain * 0.45 + S.thunder * 0.1;
+  const cloudLight = 0.35 + L * 0.65;
+  for (const cl of clouds) {
+    cl.x += cl.v * (0.4 + S.wind * 2.4) * dt;
+    if (cl.x - 260 > W) cl.x = -260;
+    ctx.save();
+    ctx.translate(cl.x, cl.y);
+    ctx.scale(cl.s, cl.s);
+    ctx.fillStyle = `rgba(${Math.round(200 * cloudLight)},${Math.round(204 * cloudLight)},${Math.round(214 * cloudLight)},${(cloudA * 0.5).toFixed(3)})`;
+    for (const p of cl.puffs) {
+      ctx.beginPath(); ctx.arc(p.dx, p.dy, p.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // 山脊（远景先画，随光照调亮）
+  for (let i = 0; i < ridges.length; i++) {
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.drawImage(ridges[i], 0, 0);
+    ctx.restore();
+  }
+  // 山脊上叠一层光照色
+  ctx.fillStyle = `rgba(${sky.mid[0]},${sky.mid[1]},${sky.mid[2]},${(0.16 + (1 - L) * 0.3).toFixed(3)})`;
+  ctx.fillRect(0, H * 0.45, W, H * 0.55);
+
+  // 雾（风大时飘动的带）
+  if (S.wind > 0.05) {
+    const fa = Math.min(0.3, S.wind * 0.3);
+    for (let i = 0; i < 3; i++) {
+      const y = H * (0.62 + i * 0.09);
+      const off = (time * (12 + i * 9) * (0.3 + S.wind)) % (W + 400) - 200;
+      const fg = ctx.createLinearGradient(off, 0, off + 420, 0);
+      fg.addColorStop(0, 'rgba(220,226,232,0)');
+      fg.addColorStop(0.5, `rgba(220,226,232,${(fa * 0.5).toFixed(3)})`);
+      fg.addColorStop(1, 'rgba(220,226,232,0)');
+      ctx.fillStyle = fg;
+      ctx.fillRect(0, y, W, H * 0.07);
+    }
+  }
+
+  // 溪流（底部波光）
+  if (S.stream > 0.03) {
+    const sy = H * 0.86;
+    const sg = ctx.createLinearGradient(0, sy - 16, 0, H);
+    sg.addColorStop(0, `rgba(90,120,150,${(0.14 + S.stream * 0.2).toFixed(3)})`);
+    sg.addColorStop(1, 'rgba(30,45,64,0.55)');
+    ctx.fillStyle = sg;
+    ctx.fillRect(0, sy - 14, W, H - sy + 14);
+    ctx.strokeStyle = `rgba(230,240,252,${(0.1 + S.stream * 0.22).toFixed(3)})`;
+    ctx.lineWidth = 1.4;
+    for (let i = 0; i < 14; i++) {
+      const y = sy + (i / 14) * (H - sy) + Math.sin(time * 2 + i) * 2;
+      const x = (time * (60 + i * 14) + i * 173) % (W + 120) - 60;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 34 + i * 3, y); ctx.stroke();
+    }
+  }
+
+  // 雨
+  if (S.rain > 0.02) {
+    const count = Math.round(raindrops.length * S.rain);
+    const windX = S.wind * 260;
+    ctx.strokeStyle = `rgba(200,214,230,${(0.14 + S.rain * 0.3).toFixed(3)})`;
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    for (let i = 0; i < count; i++) {
+      const d = raindrops[i];
+      d.y += d.v * dt;
+      d.x += windX * dt;
+      if (d.y > H) { d.y = -20; d.x = Math.random() * W * 1.2 - W * 0.1; }
+      if (d.x > W * 1.1) d.x -= W * 1.2;
+      const dx = (windX / d.v) * d.l;
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(d.x - dx, d.y - d.l);
+    }
+    ctx.stroke();
+  }
+
+  // 篝火（右下角）
+  if (S.fire > 0.03) {
+    const fx = W * 0.82, fy = H * 0.9;
+    const flick = 0.75 + 0.25 * Math.sin(time * 9.3) * Math.sin(time * 4.1);
+    const fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, 150 * S.fire * flick + 40);
+    fg.addColorStop(0, `rgba(255,168,84,${(0.4 * S.fire * flick).toFixed(3)})`);
+    fg.addColorStop(0.5, `rgba(255,120,50,${(0.16 * S.fire).toFixed(3)})`);
+    fg.addColorStop(1, 'rgba(255,100,40,0)');
+    ctx.fillStyle = fg;
+    ctx.fillRect(fx - 260, fy - 260, 520, 520);
+    // 火堆
+    ctx.fillStyle = '#2a1c14';
+    ctx.beginPath(); ctx.ellipse(fx, fy + 8, 34, 10, 0, 0, Math.PI * 2); ctx.fill();
+    for (let i = 0; i < 3; i++) {
+      const fl = (0.8 + 0.2 * Math.sin(time * 8 + i * 2.4)) * S.fire;
+      const h = 34 * fl + 14;
+      const hue = 28 - i * 8;
+      ctx.fillStyle = `hsl(${hue},95%,${58 - i * 8}%)`;
+      ctx.beginPath();
+      ctx.moveTo(fx - (16 - i * 4), fy);
+      ctx.quadraticCurveTo(fx - 6 + Math.sin(time * 7 + i) * 5, fy - h * 0.6, fx + Math.sin(time * 5.5 + i * 2) * 4, fy - h);
+      ctx.quadraticCurveTo(fx + 8, fy - h * 0.5, fx + (16 - i * 4), fy);
+      ctx.closePath(); ctx.fill();
+    }
+    // 火星
+    if (Math.random() < 0.3 + S.fire * 0.5) embers.push({ x: fx + (Math.random() - 0.5) * 22, y: fy - 24, vy: -40 - Math.random() * 60, vx: (Math.random() - 0.5) * 26, life: 1 });
+    ctx.fillStyle = 'rgba(255,190,110,0.9)';
+    for (const em of embers) {
+      em.life -= dt * 0.7; em.y += em.vy * dt; em.x += em.vx * dt + Math.sin(time * 6 + em.y * 0.05) * 0.6;
+      if (em.life > 0) { ctx.globalAlpha = em.life; ctx.fillRect(em.x, em.y, 2, 2); }
+    }
+    ctx.globalAlpha = 1;
+    embers = embers.filter(e => e.life > 0).slice(-90);
+  }
+
+  // 夜虫（夜里有萤光点缀）
+  const nightCricket = cricketActive();
+  if (nightCricket && S.cricket > 0.03) {
+    for (let i = 0; i < 5; i++) {
+      const ph = time * 0.7 + i * 2.2;
+      const x = (Math.sin(ph * 0.35 + i) * 0.5 + 0.5) * W * 0.8 + W * 0.1;
+      const y = H * (0.78 + 0.1 * Math.sin(ph + i * 1.7));
+      const a = Math.max(0, Math.sin(time * 2 + i * 1.3)) * 0.7 * S.cricket;
+      if (a > 0.03) {
+        ctx.fillStyle = `rgba(190,255,140,${a.toFixed(3)})`;
+        ctx.shadowColor = 'rgba(190,255,140,0.9)';
+        ctx.shadowBlur = 8;
+        ctx.beginPath(); ctx.arc(x, y, 1.8, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+  }
+
+  // 闪电
+  if (flash > 0) {
+    flash -= dt * 2.4;
+    ctx.fillStyle = `rgba(255,255,255,${(Math.max(0, flash) * 0.55).toFixed(3)})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // 暗角
+  const vg = ctx.createRadialGradient(W / 2, H * 0.44, Math.min(W, H) * 0.36, W / 2, H * 0.5, Math.max(W, H) * 0.78);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(4,6,10,0.46)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, W, H);
+}
+function cricketActive() {
+  return S.time >= 19.5 || S.time <= 5.2;
+}
+
+/* ================= 音频调度（帧循环内） ================= */
+let plinkT = 0, crackleT = 0, cricketT = 0;
+function audioTick(now, dt) {
+  if (!AC) return;
+  // 雨滴
+  if (S.rain > 0.06 && now > plinkT) {
+    plink();
+    plinkT = now + (40 + Math.random() * 320 / S.rain);
+  }
+  // 爆裂
+  if (S.fire > 0.08 && now > crackleT) {
+    crackle();
+    crackleT = now + (60 + Math.random() * 700 / S.fire);
+  }
+  // 虫鸣（仅夜间）
+  if (cricketActive() && S.cricket > 0.05 && now > cricketT) {
+    cricketChirp();
+    cricketT = now + (300 + Math.random() * 1600 / S.cricket);
+  }
+  // 风：截止游走
+  const wn = nodes.wind;
+  if (wn) {
+    wn.walk += (Math.random() - 0.5) * 60 * dt * 3;
+    wn.walk = Math.max(140, Math.min(900, wn.walk));
+    wn.f.frequency.setTargetAtTime(wn.walk * (0.4 + S.wind), AC.currentTime, 0.3);
+  }
+  // 雷
+  if (S.thunder > 0.03 && now > nextThunder) thunderRumble();
+  if (S.thunder <= 0.03) nextThunder = Infinity;
+}
+
+/* ================= 计时器 ================= */
+let timerMode = 0, timerEnd = 0, timerLen = 25 * 60;
+const timerBtn = document.getElementById('timerBtn'), timerTxt = document.getElementById('timerTxt'), ringFg = document.getElementById('ringFg');
+timerBtn.addEventListener('click', () => {
+  initAudio();
+  timerMode = (timerMode + 1) % 4;
+  if (timerMode < 3) {
+    timerLen = [25, 45, 60][timerMode] * 60;
+    timerEnd = performance.now() + timerLen * 1000;
+    timerBtn.classList.add('on');
+  } else {
+    timerMode = 3; timerBtn.classList.remove('on');
+  }
+  updTimerUI();
+});
+function updTimerUI() {
+  if (timerMode === 3 || timerMode === 0 && timerEnd === 0) {
+    timerTxt.textContent = T().timer[Math.min(timerMode, 3)];
+    if (timerMode === 3) { ringFg.style.strokeDashoffset = 50.3; }
+  }
+}
+function timerTick(now) {
+  if (timerMode > 2 || timerEnd === 0) return;
+  const rem = Math.max(0, (timerEnd - now) / 1000);
+  const mm = Math.floor(rem / 60), ss = Math.floor(rem % 60);
+  timerTxt.textContent = `${mm}:${ss.toString().padStart(2, '0')}`;
+  const frac = 1 - rem / timerLen;
+  ringFg.style.strokeDashoffset = (50.3 * (1 - frac)).toFixed(1);
+  if (rem <= 0) {
+    timerEnd = 0; timerMode = 3; timerBtn.classList.remove('on');
+    if (AC) bell();
+    timerTxt.textContent = T().timer[3];
+  }
+}
+
+/* ================= UI 构建 ================= */
+const ICONS = {
+  rain: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 12a5 5 0 0 1 .5-9.97A6 6 0 0 1 18 5.5 4 4 0 0 1 18 12z" transform="translate(0,-1)"/><path d="M8 15l-1.5 3M12 15l-1.5 3M16 15l-1.5 3"/></svg>',
+  wind: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 8h9a2.5 2.5 0 1 0-2.4-3.2M3 12h14a2.5 2.5 0 1 1-2.4 3.2M3 16h7a2 2 0 1 1-1.9 2.6"/></svg>',
+  fire: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-4 5-4 9a4 4 0 0 0 8 .5C16 9 12 8 12 3z"/><path d="M7.5 13a5.5 5.5 0 1 0 11-.5c0-2-1-3.5-2-4.5"/></svg>',
+  stream: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 8h5l2-2 3 2h8M3 13h6l2 2 3-2h7M3 18h5l2-2"/></svg>',
+  cricket: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 19c0-6 3-9 7-10M9 19c0-4 2-6 5-7M12 9l4-4M14 11l5-3M13 7l3-5"/><circle cx="16" cy="16" r="1" fill="currentColor" stroke="none"/></svg>',
+  thunder: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14a5 5 0 0 1 .3-9.97A6 6 0 0 1 18 7.5 3.5 3.5 0 0 1 17.5 14z"/><path d="M12 12l-2.5 4.5H13L10.5 21"/></svg>'
+};
+function buildBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  for (const k of CH_ORDER) {
+    const div = document.createElement('div');
+    div.className = 'ch' + (S[k] > 0.02 ? ' on' : '');
+    div.innerHTML = `${ICONS[k]}<div class="nm">${T().channels[k]}</div>
+      <input type="range" min="0" max="1" step="0.01" value="${S[k]}" aria-label="${T().channels[k]}">`;
+    const input = div.querySelector('input');
+    input.addEventListener('input', () => {
+      S[k] = +input.value;
+      div.classList.toggle('on', S[k] > 0.02);
+      initAudio(); updateAudio();
+      applyPresetActive(null);
+      if (k === 'thunder' && S.thunder > 0.03 && nextThunder === Infinity)
+        nextThunder = performance.now() + 3000 + Math.random() * 8000;
+      document.getElementById('hint').classList.add('gone');
+    });
+    board.appendChild(div);
+  }
+  // 分隔 + 时刻
+  const sep = document.createElement('div');
+  sep.className = 'vsep'; board.appendChild(sep);
+  const tc = document.createElement('div');
+  tc.className = 'timecol';
+  tc.innerHTML = `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3.5 2" stroke-linecap="round"/></svg>
+    <div class="nm">${T().time}</div>
+    <input type="range" id="timeR" min="0" max="24" step="0.1" value="${S.time}" aria-label="${T().time}">`;
+  const tinput = tc.querySelector('input');
+  tinput.addEventListener('input', () => {
+    S.time = +tinput.value;
+    initAudio(); updateAudio();
+    applyPresetActive(null);
+    updateClock();
+  });
+  board.appendChild(tc);
+}
+const PRESETS = {
+  rainy:   () => ({ rain: 0.65, wind: 0.18, fire: 0, stream: 0, cricket: 0, thunder: 0.35, time: 22 }),
+  morning: () => ({ rain: 0, wind: 0.12, fire: 0, stream: 0.6, cricket: 0.35, thunder: 0, time: 6.2 }),
+  fireside:() => ({ rain: 0.3, wind: 0.28, fire: 0.75, stream: 0, cricket: 0.2, thunder: 0, time: 20.5 }),
+  valley:  () => ({ rain: 0, wind: 0.38, fire: 0, stream: 0.32, cricket: 0, thunder: 0, time: 14 })
+};
+function applyPresetActive(name) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.p === name));
+}
+function buildPresets() {
+  const box = document.getElementById('presets');
+  box.innerHTML = '';
+  for (const [key, fn] of Object.entries(PRESETS)) {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.dataset.p = key;
+    b.textContent = T().presets[key];
+    b.addEventListener('click', () => {
+      Object.assign(S, fn());
+      initAudio(); updateAudio(1.2);
+      buildBoard(); updateClock();
+      applyPresetActive(key);
+      if (S.thunder > 0.03) nextThunder = performance.now() + 4000 + Math.random() * 9000;
+      else nextThunder = Infinity;
+      document.getElementById('hint').classList.add('gone');
+    });
+    box.appendChild(b);
+  }
+}
+function updateClock() {
+  const h = Math.floor(S.time) % 24, m = Math.floor((S.time % 1) * 60);
+  document.getElementById('clock').textContent = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+}
+function applyI18n() {
+  document.documentElement.lang = lang === 'zh' ? 'zh' : 'en';
+  document.title = lang === 'zh' ? '造境 · SCAPE — 程序化声景' : 'SCAPE — procedural soundscape';
+  document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+  document.getElementById('hint').textContent = T().hint;
+  updTimerUI();
+  buildPresets(); buildBoard(); updateClock();
+}
+document.getElementById('langBtn').addEventListener('click', () => {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('scape-lang', lang);
+  applyI18n();
+});
+
+/* ================= 主循环 ================= */
+let prev = performance.now();
+function frame(now) {
+  const dt = Math.min((now - prev) / 1000, 0.05);
+  prev = now;
+  scene(dt);
+  audioTick(now, dt);
+  timerTick(now);
+  requestAnimationFrame(frame);
+}
+
+/* ================= 启动 ================= */
+resize();
+applyI18n();
+// 开卷：午后山谷
+Object.assign(S, PRESETS.valley());
+buildBoard(); updateClock();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

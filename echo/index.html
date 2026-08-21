@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#07090d">
 <title>回声 · ECHO — 回声定位迷宫</title>
 <style>
   :root {
@@ -15,6 +16,7 @@
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; overflow: hidden; }
+  html { color-scheme: dark; }
   body {
     font-family: "Songti SC", "STSong", "SimSun", "Noto Serif SC", Georgia, serif;
     background: var(--bg); color: var(--pale);
@@ -39,7 +41,7 @@
     backdrop-filter: blur(6px); color: var(--pale);
     font-family: inherit; font-size: 12.5px; letter-spacing: 0.14em;
     padding: 7px 14px; border-radius: 999px; cursor: pointer;
-    transition: all .2s;
+    transition: color .2s, background .2s, border-color .2s, box-shadow .2s, transform .2s, opacity .2s;
   }
   .btn-ghost:hover { color: var(--ember); border-color: var(--ember); }
 
@@ -48,7 +50,7 @@
     position: fixed; inset: 0; z-index: 10;
     display: none; flex-direction: column; align-items: center; justify-content: center;
     background: radial-gradient(ellipse at 50% 42%, rgba(20,26,38,0.88), rgba(7,9,13,0.97));
-    text-align: center; padding: 30px; overflow-y: auto;
+    text-align: center; padding: 30px; overflow-y: auto; overscroll-behavior: contain;
   }
   .overlay.show { display: flex; }
   .ov-title { font-size: clamp(40px, 8vw, 76px); font-weight: 600; letter-spacing: 0.22em; color: var(--pale); text-shadow: 0 0 34px rgba(157,176,201,0.45); }
@@ -58,13 +60,13 @@
   .btn-main {
     border: 1px solid var(--ember); background: none; color: var(--ember);
     font-family: inherit; font-size: 15px; letter-spacing: 0.3em;
-    padding: 13px 34px; border-radius: 2px; cursor: pointer; transition: all .25s;
+    padding: 13px 34px; border-radius: 2px; cursor: pointer; transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
   }
   .btn-main:hover { background: var(--ember); color: #0a0c10; box-shadow: 0 0 30px rgba(232,192,122,0.4); }
   .btn-sub {
     border: 1px solid var(--hairline); background: none; color: var(--pale);
     font-family: inherit; font-size: 13.5px; letter-spacing: 0.22em;
-    padding: 12px 26px; border-radius: 2px; cursor: pointer; transition: all .25s;
+    padding: 12px 26px; border-radius: 2px; cursor: pointer; transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
   }
   .btn-sub:hover { border-color: var(--pale); }
 
@@ -74,7 +76,7 @@
     border: 1px solid var(--hairline); background: rgba(20,26,38,0.5);
     color: var(--pale); font-family: inherit; cursor: pointer;
     padding: 14px 10px; border-radius: 4px; min-width: 108px;
-    transition: all .2s; text-align: center;
+    transition: color .2s, background .2s, border-color .2s, box-shadow .2s, transform .2s, opacity .2s; text-align: center;
   }
   .lv:hover:not(:disabled) { border-color: var(--ember); color: var(--ember); }
   .lv:disabled { opacity: 0.32; cursor: not-allowed; }
@@ -115,7 +117,7 @@
     width: 42px; height: 42px; border-radius: 50%;
     border: 1px solid var(--hairline); background: rgba(7,9,13,0.55); backdrop-filter: blur(6px);
     color: var(--pale); display: grid; place-items: center;
-    font-size: 16px; text-decoration: none; transition: all .25s;
+    font-size: 16px; text-decoration: none; transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
   }
   .home-link:hover { color: var(--ember); border-color: var(--ember); transform: translateY(-3px); }
 
@@ -123,6 +125,13 @@
     .hud { gap: 14px; font-size: 12px; top: 14px; }
     .topbar { top: 12px; right: 12px; }
     .levels { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 </style>
 </head>

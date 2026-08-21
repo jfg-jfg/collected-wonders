@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0e14">
 <title>造境 · SCAPE — 程序化声景</title>
 <style>
+  html { color-scheme: dark; }
   :root {
     --dock: rgba(12,16,22,0.72);
     --line: rgba(255,255,255,0.14);
@@ -32,7 +34,7 @@
   .btn-ghost {
     border: 1px solid var(--line); background: var(--dock); backdrop-filter: blur(8px);
     color: var(--txt); font-family: inherit; font-size: 12.5px; letter-spacing: 0.12em;
-    padding: 7px 14px; border-radius: 999px; cursor: pointer; transition: all .2s;
+    padding: 7px 14px; border-radius: 999px; cursor: pointer; transition: color .2s, background .2s, border-color .2s, box-shadow .2s, transform .2s, opacity .2s;
   }
   .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
   .timer-badge { position: relative; }
@@ -49,7 +51,7 @@
   .chip {
     border: 1px solid var(--line); background: var(--dock); backdrop-filter: blur(8px);
     color: var(--dim); font-family: inherit; font-size: 12.5px; letter-spacing: 0.14em;
-    padding: 7px 16px; border-radius: 999px; cursor: pointer; transition: all .2s;
+    padding: 7px 16px; border-radius: 999px; cursor: pointer; transition: color .2s, background .2s, border-color .2s, box-shadow .2s, transform .2s, opacity .2s;
   }
   .chip:hover, .chip.on { color: var(--gold); border-color: var(--gold); }
 
@@ -103,7 +105,7 @@
     width: 42px; height: 42px; border-radius: 50%;
     border: 1px solid var(--line); background: var(--dock); backdrop-filter: blur(8px);
     color: var(--txt); display: grid; place-items: center;
-    font-size: 16px; text-decoration: none; transition: all .25s;
+    font-size: 16px; text-decoration: none; transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
   }
   .home-link:hover { color: var(--gold); border-color: var(--gold); transform: translateY(-3px); }
 
@@ -115,6 +117,14 @@
     .masthead { top: 14px; left: 16px; }
     .topright { top: 14px; right: 14px; }
     .hint { bottom: 230px; font-size: 11px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 </style>
 </head>

@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#101a20">
 <title>纸间 · LETTERS — 守灯人</title>
 <style>
+  html { color-scheme: dark; }
   :root {
     --ink: #33302a;
     --paper: #f0e8d6;
@@ -85,7 +87,7 @@
     padding: clamp(28px, 5vw, 56px) clamp(24px, 6vw, 64px);
     box-shadow: 0 30px 80px rgba(0,0,0,0.55), inset 0 0 60px rgba(130,110,70,0.1);
     position: relative;
-    scrollbar-width: thin; scrollbar-color: rgba(90,80,60,0.3) transparent;
+    overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(90,80,60,0.3) transparent;
   }
   .letter::before, .letter::after { /* 折痕 */
     content: ''; position: absolute; left: 0; right: 0; height: 1px;
@@ -118,7 +120,7 @@
     border: 1px solid rgba(90,75,50,0.35); background: rgba(255,252,244,0.35);
     color: var(--ink); font-family: inherit; font-size: 15px; line-height: 1.8; letter-spacing: 0.04em;
     padding: 13px 20px; border-radius: 3px; cursor: pointer; text-align: left;
-    transition: all .25s; position: relative;
+    transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s; position: relative;
   }
   .reply:hover { background: rgba(158,53,40,0.08); border-color: var(--seal); transform: translateX(4px); }
   .reply::before {
@@ -147,7 +149,7 @@
     border: 1px solid rgba(240,232,214,0.25); background: rgba(16,26,32,0.5);
     backdrop-filter: blur(6px); color: rgba(240,232,214,0.8);
     font-family: inherit; font-size: 12px; letter-spacing: 0.12em;
-    padding: 6px 13px; border-radius: 999px; cursor: pointer; transition: all .2s;
+    padding: 6px 13px; border-radius: 999px; cursor: pointer; transition: color .2s, background .2s, border-color .2s, box-shadow .2s, transform .2s, opacity .2s;
   }
   .btn-ghost:hover { color: var(--gold); border-color: var(--gold); }
 
@@ -167,13 +169,13 @@
   .btn-main {
     border: 1px solid var(--gold); background: none; color: var(--gold);
     font-family: inherit; font-size: 15px; letter-spacing: 0.3em; padding: 13px 34px;
-    border-radius: 2px; cursor: pointer; transition: all .3s;
+    border-radius: 2px; cursor: pointer; transition: color .3s, background .3s, border-color .3s, box-shadow .3s, transform .3s, opacity .3s;
   }
   .btn-main:hover { background: var(--gold); color: #14100a; box-shadow: 0 0 34px rgba(217,181,124,0.4); }
   .ts-endings { margin-top: 30px; display: flex; gap: 10px; }
   .ts-endings .dot {
     width: 12px; height: 12px; border-radius: 50%;
-    border: 1px solid rgba(240,232,214,0.35); transition: all .3s;
+    border: 1px solid rgba(240,232,214,0.35); transition: color .3s, background .3s, border-color .3s, box-shadow .3s, transform .3s, opacity .3s;
   }
   .ts-endings .dot.got { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 12px rgba(217,181,124,0.6); }
 
@@ -195,13 +197,21 @@
     width: 42px; height: 42px; border-radius: 50%;
     border: 1px solid rgba(240,232,214,0.22); background: rgba(16,26,32,0.5); backdrop-filter: blur(6px);
     color: rgba(240,232,214,0.7); display: grid; place-items: center;
-    font-size: 16px; text-decoration: none; transition: all .25s;
+    font-size: 16px; text-decoration: none; transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
   }
   .home-link:hover { color: var(--gold); border-color: var(--gold); transform: translateY(-3px); }
 
   @media (max-width: 640px) {
     .letter { max-height: 76vh; }
     .env-hint { font-size: 11px; letter-spacing: 0.25em; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 </style>
 </head>
@@ -271,7 +281,7 @@ const STORY = {
       n2: { year: '一九八九 · 春', title: '灯芯', text: `海冰初融，今夜雾大，灯要亮到天明。\n我做了一盏新的灯芯，剪去旧年的焦头。守灯这件事，说到底就是不断把烧焦的部分剪掉，让光继续。\n你那边，天气如何？`,
         replies: [
           { label: '这里也在下雨。你剪灯芯的样子，让我想起很多事。', flag: 'warm', to: 'n3' },
-          { label: '等等——你说你"死在"风暴夜。到底发生了什么？', flag: 'probe', to: 'n4' }
+          { label: '等等——你说你“死在”风暴夜。到底发生了什么？', flag: 'probe', to: 'n4' }
         ]},
       n3: { year: '一九八九 · 夏', title: '声音', text: `你问我孤不孤独。\n海上有的是声音：浪、风、雾号、缆绳敲打铁桩。孤独的不是没有声音，是没有人听你说话。\n所以我写信。写了不一定寄，寄了不一定到，到了不一定有人回。但灯亮着，就当有人在看。\n你愿意听一个老头说这些吗？`,
         replies: [
@@ -298,7 +308,7 @@ const STORY = {
           { label: '那个年轻人……后来怎么样了？', flag: 'probe', to: 'n9' },
           { label: '所以你救了他。你是救人的人，不是逃兵。', flag: 'warm', to: 'n9' }
         ]},
-      n9: { year: '一九八九 · 无日期', title: '明信片', text: `他叫陈潮生。\n后来每年清明，有人寄一张明信片到岛上，三十多年，一张没断。他不知道我是谁——他醒来时，我已经"不在了"。\n有些债，海替我还了。有些话，只能由后来的人替我说。\n塔要拆了吧。`,
+      n9: { year: '一九八九 · 无日期', title: '明信片', text: `他叫陈潮生。\n后来每年清明，有人寄一张明信片到岛上，三十多年，一张没断。他不知道我是谁——他醒来时，我已经“不在了”。\n有些债，海替我还了。有些话，只能由后来的人替我说。\n塔要拆了吧。`,
         replies: [
           { label: '要拆了。他们说，灯的意义已经完成了。', flag: 'warm', to: 'n8' }
         ]},
@@ -315,7 +325,7 @@ const STORY = {
     },
     endings: {
       E1: { title: '灯仍亮', text: `拆塔那天，你提着那盏黄铜马灯走上九十九级台阶。\n傍晚六点整，灯室最后一次亮起。海面很静，静得像有人在很远很远的地方，终于睡着了。\n你把马灯留在原处，只带走了信。\n\n后来你在拆除报告的末尾添了一行字：建议保留灯室原物。\n没有人问理由。` },
-      E2: { title: '归航', text: `你在礁石上把信一封封烧了。火很小，很快就熄了，纸灰像一群白蝶飞向海面。\n风里好像有一句很轻的"谢谢"。\n\n回程的渡船上，你睡着了。\n三十年来第一次，你没有梦见海。` },
+      E2: { title: '归航', text: `你在礁石上把信一封封烧了。火很小，很快就熄了，纸灰像一群白蝶飞向海面。\n风里好像有一句很轻的“谢谢”。\n\n回程的渡船上，你睡着了。\n三十年来第一次，你没有梦见海。` },
       E3: { title: '存信', text: `你把十三封信捐给了镇上的海事博物馆。\n玻璃柜里，它们按年份排开，标签写着：白鹤礁灯塔信札。\n\n开展那天，一位白发的老人在第一封信前站了很久很久，然后深深鞠了一躬。\n他的胸牌上写着：陈潮生。` },
       E4: { title: '第十三封信', text: `你一路问到最深处。信堆的最底下，压着第十三个信封——它是空的。\n里面只有一张字条：\n\n"如果你读到这里，说明你和我一样，是个不肯让海替你说话的人。\n那晚的名册上少了一个人的名字。去查'白鹤礁 · 拾遗号'。\n塔可以拆。名字不能。"` }
     }

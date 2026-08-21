@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#f6f2e7">
 <title>墨 · INK — 水墨流体画室</title>
 <style>
+  html { color-scheme: light; }
   :root {
     --ink: #2b2b33;
     --ink-light: #55555f;
@@ -134,7 +136,7 @@
     width: 42px; height: 42px; border-radius: 50%;
     border: 1px solid var(--hairline); background: rgba(246,242,231,0.75); backdrop-filter: blur(6px);
     color: var(--ink-light); display: grid; place-items: center;
-    font-size: 16px; text-decoration: none; transition: all .25s;
+    font-size: 16px; text-decoration: none; transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
   }
   .home-link:hover { color: var(--ink); border-color: var(--ink); transform: translateY(-3px); }
 
@@ -144,6 +146,14 @@
     .toolbar { gap: 12px; padding: 10px 14px; bottom: 16px; }
     .ctrl input[type=range] { width: 72px; }
     .hint { bottom: 132px; font-size: 12px; letter-spacing: 0.2em; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 </style>
 </head>
@@ -800,9 +810,10 @@ document.getElementById('saveBtn').addEventListener('click', saveArtwork);
 let flatPaperNext = false;
 
 /* ---------------- 闲时落墨 ---------------- */
+const REDUCED_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let nextDrop = 0;
 function idleDrop(now) {
-  if (!config.idleDrop) return;
+  if (!config.idleDrop || REDUCED_MOTION) return;
   if (now - lastInteract < 8000) return;
   if (now < nextDrop) return;
   nextDrop = now + 1200 + Math.random() * 1800;

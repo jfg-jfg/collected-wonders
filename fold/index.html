@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#05070d">
 <title>褶皱 · FOLD — 分形星球</title>
 <style>
+  html { color-scheme: dark; }
   :root {
     --txt: #dfe6ef;
     --dim: rgba(223,230,239,0.55);
@@ -33,7 +35,7 @@
   .btn-ghost {
     border: 1px solid var(--line); background: rgba(5,7,13,0.55); backdrop-filter: blur(6px);
     color: var(--dim); font-family: inherit; font-size: 12px; letter-spacing: 0.12em;
-    padding: 7px 14px; border-radius: 999px; cursor: pointer; transition: all .2s;
+    padding: 7px 14px; border-radius: 999px; cursor: pointer; transition: color .2s, background .2s, border-color .2s, box-shadow .2s, transform .2s, opacity .2s;
   }
   .btn-ghost:hover { color: var(--gold); border-color: var(--gold); }
 
@@ -45,7 +47,7 @@
   .place {
     border: 1px solid var(--line); background: rgba(5,7,13,0.6); backdrop-filter: blur(8px);
     color: var(--dim); font-family: inherit; font-size: 12.5px; letter-spacing: 0.16em;
-    padding: 8px 18px; border-radius: 999px; cursor: pointer; transition: all .25s;
+    padding: 8px 18px; border-radius: 999px; cursor: pointer; transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
   }
   .place:hover, .place.on { color: var(--gold); border-color: var(--gold); }
 
@@ -65,7 +67,7 @@
     width: 42px; height: 42px; border-radius: 50%;
     border: 1px solid var(--line); background: rgba(5,7,13,0.55); backdrop-filter: blur(6px);
     color: var(--txt); display: grid; place-items: center;
-    font-size: 16px; text-decoration: none; transition: all .25s;
+    font-size: 16px; text-decoration: none; transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
   }
   .home-link:hover { color: var(--gold); border-color: var(--gold); transform: translateY(-3px); }
 
@@ -73,6 +75,14 @@
     .masthead { top: 14px; left: 16px; }
     .topright { top: 14px; right: 14px; }
     .hint { bottom: 108px; font-size: 11px; letter-spacing: 0.2em; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 </style>
 </head>

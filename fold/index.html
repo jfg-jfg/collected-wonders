@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>褶皱 · FOLD — 分形星球</title>
+<style>
+  :root {
+    --txt: #dfe6ef;
+    --dim: rgba(223,230,239,0.55);
+    --line: rgba(223,230,239,0.16);
+    --gold: #d9b57c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: "Songti SC", "STSong", "SimSun", "Noto Serif SC", Georgia, serif;
+    background: #05070d; color: var(--txt);
+    -webkit-user-select: none; user-select: none; touch-action: none;
+  }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+  #gl.dragging { cursor: grabbing; }
+
+  .masthead { position: fixed; top: 24px; left: 30px; z-index: 5; pointer-events: none; }
+  .masthead h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 600; letter-spacing: 0.16em; }
+  .masthead h1 .en { font-size: 0.55em; font-style: italic; color: var(--gold); margin-left: 0.5em; letter-spacing: 0.1em; }
+  .coords {
+    margin-top: 8px; font-size: 12px; letter-spacing: 0.14em; color: var(--dim);
+    font-family: Georgia, serif; line-height: 1.9;
+  }
+
+  .topright { position: fixed; top: 24px; right: 26px; z-index: 5; display: flex; gap: 8px; }
+  .btn-ghost {
+    border: 1px solid var(--line); background: rgba(5,7,13,0.55); backdrop-filter: blur(6px);
+    color: var(--dim); font-family: inherit; font-size: 12px; letter-spacing: 0.12em;
+    padding: 7px 14px; border-radius: 999px; cursor: pointer; transition: all .2s;
+  }
+  .btn-ghost:hover { color: var(--gold); border-color: var(--gold); }
+
+  .places {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+    z-index: 5; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+    max-width: 94vw;
+  }
+  .place {
+    border: 1px solid var(--line); background: rgba(5,7,13,0.6); backdrop-filter: blur(8px);
+    color: var(--dim); font-family: inherit; font-size: 12.5px; letter-spacing: 0.16em;
+    padding: 8px 18px; border-radius: 999px; cursor: pointer; transition: all .25s;
+  }
+  .place:hover, .place.on { color: var(--gold); border-color: var(--gold); }
+
+  .hint {
+    position: fixed; left: 50%; bottom: 76px; transform: translateX(-50%);
+    z-index: 4; font-size: 12px; letter-spacing: 0.3em; color: var(--dim);
+    pointer-events: none; transition: opacity 2s; white-space: nowrap;
+  }
+  .hint.gone { opacity: 0; }
+
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  #errbox { position: fixed; inset: auto 0 0 0; z-index: 99; background: #401414; color: #ffb4b4; font-size: 12px; padding: 8px 12px; display: none; }
+
+  @media (max-width: 640px) {
+    .masthead { top: 14px; left: 16px; }
+    .topright { top: 14px; right: 14px; }
+    .hint { bottom: 108px; font-size: 11px; letter-spacing: 0.2em; }
+  }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+
+<header class="masthead">
+  <h1>褶皱<span class="en">FOLD</span></h1>
+  <div class="coords" id="coords"></div>
+</header>
+
+<div class="topright">
+  <button class="btn-ghost" id="shareBtn"></button>
+  <button class="btn-ghost" id="resetBtn"></button>
+  <button class="btn-ghost" id="langBtn">EN</button>
+</div>
+
+<div class="hint" id="hint"></div>
+<div class="places" id="places"></div>
+<div id="errbox"></div>
+
+<script>
+'use strict';
+window.addEventListener('error', e => {
+  const b = document.getElementById('errbox');
+  b.style.display = 'block'; b.textContent = 'ERR: ' + e.message;
+});
+
+/* ============ i18n ============ */
+const I18N = {
+  zh: {
+    sub: '分形星球',
+    hint: '滚轮缩放 · 拖拽巡游 · 双击俯冲',
+    share: '分享坐标', copied: '已复制链接', copyFail: '链接已写入地址栏，请手动复制',
+    reset: '回母港', zoom: '倍率',
+    places: [
+      { name: '母港', x: -0.6, y: 0, s: 1.4 },
+      { name: '海马谷', x: -0.746806, y: 0.108665, s: 0.006 },
+      { name: '鹦鹉螺湾', x: -0.74364388703, y: 0.13182590421, s: 2.2e-7 },
+      { name: '双螺旋角', x: 0.28693186889504513, y: 0.014286693904085048, s: 8e-10 },
+      { name: '象谷', x: 0.2755, y: 0.0065, s: 0.008 },
+      { name: '银龙针', x: -1.7686112281649, y: 0.0017551024881, s: 4e-8 },
+      { name: '尘埃驿站', x: -1.940157343, y: 0.0000008, s: 3e-7 }
+    ]
+  },
+  en: {
+    sub: 'Fractal Planet',
+    hint: 'SCROLL TO ZOOM · DRAG TO DRIFT · DOUBLE-CLICK TO DIVE',
+    share: 'SHARE SPOT', copied: 'link copied', copyFail: 'link is in the address bar — copy manually',
+    reset: 'HOME PORT', zoom: 'mag',
+    places: [
+      { name: 'Home Port', x: -0.6, y: 0, s: 1.4 },
+      { name: 'Seahorse Valley', x: -0.746806, y: 0.108665, s: 0.006 },
+      { name: 'Nautilus Bay', x: -0.74364388703, y: 0.13182590421, s: 2.2e-7 },
+      { name: 'Twin Spiral Cape', x: 0.28693186889504513, y: 0.014286693904085048, s: 8e-10 },
+      { name: 'Elephant Valley', x: 0.2755, y: 0.0065, s: 0.008 },
+      { name: 'Silver Dragon Needle', x: -1.7686112281649, y: 0.0017551024881, s: 4e-8 },
+      { name: 'Dust Waystation', x: -1.940157343, y: 0.0000008, s: 3e-7 }
+    ]
+  }
+};
+let lang = localStorage.getItem('fold-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+const T = () => I18N[lang];
+
+/* ============ WebGL ============ */
+const canvas = document.getElementById('gl');
+const gl = canvas.getContext('webgl2', { antialias: false });
+if (!gl) { document.getElementById('errbox').style.display = 'block'; document.getElementById('errbox').textContent = 'WebGL2 unavailable'; throw new Error('no webgl2'); }
+
+const VERT = `#version 300 es
+precision highp float;
+const vec2 verts[3] = vec2[3](vec2(-1.0,-1.0), vec2(3.0,-1.0), vec2(-1.0,3.0));
+void main(){ gl_Position = vec4(verts[gl_VertexID], 0.0, 1.0); }`;
+
+/* 双精度模拟（double-single）曼德博：Dekker/Knuth 技术
+   使缩放可达 ~10^13 而不糊成像素 */
+const FRAG = `#version 300 es
+precision highp float;
+out vec4 fragColor;
+uniform vec2 uCenterX;   // (hi, lo)
+uniform vec2 uCenterY;
+uniform float uScale;    // 视野半高
+uniform float uAspect;
+uniform float uIter;     // 最大迭代
+uniform float uPhase;    // 调色相位
+
+/* df64 核心 */
+vec2 ds_add(vec2 a, vec2 b) {
+  float t1 = a.x + b.x;
+  float e = t1 - a.x;
+  float t2 = ((b.x - e) + (a.x - (t1 - e))) + a.y + b.y;
+  vec2 r;
+  r.x = t1 + t2;
+  r.y = t2 - (r.x - t1);
+  return r;
+}
+vec2 ds_mul(vec2 a, vec2 b) {
+  const float SPLIT = 8193.0;
+  float ca = SPLIT * a.x, cb = SPLIT * b.x;
+  float a_hi = ca - (ca - a.x), b_hi = cb - (cb - b.x);
+  float a_lo = a.x - a_hi, b_lo = b.x - b_hi;
+  float c11 = a.x * b.x;
+  float c21 = a_lo * b_lo + (a_lo * b_hi + a_hi * b_lo) * SPLIT + (a_hi - a_hi * 1.0) * 0.0;
+  float t1 = c11 + c21;
+  vec2 r;
+  r.x = t1;
+  r.y = c21 - (t1 - c11);
+  return r;
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / vec2(uIter * 0.0 + 1.0);  // placeholder, replaced below
+  fragColor = vec4(0.0);
+}`;
+
+/* 上面的 uv 写法不便，直接内联完整主函数 */
+const FRAG_MAIN = `#version 300 es
+precision highp float;
+out vec4 fragColor;
+uniform vec2 uCenterX;
+uniform vec2 uCenterY;
+uniform float uScale;
+uniform float uAspect;
+uniform float uIter;
+uniform float uPhase;
+uniform vec2 uRes;
+
+vec2 ds_add(vec2 a, vec2 b) {
+  float t1 = a.x + b.x;
+  float e = t1 - a.x;
+  float t2 = ((b.x - e) + (a.x - (t1 - e))) + a.y + b.y;
+  vec2 r;
+  r.x = t1 + t2;
+  r.y = t2 - (r.x - t1);
+  return r;
+}
+vec2 ds_mul(vec2 a, vec2 b) {
+  const float SPLIT = 8193.0;
+  float ca = SPLIT * a.x, cb = SPLIT * b.x;
+  float a_hi = ca - (ca - a.x), b_hi = cb - (cb - b.x);
+  float a_lo = a.x - a_hi, b_lo = b.x - b_hi;
+  float c11 = a.x * b.x;
+  float c21 = a_lo * b_lo + (a_lo * b_hi + a_hi * b_lo) * SPLIT;
+  float t1 = c11 + c21;
+  vec2 r;
+  r.x = t1;
+  r.y = c21 - (t1 - c11);
+  return r;
+}
+vec3 palette(float t) {
+  /* 靛蓝 - 青 - 金 - 米白 的墨系循环 */
+  vec3 a = vec3(0.16, 0.14, 0.20);
+  vec3 b = vec3(0.42, 0.36, 0.30);
+  vec3 c = vec3(1.0, 1.0, 1.0);
+  vec3 d = vec3(0.10, 0.20, 0.38);
+  return a + b * cos(6.28318 * (c * t + d));
+}
+void main() {
+  vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
+  uv.x *= 1.0;
+  // c = center + uv * scale（df64 加法保精度）
+  vec2 cxc = ds_add(uCenterX, vec2(uv.x * uScale, 0.0));
+  vec2 cyc = ds_add(uCenterY, vec2(uv.y * uScale, 0.0));
+  vec2 zx = vec2(0.0), zy = vec2(0.0);
+  float i = 0.0;
+  float dd = 0.0;
+  for (int k = 0; k < 2048; k++) {
+    if (float(k) >= uIter) break;
+    // z = z^2 + c
+    vec2 xx = ds_mul(zx, zx);
+    vec2 yy = ds_mul(zy, zy);
+    vec2 xy = ds_mul(zx, zy);
+    // zx' = xx - yy + c.x ; zy' = 2xy + c.y
+    vec2 nx = ds_add(ds_add(xx, vec2(-yy.x, -yy.y)), cxc);
+    vec2 ny = ds_add(ds_add(xy, xy), cyc);
+    zx = nx; zy = ny;
+    dd = zx.x * zx.x + zy.x * zy.x;
+    if (dd > 65536.0) { i = float(k); break; }
+    i = float(k) + 0.5;
+  }
+  if (dd > 65536.0) {
+    float t = i + 1.0 - log2(log2(dd) * 0.5);
+    vec3 col = palette(0.06 * sqrt(t) + uPhase);
+    fragColor = vec4(col, 1.0);
+  } else {
+    fragColor = vec4(vec3(0.015, 0.02, 0.04), 1.0);
+  }
+}`;
+
+function compile(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+    throw new Error('shader: ' + gl.getShaderInfoLog(s));
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG_MAIN));
+gl.linkProgram(prog);
+if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error('link: ' + gl.getProgramInfoLog(prog));
+gl.useProgram(prog);
+const U = {};
+['uCenterX','uCenterY','uScale','uAspect','uIter','uPhase','uRes'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+
+/* ============ 视图状态 ============ */
+const view = { x: -0.6, y: 0, s: 1.4 };   // 中心与半高
+let fly = null;                            // 飞行动画 {x0,y0,s0,x1,y1,s1,t0,dur}
+const MAG_LIMIT = 1e-13;
+
+function split64(v) {
+  const hi = Math.fround(v);
+  const lo = v - hi;
+  return [hi, lo];
+}
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // 性能取舍：限制渲染分辨率
+  const maxDim = 1400;
+  let w = innerWidth * dpr, h = innerHeight * dpr;
+  const m = Math.max(w, h) / maxDim;
+  if (m > 1) { w /= m; h /= m; }
+  canvas.width = Math.round(w); canvas.height = Math.round(h);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+}
+window.addEventListener('resize', resize);
+resize();
+
+function render() {
+  const [xh, xl] = split64(view.x);
+  const [yh, yl] = split64(view.y);
+  const iter = Math.min(2000, Math.round(160 + 42 * Math.log2(3 / view.s) * 0.5 + 80));
+  gl.uniform2f(U.uCenterX, xh, xl);
+  gl.uniform2f(U.uCenterY, yh, yl);
+  gl.uniform1f(U.uScale, view.s);
+  gl.uniform1f(U.uAspect, canvas.width / canvas.height);
+  gl.uniform1f(U.uIter, iter);
+  gl.uniform1f(U.uPhase, 0.0);
+  gl.uniform2f(U.uRes, canvas.width, canvas.height);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  updateCoords();
+}
+
+/* ============ HUD ============ */
+const coordsEl = document.getElementById('coords');
+function updateCoords() {
+  const mag = 1.4 / view.s;
+  const magStr = mag >= 1e8 ? (mag / 1e8).toFixed(1) + '×10⁸'
+    : mag >= 1e4 ? (mag / 1e4).toFixed(1) + '×10⁴'
+    : mag >= 100 ? mag.toFixed(0)
+    : mag.toFixed(1);
+  coordsEl.innerHTML =
+    `RE ${view.x.toFixed(12).slice(0, 12)}<br>IM ${view.y.toFixed(12).slice(0, 12)}<br>${T().zoom} ${magStr}`;
+}
+
+/* ============ 交互 ============ */
+let dragStart = null, moved = false;
+canvas.addEventListener('pointerdown', e => {
+  dragStart = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
+  moved = false;
+  canvas.classList.add('dragging');
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', e => {
+  if (!dragStart) return;
+  const dx = (e.clientX - dragStart.x) / innerHeight * 2 * view.s;
+  const dy = (e.clientY - dragStart.y) / innerHeight * 2 * view.s;
+  if (Math.abs(e.clientX - dragStart.x) + Math.abs(e.clientY - dragStart.y) > 4) moved = true;
+  view.x = dragStart.vx - dx;
+  view.y = dragStart.vy + dy;
+  fly = null;
+  document.getElementById('hint').classList.add('gone');
+  requestRender();
+});
+window.addEventListener('pointerup', () => { dragStart = null; canvas.classList.remove('dragging'); });
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const f = Math.exp(e.deltaY * 0.0016);
+  zoomAt(e.clientX, e.clientY, f);
+  fly = null;
+  document.getElementById('hint').classList.add('gone');
+}, { passive: false });
+
+function zoomAt(cx, cy, f) {
+  const ns = Math.max(MAG_LIMIT * 1.4, Math.min(2.5, view.s * f));
+  const kx = (cx - innerWidth / 2) / innerHeight * 2;
+  const ky = -(cy - innerHeight / 2) / innerHeight * 2;
+  const ratio = ns / view.s;
+  view.x += kx * view.s * (1 - ratio);
+  view.y += ky * view.s * (1 - ratio);
+  view.s = ns;
+  requestRender();
+}
+canvas.addEventListener('dblclick', e => {
+  zoomAt(e.clientX, e.clientY, 0.32);
+  fly = null;
+});
+
+/* 触屏双指缩放 */
+const touches = new Map();
+canvas.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') touches.set(e.pointerId, e); });
+canvas.addEventListener('pointermove', e => {
+  if (e.pointerType === 'touch' && touches.has(e.pointerId)) {
+    touches.set(e.pointerId, e);
+    if (touches.size === 2) {
+      const [a, b] = [...touches.values()];
+      const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      if (canvas._lastPinch) {
+        zoomAt((a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2, canvas._lastPinch / dist);
+      }
+      canvas._lastPinch = dist;
+    }
+  }
+});
+window.addEventListener('pointerup', e => {
+  touches.delete(e.pointerId);
+  if (touches.size < 2) canvas._lastPinch = null;
+});
+
+/* ============ 地名巡航 ============ */
+function flyTo(p) {
+  fly = { x0: view.x, y0: view.y, s0: view.s, x1: p.x, y1: p.y, s1: p.s, t0: performance.now(), dur: 2600 };
+  document.getElementById('hint').classList.add('gone');
+}
+function buildPlaces() {
+  const box = document.getElementById('places');
+  box.innerHTML = '';
+  T().places.forEach(p => {
+    const b = document.createElement('button');
+    b.className = 'place';
+    b.textContent = p.name;
+    b.addEventListener('click', () => {
+      flyTo(p);
+      document.querySelectorAll('.place').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+    });
+    box.appendChild(b);
+  });
+}
+
+/* ============ 分享 ============ */
+function writeHash() {
+  history.replaceState(null, '', `#x=${view.x.toPrecision(15)},y=${view.y.toPrecision(15)},s=${view.s.toPrecision(6)}`);
+}
+document.getElementById('shareBtn').addEventListener('click', async () => {
+  writeHash();
+  const url = location.href;
+  try {
+    await navigator.clipboard.writeText(url);
+    flashTitle(document.getElementById('shareBtn'), '✓ ' + T().copied);
+  } catch (e) {
+    flashTitle(document.getElementById('shareBtn'), T().copyFail);
+  }
+});
+function flashTitle(btn, txt) {
+  const old = btn.textContent;
+  btn.textContent = txt;
+  setTimeout(() => btn.textContent = old, 1800);
+}
+document.getElementById('resetBtn').addEventListener('click', () => flyTo(T().places[0]));
+document.getElementById('langBtn').addEventListener('click', () => {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('fold-lang', lang);
+  applyI18n();
+});
+function applyI18n() {
+  document.documentElement.lang = lang === 'zh' ? 'zh' : 'en';
+  document.title = lang === 'zh' ? '褶皱 · FOLD — 分形星球' : 'FOLD — Fractal Planet';
+  document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+  document.getElementById('shareBtn').textContent = T().share;
+  document.getElementById('resetBtn').textContent = T().reset;
+  document.getElementById('hint').textContent = T().hint;
+  buildPlaces();
+  updateCoords();
+}
+
+/* ============ 渲染循环 ============ */
+let renderPending = false;
+function requestRender() {
+  if (renderPending) return;
+  renderPending = true;
+  requestAnimationFrame(() => { renderPending = false; render(); });
+}
+let prev = performance.now();
+function frame(now) {
+  const dt = Math.min((now - prev) / 1000, 0.05);
+  prev = now;
+  if (fly) {
+    const t = Math.min(1, (now - fly.t0) / fly.dur);
+    const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;  // easeInOutQuad
+    // 对数插值 scale
+    view.s = Math.exp(Math.log(fly.s0) + (Math.log(fly.s1) - Math.log(fly.s0)) * e);
+    view.x = fly.x0 + (fly.x1 - fly.x0) * e;
+    view.y = fly.y0 + (fly.y1 - fly.y0) * e;
+    if (t >= 1) fly = null;
+    requestRender();
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ============ 启动 ============ */
+applyI18n();
+// URL hash 坐标恢复
+const hm = location.hash.match(/x=([-\d.e+]+),y=([-\d.e+]+),s=([\d.e+-]+)/);
+if (hm) {
+  view.x = +hm[1]; view.y = +hm[2]; view.s = +hm[3];
+}
+render();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

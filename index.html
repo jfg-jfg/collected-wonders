@@ -15,6 +15,7 @@
     --echo-accent: #8fa5c4;
     --scape-accent: #8fd8cf;
     --letters-accent: #e0c08e;
+    --fold-accent: #c9a6d9;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -192,11 +193,11 @@ window.addEventListener('error', e => {
 /* ============ i18n ============ */
 const I18N = {
   zh: {
-    kicker: '四 件 小 小 的 奇 物',
+    kicker: '五 件 小 小 的 奇 物',
     title: '拾遗',
     sub: 'COLLECTED WONDERS · 创意站点集',
     note: '零依赖 · 纯原生 HTML/CSS/JS · 双击即开 · 中英双语',
-    footer: '墨 · 回声 · 造境 · 纸间 —— 各自独立，皆可独赏<br>2026 · 以代码作墨，以浏览器为纸',
+    footer: '墨 · 回声 · 造境 · 纸间 · 褶皱 —— 各自独立，皆可独赏<br>2026 · 以代码作墨，以浏览器为纸',
     works: [
       { zh: '墨', en: 'INK', tag: '视觉实验 · 流体', href: 'ink/',
         desc: '一支笔，一汪水。手写流体力学引擎让墨在宣纸上晕开——缓行则浓，疾书则淡。画完盖一枚朱印，带走它。',
@@ -209,15 +210,18 @@ const I18N = {
         ac: 'var(--scape-accent)' },
       { zh: '纸间', en: 'LETTERS', tag: '叙事 · 书信', href: 'letters/',
         desc: '拆除前的灯塔里，守灯人留下一摞写给"后来人"的信。你的每一次回信，都会让往事渗出不同的一面。四个结局。',
-        ac: 'var(--letters-accent)' }
+        ac: 'var(--letters-accent)' },
+      { zh: '褶皱', en: 'FOLD', tag: '技术 · 分形', href: 'fold/',
+        desc: '一颗无限细节的星球。双精度模拟让缩放抵达十万亿倍，七个地名等你巡航——海马谷、鹦鹉螺湾、银龙针。坐标可分享。',
+        ac: 'var(--fold-accent)' }
     ]
   },
   en: {
-    kicker: 'FOUR SMALL WONDERS',
+    kicker: 'FIVE SMALL WONDERS',
     title: '拾遗',
     sub: 'COLLECTED WONDERS · a set of tiny art sites',
     note: 'zero-dependency · plain HTML/CSS/JS · double-click to open · bilingual',
-    footer: 'INK · ECHO · SCAPE · LETTERS — each stands alone<br>2026 · code as ink, browser as paper',
+    footer: 'INK · ECHO · SCAPE · LETTERS · FOLD — each stands alone<br>2026 · code as ink, browser as paper',
     works: [
       { zh: '墨', en: 'INK', tag: 'VISUAL · FLUID', href: 'ink/',
         desc: 'A brush, a pool of water. A hand-written fluid dynamics engine lets ink bloom across rice paper — slow strokes run heavy, fast ones fly white. Finish with a red seal, and take it home.',
@@ -230,7 +234,10 @@ const I18N = {
         ac: 'var(--scape-accent)' },
       { zh: '纸间', en: 'LETTERS', tag: 'NARRATIVE · EPISTOLARY', href: 'letters/',
         desc: 'In a lighthouse about to be demolished, the keeper left a stack of letters "to whoever comes after". Each reply you choose bleeds a different truth from the past. Four endings.',
-        ac: 'var(--letters-accent)' }
+        ac: 'var(--letters-accent)' },
+      { zh: '褶皱', en: 'FOLD', tag: 'TECH · FRACTAL', href: 'fold/',
+        desc: 'A planet of infinite detail. Double-float emulation zooms to a hundred-billion magnification; seven named places await your cruise — Seahorse Valley, Nautilus Bay, the Silver Dragon Needle. Coordinates are shareable.',
+        ac: 'var(--fold-accent)' }
     ]
   }
 };
@@ -239,7 +246,8 @@ const EMBLEMS = {
   INK: '<div class="em-ink"><div class="drop"></div><div class="drop"></div><div class="drop"></div></div>',
   ECHO: '<div class="em-echo"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="core"></div></div>',
   SCAPE: '<div class="em-scape"><div class="sky"></div><div class="sunmoon"></div></div>',
-  LETTERS: '<div class="em-letters"><div class="env"></div><div class="flap"></div><div class="wax">守</div></div>'
+  LETTERS: '<div class="em-letters"><div class="env"></div><div class="flap"></div><div class="wax">守</div></div>',
+  FOLD: '<div class="em-echo"><div class="ring" style="border-color:var(--fold-accent)"></div><div class="ring" style="border-color:var(--fold-accent)"></div><div class="ring" style="border-color:var(--fold-accent)"></div><div class="core" style="background:var(--fold-accent);box-shadow:0 0 14px var(--fold-accent)"></div></div>'
 };
 function applyI18n() {
   document.documentElement.lang = lang === 'zh' ? 'zh' : 'en';

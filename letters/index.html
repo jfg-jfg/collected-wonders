@@ -190,6 +190,15 @@
   .en-text { font-size: clamp(15px, 2.2vw, 17px); line-height: 2.4; letter-spacing: 0.08em; color: rgba(236,229,210,0.85); max-width: 560px; }
   .en-stats { margin-top: 28px; font-size: 13px; letter-spacing: 0.2em; color: rgba(236,229,210,0.5); }
 
+  .home-link {
+    position: fixed; left: 26px; bottom: 26px; z-index: 6;
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 1px solid rgba(240,232,214,0.22); background: rgba(16,26,32,0.5); backdrop-filter: blur(6px);
+    color: rgba(240,232,214,0.7); display: grid; place-items: center;
+    font-size: 16px; text-decoration: none; transition: all .25s;
+  }
+  .home-link:hover { color: var(--gold); border-color: var(--gold); transform: translateY(-3px); }
+
   @media (max-width: 640px) {
     .letter { max-height: 76vh; }
     .env-hint { font-size: 11px; letter-spacing: 0.25em; }
@@ -222,6 +231,7 @@
 
 <div class="stage" id="stage"></div>
 
+<a class="home-link" href="../index.html" title="拾遗 · 序">序</a>
 <div class="ending-note" id="endingNote">
   <div class="en-kicker" id="enKicker"></div>
   <div class="en-title" id="enTitle"></div>

@@ -60,6 +60,15 @@
 
   #errbox { position: fixed; inset: auto 0 0 0; z-index: 99; background: #401414; color: #ffb4b4; font-size: 12px; padding: 8px 12px; display: none; }
 
+  .home-link {
+    position: fixed; left: 28px; bottom: 28px; z-index: 6;
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 1px solid var(--line); background: rgba(5,7,13,0.55); backdrop-filter: blur(6px);
+    color: var(--txt); display: grid; place-items: center;
+    font-size: 16px; text-decoration: none; transition: all .25s;
+  }
+  .home-link:hover { color: var(--gold); border-color: var(--gold); transform: translateY(-3px); }
+
   @media (max-width: 640px) {
     .masthead { top: 14px; left: 16px; }
     .topright { top: 14px; right: 14px; }
@@ -82,6 +91,7 @@
 </div>
 
 <div class="hint" id="hint"></div>
+<a class="home-link" href="../index.html" title="拾遗 · 序">序</a>
 <div class="places" id="places"></div>
 <div id="errbox"></div>
 

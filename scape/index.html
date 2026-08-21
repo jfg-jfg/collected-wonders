@@ -98,6 +98,15 @@
 
   button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
+  .home-link {
+    position: fixed; left: 28px; bottom: 28px; z-index: 7;
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--dock); backdrop-filter: blur(8px);
+    color: var(--txt); display: grid; place-items: center;
+    font-size: 16px; text-decoration: none; transition: all .25s;
+  }
+  .home-link:hover { color: var(--gold); border-color: var(--gold); transform: translateY(-3px); }
+
   @media (max-width: 720px) {
     .board { gap: 2px; padding: 10px 8px 8px; }
     .ch { width: 74px; }
@@ -130,6 +139,7 @@
 </div>
 
 <div class="hint" id="hint"></div>
+<a class="home-link" href="../index.html" title="拾遗 · 序">序</a>
 
 <script>
 'use strict';

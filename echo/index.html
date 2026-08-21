@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>回声 · ECHO — 回声定位迷宫</title>
+<style>
+  :root {
+    --bg: #07090d;
+    --wall: #5d6b85;
+    --ember: #e8c07a;
+    --pale: #9db0c9;
+    --cyan: #7fd8d0;
+    --hairline: rgba(157,176,201,0.22);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: "Songti SC", "STSong", "SimSun", "Noto Serif SC", Georgia, serif;
+    background: var(--bg); color: var(--pale);
+    -webkit-user-select: none; user-select: none; touch-action: none;
+  }
+  #cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* ---------- HUD ---------- */
+  .hud {
+    position: fixed; top: 22px; left: 50%; transform: translateX(-50%);
+    z-index: 5; display: flex; gap: 26px; align-items: baseline;
+    font-size: 14px; letter-spacing: 0.22em; color: var(--pale);
+    text-shadow: 0 0 12px rgba(157,176,201,0.35);
+    pointer-events: none; white-space: nowrap;
+  }
+  .hud b { color: var(--ember); font-weight: 600; }
+  .hud .sep { color: var(--hairline); }
+
+  .topbar { position: fixed; top: 20px; right: 24px; z-index: 6; display: flex; gap: 8px; }
+  .btn-ghost {
+    border: 1px solid var(--hairline); background: rgba(7,9,13,0.55);
+    backdrop-filter: blur(6px); color: var(--pale);
+    font-family: inherit; font-size: 12.5px; letter-spacing: 0.14em;
+    padding: 7px 14px; border-radius: 999px; cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-ghost:hover { color: var(--ember); border-color: var(--ember); }
+
+  /* ---------- 覆盖层（菜单/过关/终章） ---------- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 10;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 42%, rgba(20,26,38,0.88), rgba(7,9,13,0.97));
+    text-align: center; padding: 30px; overflow-y: auto;
+  }
+  .overlay.show { display: flex; }
+  .ov-title { font-size: clamp(40px, 8vw, 76px); font-weight: 600; letter-spacing: 0.22em; color: var(--pale); text-shadow: 0 0 34px rgba(157,176,201,0.45); }
+  .ov-title .en { display: block; font-size: 0.28em; letter-spacing: 0.55em; color: var(--ember); margin-top: 10px; font-style: italic; }
+  .ov-sub { margin-top: 18px; font-size: 15px; line-height: 2.1; letter-spacing: 0.12em; color: var(--pale); max-width: 520px; }
+  .ov-actions { margin-top: 34px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .btn-main {
+    border: 1px solid var(--ember); background: none; color: var(--ember);
+    font-family: inherit; font-size: 15px; letter-spacing: 0.3em;
+    padding: 13px 34px; border-radius: 2px; cursor: pointer; transition: all .25s;
+  }
+  .btn-main:hover { background: var(--ember); color: #0a0c10; box-shadow: 0 0 30px rgba(232,192,122,0.4); }
+  .btn-sub {
+    border: 1px solid var(--hairline); background: none; color: var(--pale);
+    font-family: inherit; font-size: 13.5px; letter-spacing: 0.22em;
+    padding: 12px 26px; border-radius: 2px; cursor: pointer; transition: all .25s;
+  }
+  .btn-sub:hover { border-color: var(--pale); }
+
+  /* 关卡选择 */
+  .levels { margin-top: 30px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .lv {
+    border: 1px solid var(--hairline); background: rgba(20,26,38,0.5);
+    color: var(--pale); font-family: inherit; cursor: pointer;
+    padding: 14px 10px; border-radius: 4px; min-width: 108px;
+    transition: all .2s; text-align: center;
+  }
+  .lv:hover:not(:disabled) { border-color: var(--ember); color: var(--ember); }
+  .lv:disabled { opacity: 0.32; cursor: not-allowed; }
+  .lv .n { font-size: 17px; letter-spacing: 0.1em; }
+  .lv .t { font-size: 11px; letter-spacing: 0.28em; margin-top: 6px; color: var(--cyan); }
+  .lv .b { font-size: 11px; margin-top: 6px; color: var(--pale); opacity: 0.75; }
+
+  /* 过关面板 */
+  .panel { border: 1px solid var(--hairline); background: rgba(14,18,26,0.85); padding: 34px 44px; border-radius: 6px; max-width: 560px; }
+  .panel h2 { font-size: 26px; letter-spacing: 0.3em; color: var(--ember); font-weight: 600; }
+  .panel .stats { margin-top: 18px; font-size: 14.5px; line-height: 2.2; letter-spacing: 0.1em; }
+  .lanterns { font-size: 22px; letter-spacing: 0.4em; margin-top: 8px; color: var(--ember); }
+  .lanterns .off { opacity: 0.18; }
+
+  /* 剧情碎片弹现 */
+  .frag {
+    position: fixed; left: 50%; bottom: 15%; transform: translateX(-50%) translateY(14px);
+    z-index: 8; max-width: min(86vw, 560px); padding: 16px 28px;
+    border: 1px solid rgba(127,216,208,0.4); border-radius: 4px;
+    background: rgba(10,16,18,0.92); color: var(--cyan);
+    font-size: 15px; line-height: 1.9; letter-spacing: 0.1em; text-align: center;
+    opacity: 0; pointer-events: none; transition: opacity .6s, transform .6s;
+    text-shadow: 0 0 14px rgba(127,216,208,0.4);
+  }
+  .frag.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* 结局诗 */
+  .poem { margin-top: 26px; font-size: 15.5px; line-height: 2.4; letter-spacing: 0.14em; color: var(--pale); max-width: 560px; }
+  .poem .miss { color: rgba(157,176,201,0.3); }
+
+  .kbd-hint { margin-top: 26px; font-size: 12.5px; letter-spacing: 0.18em; color: rgba(157,176,201,0.6); }
+  .kbd-hint span { border: 1px solid var(--hairline); border-radius: 3px; padding: 2px 7px; margin: 0 2px; }
+
+  #errbox { position: fixed; inset: auto 0 0 0; z-index: 99; background: #401414; color: #ffb4b4; font-size: 12px; padding: 8px 12px; display: none; }
+
+  @media (max-width: 640px) {
+    .hud { gap: 14px; font-size: 12px; top: 14px; }
+    .topbar { top: 12px; right: 12px; }
+    .levels { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div class="hud" id="hud" style="display:none">
+  <span id="hudLevel"></span><span class="sep">·</span>
+  <span id="hudSteps"></span><span class="sep">·</span>
+  <span id="hudPings"></span>
+</div>
+
+<div class="topbar" id="topbar" style="display:none">
+  <button class="btn-ghost" id="menuBtn"></button>
+  <button class="btn-ghost" id="sndBtn"></button>
+  <button class="btn-ghost" id="langBtn">EN</button>
+</div>
+
+<div class="overlay show" id="menuOv">
+  <div class="ov-title">回声<span class="en">E C H O</span></div>
+  <div class="ov-sub" data-t="menuSub"></div>
+  <div class="ov-actions">
+    <button class="btn-main" id="startBtn" data-t="start"></button>
+  </div>
+  <div class="levels" id="levels"></div>
+  <div class="kbd-hint" data-t="kbd"></div>
+</div>
+
+<div class="overlay" id="clearOv">
+  <div class="panel">
+    <h2 id="clearTitle"></h2>
+    <div class="lanterns" id="lanterns"></div>
+    <div class="stats" id="clearStats"></div>
+    <div class="ov-actions" style="margin-top:24px">
+      <button class="btn-main" id="nextBtn" data-t="next"></button>
+      <button class="btn-sub" id="retryBtn" data-t="retry"></button>
+      <button class="btn-sub" id="clearMenuBtn" data-t="toMenu"></button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="endOv">
+  <div class="ov-title" style="font-size:clamp(30px,6vw,52px)">天光<span class="en" data-t="endEn"></span></div>
+  <div class="ov-sub" data-t="endSub"></div>
+  <div class="poem" id="poem"></div>
+  <div class="ov-actions">
+    <button class="btn-main" id="againBtn" data-t="again"></button>
+    <button class="btn-sub" id="endMenuBtn" data-t="toMenu"></button>
+  </div>
+</div>
+
+<div class="frag" id="frag"></div>
+<div id="errbox"></div>
+
+<script>
+'use strict';
+window.addEventListener('error', e => {
+  const b = document.getElementById('errbox');
+  b.style.display = 'block'; b.textContent = 'ERR: ' + e.message;
+});
+
+/* ================= i18n ================= */
+const I18N = {
+  zh: {
+    menuSub: '无光的深处，唯回声与你同行。<br>以声照路，走出这座沉没之城。', start: '入 井',
+    kbd: '<span>方向键 / WASD</span> 移动　<span>空格 / 点击</span> 发出回声',
+    steps: '步', pings: '回声', level: '层', par: '定额',
+    sndOn: '声 · 开', sndOff: '声 · 关', menu: '回廊', toMenu: '回廊',
+    clearTitle: '回声抵达', next: '下 潜', retry: '重来', again: '再入井',
+    endEn: 'T H E   D A Y L I G H T',
+    endSub: '你拾级的碎片在此拼合——这是这座城最后的声音。',
+    fragGot: '碎片', of: '／',
+    lantern: ['灯', '灯', '灯'],
+    lvNames: ['一 · 深井', '二 · 回廊', '三 · 蜂巢', '四 · 迷津', '五 · 巨殿', '六 · 归途'],
+    locked: '未至', best: '最佳',
+    lvSub: ['醒来时，头顶的井口已是一枚远星。', '水声在回廊尽头折返，像有人应答。', '蜂巢般的居所，门都朝着黑暗敞开。', '迷津不在乎方向，只在乎你还愿意走。', '巨殿的柱影比夜更旧。', '归途上，每一步回声都更接近自己。']
+  },
+  en: {
+    menuSub: 'In the lightless deep, only echoes walk with you.<br>Sound out the dark. Climb out of the drowned city.', start: 'DESCEND',
+    kbd: '<span>Arrows / WASD</span> move　<span>Space / click</span> echo',
+    steps: 'steps', pings: 'echoes', level: 'Depth', par: 'par',
+    sndOn: 'SND ON', sndOff: 'SND OFF', menu: 'MENU', toMenu: 'MENU',
+    clearTitle: 'ECHO ARRIVED', next: 'DESCEND', retry: 'RETRY', again: 'DESCEND AGAIN',
+    endEn: 'T H E   D A Y L I G H T',
+    endSub: 'The fragments you gathered assemble here — the last voice of the city.',
+    fragGot: 'fragments', of: '/',
+    lantern: ['◆', '◆', '◆'],
+    lvNames: ['I · The Well', 'II · Corridors', 'III · The Hive', 'IV · Labyrinth', 'V · Great Hall', 'VI · The Way Back'],
+    locked: 'locked', best: 'best',
+    lvSub: ['Waking, the well mouth above is one far star.', 'Water turns at the corridor\'s end, like an answer.', 'Hive-homes, every door open to the dark.', 'The labyrinth cares not for direction, only that you still walk.', 'Pillar-shadows older than night in the great hall.', 'On the way back, each echo is nearer to yourself.']
+  }
+};
+let lang = localStorage.getItem('echo-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+const T = () => I18N[lang];
+function applyI18n() {
+  document.documentElement.lang = lang === 'zh' ? 'zh' : 'en';
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const k = el.getAttribute('data-t');
+    if (T()[k] !== undefined) el.innerHTML = T()[k];
+  });
+  document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+  document.getElementById('menuBtn').textContent = T().menu;
+  document.title = lang === 'zh' ? '回声 · ECHO — 回声定位迷宫' : 'ECHO — the echolocation maze';
+  buildLevelGrid(); updateHud();
+}
+
+/* ================= 关卡数据 =================
+   # 墙  . 地  S 起点  G 出口  * 记忆碎片
+   关卡由种子化迷宫生成器产生（递归回溯保证连通），
+   再经 BFS 连通性校验（见 validateLevels）双重保障 */
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function genMaze(w, h, rng, braid) {
+  const g = Array.from({ length: h }, () => Array(w).fill('#'));
+  const stack = [[1, 1]]; g[1][1] = '.';
+  while (stack.length) {
+    const [x, y] = stack[stack.length - 1];
+    const dirs = [[2, 0], [-2, 0], [0, 2], [0, -2]].filter(([dx, dy]) => {
+      const nx = x + dx, ny = y + dy;
+      return nx > 0 && ny > 0 && nx < w - 1 && ny < h - 1 && g[ny][nx] === '#';
+    });
+    if (!dirs.length) { stack.pop(); continue; }
+    const [dx, dy] = dirs[Math.floor(rng() * dirs.length)];
+    g[y + dy / 2][x + dx / 2] = '.';
+    g[y + dy][x + dx] = '.';
+    stack.push([x + dx, y + dy]);
+  }
+  // 编织：按比例打通部分死胡同，形成环路（提升后期关卡的探索感）
+  if (braid > 0) {
+    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+      if (g[y][x] !== '.') continue;
+      const nbs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+      const open = nbs.filter(([dx, dy]) => g[y + dy][x + dx] === '.');
+      if (open.length === 1 && rng() < braid) {
+        const cand = nbs.filter(([dx, dy]) => {
+          const nx = x + dx, ny = y + dy, fx = x + dx * 2, fy = y + dy * 2;
+          return nx > 0 && ny > 0 && nx < w - 1 && ny < h - 1 &&
+                 g[ny][nx] === '#' && fy < h && fx < w && g[fy][fx] === '.';
+        });
+        if (cand.length) {
+          const [dx, dy] = cand[Math.floor(rng() * cand.length)];
+          g[y + dy][x + dx] = '.';
+        }
+      }
+    }
+  }
+  return g;
+}
+function bfsDist(g, sx, sy) {
+  const h = g.length, w = g[0].length;
+  const dist = Array.from({ length: h }, () => Array(w).fill(-1));
+  dist[sy][sx] = 0;
+  const q = [[sx, sy]];
+  let qi = 0;
+  while (qi < q.length) {
+    const [x, y] = q[qi++];
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h || g[ny][nx] === '#') continue;
+      if (dist[ny][nx] === -1) { dist[ny][nx] = dist[y][x] + 1; q.push([nx, ny]); }
+    }
+  }
+  return dist;
+}
+function buildLevels() {
+  const specs = [
+    { w: 13, h: 9,  braid: 0,    seed: 1101 },
+    { w: 15, h: 11, braid: 0.08, seed: 2202 },
+    { w: 17, h: 13, braid: 0.16, seed: 3303 },
+    { w: 19, h: 13, braid: 0.25, seed: 4404 },
+    { w: 21, h: 15, braid: 0.32, seed: 5505, hall: true },
+    { w: 21, h: 15, braid: 0.4,  seed: 6606 }
+  ];
+  return specs.map(({ w, h, braid, seed, hall }) => {
+    const g = genMaze(w, h, mulberry32(seed), braid);
+    if (hall) { // 五 · 巨殿：中央凿空成柱厅
+      for (let y = 6; y <= 8; y++) for (let x = 8; x <= 12; x++) g[y][x] = '.';
+      g[7][8] = '.'; g[7][12] = '.';   // 东西门
+      g[6][10] = '#'; g[8][10] = '#';  // 双柱
+    }
+    const dist = bfsDist(g, 1, 1);
+    // G = 距 S 最远的格子
+    let gx = 1, gy = 1, best = -1;
+    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++)
+      if (dist[y][x] > best) { best = dist[y][x]; gx = x; gy = y; }
+    g[1][1] = 'S'; g[gy][gx] = 'G';
+    // 碎片：中远距离、彼此远离的 3 格
+    const cand = [];
+    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++)
+      if (g[y][x] === '.' && dist[y][x] > best * 0.35) cand.push([x, y, dist[y][x]]);
+    cand.sort((a, b) => b[2] - a[2]);
+    const picked = [];
+    for (const c of cand) {
+      if (picked.length >= 3) break;
+      if (picked.every(p => Math.abs(p[0] - c[0]) + Math.abs(p[1] - c[1]) > 4)) picked.push(c);
+    }
+    picked.forEach(([x, y]) => g[y][x] = '*');
+    const par = Math.round(best * 1.2) + 4;
+    return { par, map: g.map(r => r.join('')) };
+  });
+}
+const LEVELS = buildLevels();
+
+/* BFS 连通性校验：不可达则启动时报错（保障手作关卡质量） */
+function validateLevels() {
+  LEVELS.forEach((L, li) => {
+    const g = L.map;
+    const h = g.length, w = g[0].length;
+    let start = null, goal = null;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (g[y][x] === 'S') start = [x, y];
+      if (g[y][x] === 'G') goal = [x, y];
+    }
+    if (!start || !goal) throw new Error('level ' + li + ': missing S/G');
+    const seen = new Set([start.join(',')]);
+    const q = [start];
+    while (q.length) {
+      const [x, y] = q.shift();
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const c = g[ny][nx];
+        if (c === '#') continue;
+        const k = nx + ',' + ny;
+        if (!seen.has(k)) { seen.add(k); q.push([nx, ny]); }
+      }
+    }
+    if (!seen.has(goal.join(','))) throw new Error('level ' + li + ': goal unreachable');
+    // 碎片也须可达
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++)
+      if (g[y][x] === '*' && !seen.has(x + ',' + y)) throw new Error('level ' + li + ': fragment unreachable at ' + x + ',' + y);
+  });
+}
+validateLevels();
+
+/* 剧情碎片（按关卡顺序，双语） */
+const FRAGS = {
+  zh: [
+    '「井口的星升起来，又落下去。有人数过一万次。」',
+    '「水涨的那夜，钟楼的钟自己响了。」',
+    '「这里的门从不落锁——黑暗就是锁。」',
+    '「孩子问：回声是墙在说话吗？母亲说：是我们说过的路在说话。」',
+    '「巨殿的石柱，是从前的桅杆。这里曾是一片海。」',
+    '「灯还亮着。谁留的灯，谁就是同路人。」'
+  ],
+  en: [
+    '"The well-mouth star rose and fell. Someone counted ten thousand times."',
+    '"The night the water rose, the bell tower rang by itself."',
+    '"No door here was ever locked — the dark is the lock."',
+    '"A child asked: is echo the wall speaking? The mother said: it is the road we walked, speaking."',
+    '"The great hall\'s pillars were masts once. This was a sea."',
+    '"The lamp is still lit. Whoever keeps a lamp lit walks with you."'
+  ]
+};
+
+/* ================= 存档 ================= */
+const save = Object.assign({ unlocked: 0, best: {}, frags: [], snd: true },
+  JSON.parse(localStorage.getItem('echo-save') || '{}'));
+const persist = () => localStorage.setItem('echo-save', JSON.stringify(save));
+
+/* ================= 音频（全合成） ================= */
+let AC = null;
+function audio() {
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  if (AC.state === 'suspended') AC.resume();
+  return AC;
+}
+function sndPing() {
+  const ac = audio(); if (!ac || !save.snd) return;
+  const t = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(880, t);
+  o.frequency.exponentialRampToValueAtTime(220, t + 0.42);
+  g.gain.setValueAtTime(0.16, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+  // 回声：延迟反馈
+  const d = ac.createDelay(1.2), fb = ac.createGain(), wet = ac.createGain();
+  d.delayTime.value = 0.31; fb.gain.value = 0.34; wet.gain.value = 0.5;
+  o.connect(g); g.connect(ac.destination);
+  g.connect(d); d.connect(fb); fb.connect(d); d.connect(wet); wet.connect(ac.destination);
+  o.start(t); o.stop(t + 0.5);
+}
+function sndStep() {
+  const ac = audio(); if (!ac || !save.snd) return;
+  const t = ac.currentTime;
+  const len = 0.05, buf = ac.createBuffer(1, ac.sampleRate * len, ac.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  const s = ac.createBufferSource(); s.buffer = buf;
+  const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 320;
+  const g = ac.createGain(); g.gain.value = 0.06;
+  s.connect(f); f.connect(g); g.connect(ac.destination);
+  s.start(t);
+}
+function sndFrag() {
+  const ac = audio(); if (!ac || !save.snd) return;
+  const t = ac.currentTime;
+  [1318.5, 1975.5].forEach((fq, i) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.value = fq;
+    g.gain.setValueAtTime(0.001, t + i * 0.06);
+    g.gain.exponentialRampToValueAtTime(0.12, t + i * 0.06 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.06 + 1.2);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t + i * 0.06); o.stop(t + i * 0.06 + 1.3);
+  });
+}
+function sndWin() {
+  const ac = audio(); if (!ac || !save.snd) return;
+  const t = ac.currentTime;
+  [523.25, 659.25, 783.99].forEach((fq, i) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'triangle'; o.frequency.value = fq;
+    g.gain.setValueAtTime(0.001, t + i * 0.14);
+    g.gain.exponentialRampToValueAtTime(0.14, t + i * 0.14 + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.14 + 0.9);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t + i * 0.14); o.stop(t + i * 0.14 + 1);
+  });
+}
+
+/* ================= 游戏状态 ================= */
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let state = 'menu';           // menu | play | clear | end
+let li = 0;                   // 当前关卡
+let grid = [], cols = 0, rows = 0;
+let px = 0, py = 0;           // 玩家格坐标
+let steps = 0, pings = 0;
+let ripples = [];             // {x,y,r,maxR}
+let lights = null;            // 每格照明度
+let cell = 40, ox = 0, oy = 0; // 渲染布局
+let moveCooldown = 0;
+let goalPulse = 0;
+
+const FRAG_STEPS = [];        // 本关碎片格
+let fragTakenSet = null;      // 'x,y' 已拾取
+
+function loadLevel(i) {
+  li = i;
+  const L = LEVELS[i];
+  grid = L.map.map(r => r.split(''));
+  rows = grid.length; cols = grid[0].length;
+  FRAG_STEPS.length = 0;
+  fragTakenSet = new Set();
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+    if (grid[y][x] === 'S') { px = x; py = y; }
+    if (grid[y][x] === '*') FRAG_STEPS.push([x, y]);
+  }
+  steps = 0; pings = 0;
+  ripples = [];
+  lights = new Float32Array(cols * rows);
+  state = 'play';
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('topbar').style.display = 'flex';
+  hideAll();
+  layout();
+  updateHud();
+  showFrag(T().lvSub[i], false);
+}
+
+function layout() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = innerWidth, h = innerHeight;
+  cv.width = w * dpr; cv.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const availW = w * 0.92, availH = h * 0.76;
+  cell = Math.floor(Math.min(availW / cols, availH / rows));
+  cell = Math.max(14, Math.min(cell, 56));
+  ox = Math.round((w - cols * cell) / 2);
+  oy = Math.round((h - rows * cell) / 2 + h * 0.03);
+}
+window.addEventListener('resize', () => { if (state === 'play') layout(); });
+
+const G = (x, y) => (x < 0 || y < 0 || x >= cols || y >= rows) ? '#' : grid[y][x];
+
+function tryMove(dx, dy) {
+  if (state !== 'play') return;
+  const nx = px + dx, ny = py + dy;
+  if (G(nx, ny) === '#') { sndStep(); return; }
+  px = nx; py = ny; steps++;
+  sndStep();
+  // 脚步自带微光涟漪（半径小）
+  ripples.push({ x: px + 0.5, y: py + 0.5, r: 0, maxR: 1.8, soft: true });
+  const k = nx + ',' + ny;
+  if (G(nx, ny) === '*') {
+    fragTakenSet.add(k);
+    save.frags[li * 3 + FRAG_STEPS.findIndex(f => f[0] === nx && f[1] === ny)] = true;
+    persist();
+    sndFrag();
+    showFrag((lang === 'zh' ? FRAGS.zh : FRAGS.en)[li], true);
+  }
+  if (G(nx, ny) === 'G') levelClear();
+  updateHud();
+}
+
+function ping(cx, cy) {
+  if (state !== 'play') return;
+  pings++;
+  ripples.push({ x: cx !== undefined ? cx : px + 0.5, y: cy !== undefined ? cy : py + 0.5, r: 0, maxR: 7.5 });
+  sndPing();
+  updateHud();
+}
+
+/* ================= 涟漪照明 ================= */
+function propagate(dt) {
+  for (const rp of ripples) rp.r += 9.5 * dt;
+  // 衰减
+  for (let i = 0; i < lights.length; i++) lights[i] *= Math.exp(-dt * 1.1);
+  // 涟漪扫过的墙亮起
+  for (const rp of ripples) {
+    const x0 = Math.max(0, Math.floor(rp.x - rp.r - 1));
+    const x1 = Math.min(cols - 1, Math.ceil(rp.x + rp.r + 1));
+    const y0 = Math.max(0, Math.floor(rp.y - rp.r - 1));
+    const y1 = Math.min(rows - 1, Math.ceil(rp.y + rp.r + 1));
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const d = Math.hypot(x + 0.5 - rp.x, y + 0.5 - rp.y);
+      if (Math.abs(d - rp.r) < 0.75 && d <= rp.maxR) {
+        const inten = (1 - d / rp.maxR) * (rp.soft ? 0.35 : 1) * 0.95;
+        const idx = y * cols + x;
+        if (inten > lights[idx]) lights[idx] = inten;
+      }
+    }
+  }
+  ripples = ripples.filter(r => r.r < r.maxR + 1.5);
+}
+
+/* ================= 渲染 ================= */
+let time = 0;
+function render(dt) {
+  time += dt;
+  const W = innerWidth, H = innerHeight;
+  ctx.fillStyle = '#07090d';
+  ctx.fillRect(0, 0, W, H);
+
+  if (state !== 'play') return;
+
+  // 暗角
+  const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.72);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,0,0,0.6)');
+
+  // 玩家光晕亮度（呼吸）
+  const breathe = 0.85 + Math.sin(time * 2.2) * 0.15;
+  const pcx = ox + (px + 0.5) * cell, pcy = oy + (py + 0.5) * cell;
+
+  // 墙体
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+    const c = grid[y][x];
+    if (c === '#') {
+      const l = lights[y * cols + x];
+      // 玩家近旁常亮微光
+      const dpx = Math.hypot(x - px, y - py);
+      const near = Math.max(0, 1 - dpx / 2.2) * 0.4 * breathe;
+      const a = Math.min(1, l + near);
+      if (a < 0.015) continue;
+      ctx.fillStyle = `rgba(93,107,133,${(a * 0.92).toFixed(3)})`;
+      ctx.shadowColor = 'rgba(125,145,180,0.8)';
+      ctx.shadowBlur = 14 * a;
+      roundRectC(x * cell + ox + 1.5, y * cell + oy + 1.5, cell - 3, cell - 3, 3);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  // 出口（涟漪照亮后留有余辉；近时脉动）
+  {
+    let gx = 0, gy = 0;
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) if (grid[y][x] === 'G') { gx = x; gy = y; }
+    const d = Math.hypot(gx - px, gy - py);
+    goalPulse = Math.max(goalPulse * Math.exp(-dt * 0.5), lights[gy * cols + gx]);
+    const nearGlow = Math.max(0, 1 - d / 3) * 0.5;
+    const ga = Math.min(1, goalPulse + nearGlow + 0.04);
+    if (ga > 0.02) {
+      const gcx = ox + (gx + 0.5) * cell, gcy = oy + (gy + 0.5) * cell;
+      const grad = ctx.createRadialGradient(gcx, gcy, 0, gcx, gcy, cell * 1.1);
+      grad.addColorStop(0, `rgba(232,192,122,${(ga * 0.85).toFixed(3)})`);
+      grad.addColorStop(1, 'rgba(232,192,122,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(gcx - cell * 1.2, gcy - cell * 1.2, cell * 2.4, cell * 2.4);
+      ctx.fillStyle = `rgba(246,226,180,${ga.toFixed(3)})`;
+      ctx.font = `${Math.round(cell * 0.52)}px serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(lang === 'zh' ? '出' : '⌂', gcx, gcy + 1);
+    }
+  }
+
+  // 碎片
+  for (const [fx, fy] of FRAG_STEPS) {
+    if (fragTakenSet.has(fx + ',' + fy)) continue;
+    const d = Math.hypot(fx - px, fy - py);
+    const twinkle = 0.5 + 0.5 * Math.sin(time * 3 + fx * 2.1 + fy * 1.3);
+    const near = Math.max(0, 1 - d / 2.4);
+    const lit = lights[fy * cols + fx] * 0.8;
+    const a = Math.min(1, near * 0.9 + lit);
+    if (a < 0.02) continue;
+    const fcx = ox + (fx + 0.5) * cell, fcy = oy + (fy + 0.5) * cell;
+    ctx.fillStyle = `rgba(127,216,208,${(a * (0.55 + twinkle * 0.45)).toFixed(3)})`;
+    ctx.shadowColor = 'rgba(127,216,208,0.9)';
+    ctx.shadowBlur = 10 * a;
+    ctx.beginPath();
+    const s = cell * 0.12 * (0.8 + twinkle * 0.4);
+    ctx.moveTo(fcx, fcy - s * 1.6); ctx.lineTo(fcx + s, fcy); ctx.lineTo(fcx, fcy + s * 1.6); ctx.lineTo(fcx - s, fcy);
+    ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  // 涟漪环
+  for (const rp of ripples) {
+    const t = rp.r / rp.maxR;
+    const a = Math.max(0, (1 - t)) * (rp.soft ? 0.14 : 0.5);
+    if (a < 0.01) continue;
+    ctx.strokeStyle = `rgba(157,176,201,${a.toFixed(3)})`;
+    ctx.lineWidth = rp.soft ? 1 : 1.6;
+    ctx.beginPath();
+    ctx.arc(ox + rp.x * cell, oy + rp.y * cell, rp.r * cell, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // 玩家：灯芯
+  const pg = ctx.createRadialGradient(pcx, pcy, 0, pcx, pcy, cell * 1.5);
+  pg.addColorStop(0, `rgba(232,192,122,${(0.5 * breathe).toFixed(3)})`);
+  pg.addColorStop(1, 'rgba(232,192,122,0)');
+  ctx.fillStyle = pg;
+  ctx.fillRect(pcx - cell * 1.6, pcy - cell * 1.6, cell * 3.2, cell * 3.2);
+  ctx.fillStyle = `rgba(246,214,150,${(0.95).toFixed(3)})`;
+  ctx.shadowColor = 'rgba(232,192,122,1)';
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.arc(pcx, pcy, cell * 0.17, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, W, H);
+}
+
+function roundRectC(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/* ================= HUD / 覆盖层 ================= */
+function updateHud() {
+  const h = document.getElementById('hud');
+  if (state !== 'play') { h.style.display = 'none'; return; }
+  document.getElementById('hudLevel').innerHTML = `<b>${T().lvNames[li]}</b>`;
+  document.getElementById('hudSteps').innerHTML = `${T().steps} <b>${steps}</b> / ${T().par} ${LEVELS[li].par}`;
+  document.getElementById('hudPings').innerHTML = `${T().pings} <b>${pings}</b>`;
+}
+let fragTimer = null;
+function showFrag(text, isStory) {
+  const f = document.getElementById('frag');
+  f.innerHTML = text;
+  f.classList.add('show');
+  clearTimeout(fragTimer);
+  fragTimer = setTimeout(() => f.classList.remove('show'), isStory ? 4200 : 2600);
+}
+function hideAll() {
+  document.querySelectorAll('.overlay').forEach(o => o.classList.remove('show'));
+}
+
+/* ================= 过关 / 结局 ================= */
+function levelClear() {
+  state = 'clear';
+  sndWin();
+  // 存档
+  if (li + 1 > save.unlocked) { save.unlocked = li + 1; }
+  const prev = save.best[li];
+  if (!prev || steps + pings < prev.s + prev.p) save.best[li] = { s: steps, p: pings };
+  persist();
+  const par = LEVELS[li].par;
+  const score = steps <= par ? 3 : steps <= par * 1.5 ? 2 : 1;
+  const L = T().lantern;
+  document.getElementById('clearTitle').textContent = T().clearTitle;
+  document.getElementById('lanterns').innerHTML =
+    L.map((c, i) => `<span class="${i < score ? '' : 'off'}">${c}</span>`).join('');
+  document.getElementById('clearStats').innerHTML =
+    `${T().steps}：${steps}　·　${T().pings}：${pings}<br>${T().lvNames[li]}`;
+  document.getElementById('nextBtn').textContent =
+    li + 1 < LEVELS.length ? T().next : (lang === 'zh' ? '归 途 尽 头' : 'THE END');
+  document.getElementById('clearOv').classList.add('show');
+}
+
+function showEnding() {
+  state = 'end';
+  hideAll();
+  const poem = document.getElementById('poem');
+  const src = lang === 'zh' ? FRAGS.zh : FRAGS.en;
+  let html = '';
+  src.forEach((line, i) => {
+    const got = save.frags[i];
+    html += `<div class="${got ? '' : 'miss'}">${got ? line : (lang === 'zh' ? '· · ·' : '· · ·')}</div>`;
+  });
+  const total = save.frags.filter(Boolean).length;
+  document.querySelector('#endOv [data-t="endSub"]').innerHTML =
+    T().endSub + `<br><span style="color:var(--cyan)">${T().fragGot} ${total} ${T().of} ${src.length}</span>`;
+  poem.innerHTML = html;
+  document.getElementById('endOv').classList.add('show');
+  document.getElementById('hud').style.display = 'none';
+}
+
+/* ================= 菜单构建 ================= */
+function buildLevelGrid() {
+  const box = document.getElementById('levels');
+  box.innerHTML = '';
+  LEVELS.forEach((L, i) => {
+    const b = document.createElement('button');
+    b.className = 'lv';
+    const locked = i > save.unlocked;
+    b.disabled = locked;
+    const best = save.best[i];
+    b.innerHTML = `<div class="n">${T().lvNames[i].split(' · ')[0]}</div>
+      <div class="t">${locked ? T().locked : T().lvNames[i].split(' · ')[1]}</div>
+      <div class="b">${best ? `${T().best} ${best.s}${lang === 'zh' ? '步' : 's'} / ${best.p}` : ''}</div>`;
+    if (!locked) b.addEventListener('click', () => loadLevel(i));
+    box.appendChild(b);
+  });
+}
+
+/* ================= 输入 ================= */
+window.addEventListener('keydown', e => {
+  if (e.repeat && state === 'play' && moveCooldown > 0) return;
+  const k = e.key;
+  const map = { ArrowUp: [0,-1], w: [0,-1], W: [0,-1], ArrowDown: [0,1], s: [0,1], S: [0,1],
+                ArrowLeft: [-1,0], a: [-1,0], A: [-1,0], ArrowRight: [1,0], d: [1,0], D: [1,0] };
+  if (map[k]) {
+    e.preventDefault();
+    if (state === 'play') { tryMove(...map[k]); moveCooldown = 0.11; }
+  } else if (k === ' ') {
+    e.preventDefault();
+    ping();
+  } else if (k === 'Enter' && state === 'menu') {
+    loadLevel(0);
+  }
+});
+window.addEventListener('keyup', () => moveCooldown = 0);
+
+// 点击画布 = 在点击处发回声；触屏滑动 = 移动
+let touchStart = null;
+cv.addEventListener('pointerdown', e => {
+  touchStart = [e.clientX, e.clientY];
+});
+cv.addEventListener('pointerup', e => {
+  if (!touchStart) return;
+  const dx = e.clientX - touchStart[0], dy = e.clientY - touchStart[1];
+  const dist = Math.hypot(dx, dy);
+  if (state === 'play') {
+    if (dist > 30) {
+      // 滑动：择主轴移动
+      if (Math.abs(dx) > Math.abs(dy)) tryMove(Math.sign(dx), 0);
+      else tryMove(0, Math.sign(dy));
+    } else {
+      ping((e.clientX - ox) / cell, (e.clientY - oy) / cell);
+    }
+  }
+  touchStart = null;
+});
+
+/* ================= 按钮 ================= */
+document.getElementById('startBtn').addEventListener('click', () => loadLevel(0));
+document.getElementById('retryBtn').addEventListener('click', () => loadLevel(li));
+document.getElementById('nextBtn').addEventListener('click', () => {
+  if (li + 1 < LEVELS.length) loadLevel(li + 1);
+  else showEnding();
+});
+document.getElementById('againBtn').addEventListener('click', () => { save.frags = []; persist(); loadLevel(0); });
+document.getElementById('menuBtn').addEventListener('click', () => {
+  state = 'menu'; hideAll();
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('topbar').style.display = 'none';
+  buildLevelGrid();
+  document.getElementById('menuOv').classList.add('show');
+});
+document.getElementById('clearMenuBtn').addEventListener('click', () => document.getElementById('menuBtn').click());
+document.getElementById('endMenuBtn').addEventListener('click', () => document.getElementById('menuBtn').click());
+const sndBtn = document.getElementById('sndBtn');
+function updSnd() { sndBtn.textContent = save.snd ? T().sndOn : T().sndOff; }
+sndBtn.addEventListener('click', () => { save.snd = !save.snd; persist(); updSnd(); });
+document.getElementById('langBtn').addEventListener('click', () => {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('echo-lang', lang);
+  applyI18n(); updSnd();
+});
+
+/* ================= 主循环 ================= */
+let prev = performance.now();
+function frame(now) {
+  const dt = Math.min((now - prev) / 1000, 0.05);
+  prev = now;
+  if (state === 'play') {
+    propagate(dt);
+    if (moveCooldown > 0) moveCooldown -= dt;
+  }
+  render(dt);
+  requestAnimationFrame(frame);
+}
+
+/* ================= 启动 ================= */
+applyI18n();
+updSnd();
+// #lv<N> 直达关卡（测试/分享用）
+const m = location.hash.match(/^#lv(\d+)/);
+if (m && +m[1] < LEVELS.length) loadLevel(+m[1]);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

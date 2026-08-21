@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>纸间 · LETTERS — 守灯人</title>
+<style>
+  :root {
+    --ink: #33302a;
+    --paper: #f0e8d6;
+    --paper2: #e8ddc4;
+    --seal: #9e3528;
+    --dim: #8a8375;
+    --bg1: #101a20;
+    --bg2: #1a2732;
+    --gold: #d9b57c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Songti SC", "STSong", "SimSun", "Noto Serif SC", Georgia, serif;
+    background: radial-gradient(ellipse at 50% 30%, var(--bg2), var(--bg1) 75%);
+    color: var(--ink); overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+  }
+  #motes { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+
+  .stage { position: fixed; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; padding: 20px; }
+
+  /* ---------- 信封 ---------- */
+  .envelope {
+    position: relative; width: min(420px, 88vw); aspect-ratio: 1.45/1;
+    cursor: pointer; transition: transform .5s cubic-bezier(.2,.8,.2,1), opacity .6s;
+    perspective: 800px;
+  }
+  .envelope:hover { transform: translateY(-6px); }
+  .env-body {
+    position: absolute; inset: 0; border-radius: 6px;
+    background: linear-gradient(160deg, #d9cbae, #cbbc9c 55%, #cdbf9f);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5), inset 0 0 40px rgba(120,100,60,0.18);
+  }
+  .env-flap {
+    position: absolute; top: 0; left: 0; right: 0; height: 56%;
+    background: linear-gradient(180deg, #cfc09e, #c2b28e);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    border-radius: 6px 6px 0 0;
+    transform-origin: top center;
+    transition: transform .8s cubic-bezier(.6,0,.3,1);
+    z-index: 3;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  }
+  .envelope.open .env-flap { transform: rotateX(178deg); }
+  .env-letterpeek {
+    position: absolute; left: 6%; right: 6%; top: 12%; bottom: 12%;
+    background: var(--paper); border-radius: 3px; z-index: 2;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    transition: transform .7s .3s cubic-bezier(.2,.8,.2,1);
+  }
+  .envelope.open .env-letterpeek { transform: translateY(-16%) scale(1.04); }
+  .seal {
+    position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%);
+    width: 58px; height: 58px; border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #c65b44, var(--seal) 60%, #7e281e);
+    display: grid; place-items: center; z-index: 4;
+    color: #f3e2c8; font-size: 26px; font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35), inset 0 0 0 3px rgba(243,226,200,0.35), inset 0 0 0 6px var(--seal);
+    transition: opacity .4s .5s;
+    letter-spacing: 0;
+  }
+  .envelope.open .seal { opacity: 0; }
+  .env-hint {
+    position: absolute; left: 50%; bottom: -44px; transform: translateX(-50%);
+    color: rgba(240,232,214,0.55); font-size: 13px; letter-spacing: 0.4em; white-space: nowrap;
+  }
+
+  /* ---------- 信纸 ---------- */
+  .letter {
+    width: min(680px, 94vw); max-height: 82vh; overflow-y: auto;
+    background:
+      linear-gradient(105deg, transparent 40%, rgba(120,100,60,0.05) 41%, transparent 43%),
+      linear-gradient(105deg, transparent 68%, rgba(120,100,60,0.04) 69%, transparent 71%),
+      radial-gradient(ellipse at 20% 10%, rgba(160,140,90,0.08), transparent 55%),
+      linear-gradient(165deg, var(--paper), var(--paper2));
+    border-radius: 4px;
+    padding: clamp(28px, 5vw, 56px) clamp(24px, 6vw, 64px);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55), inset 0 0 60px rgba(130,110,70,0.1);
+    position: relative;
+    scrollbar-width: thin; scrollbar-color: rgba(90,80,60,0.3) transparent;
+  }
+  .letter::before, .letter::after { /* 折痕 */
+    content: ''; position: absolute; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(90,75,50,0.22) 18%, rgba(90,75,50,0.22) 82%, transparent);
+  }
+  .letter::before { top: 33%; } .letter::after { top: 66%; }
+  .letter .yr {
+    font-size: 12.5px; letter-spacing: 0.35em; color: var(--dim); margin-bottom: 4px;
+  }
+  .letter h2 {
+    font-size: clamp(19px, 3vw, 25px); font-weight: 600; letter-spacing: 0.14em; margin-bottom: 20px;
+  }
+  .letter p {
+    font-size: clamp(15px, 2.2vw, 17.5px); line-height: 2.15; letter-spacing: 0.05em;
+    margin-bottom: 1.1em; color: var(--ink);
+    opacity: 0; transform: translateY(8px); filter: blur(3px);
+  }
+  .letter p.in { opacity: 1; transform: none; filter: blur(0); transition: opacity 1.3s ease, transform 1s ease, filter 1.2s ease; }
+  .letter p.drop::first-letter {
+    font-size: 1.9em; float: left; line-height: 1; padding: 6px 10px 0 0; color: var(--seal); font-weight: 600;
+  }
+
+  /* ---------- 回信 ---------- */
+  .replies { margin-top: 26px; display: none; flex-direction: column; gap: 12px; }
+  .replies.in { display: flex; animation: fadeUp .8s ease both; }
+  .replies .q {
+    font-size: 13px; letter-spacing: 0.3em; color: var(--dim); text-align: center; margin-bottom: 4px;
+  }
+  .reply {
+    border: 1px solid rgba(90,75,50,0.35); background: rgba(255,252,244,0.35);
+    color: var(--ink); font-family: inherit; font-size: 15px; line-height: 1.8; letter-spacing: 0.04em;
+    padding: 13px 20px; border-radius: 3px; cursor: pointer; text-align: left;
+    transition: all .25s; position: relative;
+  }
+  .reply:hover { background: rgba(158,53,40,0.08); border-color: var(--seal); transform: translateX(4px); }
+  .reply::before {
+    content: '✎'; margin-right: 10px; color: var(--seal); opacity: 0; transition: opacity .25s;
+  }
+  .reply:hover::before { opacity: 1; }
+  button:focus-visible { outline: 2px solid var(--seal); outline-offset: 2px; }
+
+  .continue { display: none; margin: 10px auto 0; }
+  .continue.in { display: block; animation: fadeUp .8s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- 顶栏 ---------- */
+  .topbar {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 5;
+    display: flex; gap: 14px; align-items: center;
+    color: rgba(240,232,214,0.6); font-size: 12.5px; letter-spacing: 0.25em;
+  }
+  .topbar .lampdot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--gold);
+    box-shadow: 0 0 10px var(--gold); animation: breathe 2.6s ease-in-out infinite;
+  }
+  @keyframes breathe { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+  .corner { position: fixed; z-index: 5; top: 18px; right: 22px; display: flex; gap: 8px; }
+  .btn-ghost {
+    border: 1px solid rgba(240,232,214,0.25); background: rgba(16,26,32,0.5);
+    backdrop-filter: blur(6px); color: rgba(240,232,214,0.8);
+    font-family: inherit; font-size: 12px; letter-spacing: 0.12em;
+    padding: 6px 13px; border-radius: 999px; cursor: pointer; transition: all .2s;
+  }
+  .btn-ghost:hover { color: var(--gold); border-color: var(--gold); }
+
+  /* ---------- 标题屏 ---------- */
+  .title-screen {
+    position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 30px;
+    background: radial-gradient(ellipse at 50% 35%, rgba(26,39,50,0.9), rgba(10,15,19,0.97));
+    transition: opacity 1.2s; gap: 6px;
+  }
+  .title-screen.gone { opacity: 0; pointer-events: none; }
+  .ts-kicker { font-size: 13px; letter-spacing: 0.6em; color: rgba(217,181,124,0.75); margin-bottom: 14px; }
+  .ts-title { font-size: clamp(44px, 9vw, 84px); font-weight: 600; letter-spacing: 0.18em; color: #e9e2cf; text-shadow: 0 0 40px rgba(217,181,124,0.25); }
+  .ts-sub { font-size: clamp(15px, 2.4vw, 19px); letter-spacing: 0.5em; color: rgba(233,226,207,0.55); margin-top: 10px; }
+  .ts-desc { margin-top: 26px; font-size: 14px; line-height: 2.2; letter-spacing: 0.12em; color: rgba(233,226,207,0.7); max-width: 480px; }
+  .ts-actions { margin-top: 36px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .btn-main {
+    border: 1px solid var(--gold); background: none; color: var(--gold);
+    font-family: inherit; font-size: 15px; letter-spacing: 0.3em; padding: 13px 34px;
+    border-radius: 2px; cursor: pointer; transition: all .3s;
+  }
+  .btn-main:hover { background: var(--gold); color: #14100a; box-shadow: 0 0 34px rgba(217,181,124,0.4); }
+  .ts-endings { margin-top: 30px; display: flex; gap: 10px; }
+  .ts-endings .dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 1px solid rgba(240,232,214,0.35); transition: all .3s;
+  }
+  .ts-endings .dot.got { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 12px rgba(217,181,124,0.6); }
+
+  /* ---------- 结局屏 ---------- */
+  .ending-note {
+    position: fixed; inset: 0; z-index: 9; display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 40%, rgba(30,34,44,0.94), rgba(8,10,14,0.98));
+    text-align: center; padding: 34px; overflow-y: auto;
+  }
+  .ending-note.show { display: flex; }
+  .en-kicker { font-size: 12px; letter-spacing: 0.55em; color: rgba(217,181,124,0.7); }
+  .en-title { font-size: clamp(34px, 6.5vw, 58px); letter-spacing: 0.22em; color: #ece5d2; margin: 18px 0 26px; font-weight: 600; }
+  .en-text { font-size: clamp(15px, 2.2vw, 17px); line-height: 2.4; letter-spacing: 0.08em; color: rgba(236,229,210,0.85); max-width: 560px; }
+  .en-stats { margin-top: 28px; font-size: 13px; letter-spacing: 0.2em; color: rgba(236,229,210,0.5); }
+
+  @media (max-width: 640px) {
+    .letter { max-height: 76vh; }
+    .env-hint { font-size: 11px; letter-spacing: 0.25em; }
+  }
+</style>
+</head>
+<body>
+<canvas id="motes"></canvas>
+
+<div class="title-screen" id="titleScreen">
+  <div class="ts-kicker" id="tsKicker">一 场 纸 上 的 相 遇</div>
+  <div class="ts-title" id="tsTitle">守灯人</div>
+  <div class="ts-sub" id="tsSub">THE KEEPER OF THE LIGHT</div>
+  <div class="ts-desc" id="tsDesc"></div>
+  <div class="ts-actions">
+    <button class="btn-main" id="startBtn">拆 开 第 一 封 信</button>
+    <button class="btn-main" id="contBtn" style="display:none">继 续 读 信</button>
+  </div>
+  <div class="ts-endings" id="tsEndings"></div>
+</div>
+
+<div class="topbar" id="topbar" style="display:none">
+  <span class="lampdot"></span>
+  <span id="letterNo"></span>
+</div>
+<div class="corner">
+  <button class="btn-ghost" id="sndBtn">声 · 开</button>
+  <button class="btn-ghost" id="langBtn">EN</button>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<div class="ending-note" id="endingNote">
+  <div class="en-kicker" id="enKicker"></div>
+  <div class="en-title" id="enTitle"></div>
+  <div class="en-text" id="enText"></div>
+  <div class="en-stats" id="enStats"></div>
+  <div class="ts-actions" style="margin-top:34px">
+    <button class="btn-main" id="againBtn">再 读 一 遍</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+window.addEventListener('error', e => {
+  const b = document.createElement('div');
+  b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99;background:#401414;color:#ffb4b4;font-size:12px;padding:8px 12px';
+  b.textContent = 'ERR: ' + e.message;
+  document.body.appendChild(b);
+});
+
+/* ================= 双语剧本 ================= */
+const STORY = {
+  zh: {
+    title: '守灯人', sub: 'THE KEEPER OF THE LIGHT',
+    kicker: '一 场 纸 上 的 相 遇',
+    desc: '白鹤礁灯塔将于今冬拆除。<br>你是来告别的——直到你推开灯室的门，<br>看见桌上那摞按了年份的信。',
+    start: '拆 开 第 一 封 信', cont: '继 续 读 信', again: '再 读 一 遍',
+    openHint: '点 击 拆 封', replyQ: '—— 你 要 如 何 回 信 ——', contBtn: '继续读下一封',
+    sndOn: '声 · 开', sndOff: '声 · 关',
+    letterNo: n => `第 ${n} 封信`,
+    endings: ['灯仍亮', '归航', '存信', '第十三封信'],
+    enKicker: '结 局',
+    stats: (n, path) => `共读 ${n} 封信 · 走过「${path}」`,
+    paths: { warm: '温情之路', probe: '追问之路' },
+    nodes: {
+      n1: { year: '无年份', title: '致后来的旅人', text: `如果你读到这里，说明灯塔还没有拆掉，而你恰好推开了这扇门。\n我叫周远，在此守灯三十一年。人们说我死在第三十一年的那个风暴夜——他们说得对，也不对。\n桌上的信封按了年份。拆开之前，点一盏灯吧。守灯人的规矩：读信时，屋里要有光。`,
+        cont: '拆开一九八九年的信' },
+      n2: { year: '一九八九 · 春', title: '灯芯', text: `海冰初融，今夜雾大，灯要亮到天明。\n我做了一盏新的灯芯，剪去旧年的焦头。守灯这件事，说到底就是不断把烧焦的部分剪掉，让光继续。\n你那边，天气如何？`,
+        replies: [
+          { label: '这里也在下雨。你剪灯芯的样子，让我想起很多事。', flag: 'warm', to: 'n3' },
+          { label: '等等——你说你"死在"风暴夜。到底发生了什么？', flag: 'probe', to: 'n4' }
+        ]},
+      n3: { year: '一九八九 · 夏', title: '声音', text: `你问我孤不孤独。\n海上有的是声音：浪、风、雾号、缆绳敲打铁桩。孤独的不是没有声音，是没有人听你说话。\n所以我写信。写了不一定寄，寄了不一定到，到了不一定有人回。但灯亮着，就当有人在看。\n你愿意听一个老头说这些吗？`,
+        replies: [
+          { label: '我愿意。从头说起吧——你是怎么来这座岛的？', flag: 'warm', to: 'n5' },
+          { label: '别只说你自己。说说奶奶——她为什么从来不肯提你？', flag: 'probe', to: 'n6' }
+        ]},
+      n4: { year: '一九八九 · 十月四日', title: '航海日志（抄）', text: `你问到那一夜。我只抄记录，记录不会撒谎：\n二十一时十七分，雾号失灵。二十一时三十分，一艘渔船请求引航。二十一时四十一分，灯灭了四分钟。\n四分钟。在海上，四分钟够埋葬很多东西。\n第二天他们找到了空的救生圈，没有找到人。信不信由你——那四分钟里，我不在灯室。`,
+        replies: [
+          { label: '那四分钟，你在哪里？', flag: 'probe', to: 'n7' },
+          { label: '记录是官方的。我想听你自己说那一夜。', flag: 'warm', to: 'n7' }
+        ]},
+      n5: { year: '一九六二 · 追记', title: '上岛', text: `我上这座岛，是因为一场争吵。年轻气盛，觉得整个世界欠我一个解释。\n你叔公说：去守灯吧，灯不问问题。\n我就住了下来。第一年我数过往的船，第二年我数星星，第三年之后我什么都不数了——我开始给海写信。\n你呢？你为什么推开这扇门？`,
+        replies: [
+          { label: '灯塔要拆了。我是来告别的。', flag: 'warm', to: 'n8' },
+          { label: '我在找你。家里人从来不肯说起你。', flag: 'probe', to: 'n6' }
+        ]},
+      n6: { year: '一九七五 · 追记', title: '那天的浪', text: `她……是我最对不起的人。\n我上岛那年，她怀着你父亲。我说守两年就回。灯底下的两年，和别处的两年不一样——它把人钉在原地。\n后来她带孩子来过一次。渡船靠不了岸，风浪太大。她站在船头朝灯室挥手，我看见了，我没能下去。那天的浪，我下去，就是两个人一起沉。\n那是我这辈子最亮的四分钟，也是最暗的。`,
+        replies: [
+          { label: '我不怪你。奶奶窗台上总点着一盏灯——现在我懂了。', flag: 'warm', to: 'n8' },
+          { label: '可她等了你一辈子。你欠她一句回答。', flag: 'probe', to: 'n8' }
+        ]},
+      n7: { year: '一九八九 · 十月四日（续）', title: '四分钟', text: `好。二十一点四十一分，灯室的油路堵了——老塔的旧病。我提着马灯下机房，来回四分钟。\n等我回到灯室，那艘渔船的桅杆已经在礁石上折断了。\n我发了求救信号，然后跳进海里。十月的水冷得像铁。我捞住一个年轻人，把救生圈套在他身上，把他推上礁石。第二个浪打过来的时候，我的手已经没有力气了。\n你还想问什么？`,
+        replies: [
+          { label: '那个年轻人……后来怎么样了？', flag: 'probe', to: 'n9' },
+          { label: '所以你救了他。你是救人的人，不是逃兵。', flag: 'warm', to: 'n9' }
+        ]},
+      n9: { year: '一九八九 · 无日期', title: '明信片', text: `他叫陈潮生。\n后来每年清明，有人寄一张明信片到岛上，三十多年，一张没断。他不知道我是谁——他醒来时，我已经"不在了"。\n有些债，海替我还了。有些话，只能由后来的人替我说。\n塔要拆了吧。`,
+        replies: [
+          { label: '要拆了。他们说，灯的意义已经完成了。', flag: 'warm', to: 'n8' }
+        ]},
+      n8: { year: '最后一批 · 之一', title: '灯室里的马灯', text: `拆了也好。灯的意义是让人平安到家，不是让塔永远站着。\n我只求一件事：拆塔那天，把灯室里那盏黄铜马灯点亮一次。十分钟就够。让它最后亮一次，像有人在。\n你说，会被允许吗？`,
+        replies: [
+          { label: '我会去点。以你的名义。', flag: 'light', to: 'E1' },
+          { label: '塔都要拆了，灯点给谁看？让它去吧。', flag: 'letgo', to: 'n10' }
+        ]},
+      n10: { year: '最后一批 · 之二', title: '守灯人最后一条规矩', text: `你说得也对。光在人心里，不在玻璃罩子里。\n那么，替我把这些信烧了吧。纸归海，灰归风。\n守灯人最后一条规矩：灯灭之后，不要回头看塔。回头看塔的人，会一直留在原地。`,
+        replies: [
+          { label: '好。我替你烧。', flag: 'burn', to: 'E2' },
+          { label: '不。这些信应该留下来，给更多人读。', flag: 'keep', to: 'E3' }
+        ]}
+    },
+    endings: {
+      E1: { title: '灯仍亮', text: `拆塔那天，你提着那盏黄铜马灯走上九十九级台阶。\n傍晚六点整，灯室最后一次亮起。海面很静，静得像有人在很远很远的地方，终于睡着了。\n你把马灯留在原处，只带走了信。\n\n后来你在拆除报告的末尾添了一行字：建议保留灯室原物。\n没有人问理由。` },
+      E2: { title: '归航', text: `你在礁石上把信一封封烧了。火很小，很快就熄了，纸灰像一群白蝶飞向海面。\n风里好像有一句很轻的"谢谢"。\n\n回程的渡船上，你睡着了。\n三十年来第一次，你没有梦见海。` },
+      E3: { title: '存信', text: `你把十三封信捐给了镇上的海事博物馆。\n玻璃柜里，它们按年份排开，标签写着：白鹤礁灯塔信札。\n\n开展那天，一位白发的老人在第一封信前站了很久很久，然后深深鞠了一躬。\n他的胸牌上写着：陈潮生。` },
+      E4: { title: '第十三封信', text: `你一路问到最深处。信堆的最底下，压着第十三个信封——它是空的。\n里面只有一张字条：\n\n"如果你读到这里，说明你和我一样，是个不肯让海替你说话的人。\n那晚的名册上少了一个人的名字。去查'白鹤礁 · 拾遗号'。\n塔可以拆。名字不能。"` }
+    }
+  },
+  en: {
+    title: 'The Keeper of the Light', sub: '白鹤礁灯塔信札',
+    kicker: 'AN ENCOUNTER, ON PAPER',
+    desc: 'White Crane Reef Lighthouse is to be demolished this winter.<br>You came to say goodbye — until you pushed open the lamp-room door<br>and saw the stack of letters, marked by year.',
+    start: 'OPEN THE FIRST LETTER', cont: 'CONTINUE READING', again: 'READ AGAIN',
+    openHint: 'CLICK TO UNSEAL', replyQ: '— HOW WILL YOU REPLY —', contBtn: 'Read the next letter',
+    sndOn: 'SND ON', sndOff: 'SND OFF',
+    letterNo: n => `Letter ${n}`,
+    endings: ['The Light Stays', 'Homeward', 'Kept', 'The Thirteenth'],
+    enKicker: 'ENDING',
+    stats: (n, path) => `${n} letters read · the ${path}`,
+    paths: { warm: 'gentle road', probe: 'searching road' },
+    nodes: {
+      n1: { year: 'NO YEAR', title: 'To the Traveler After', text: `If you are reading this, the lighthouse still stands, and you have pushed open this door.\nMy name is Zhou Yuan. I kept this light for thirty-one years. They say I died on the storm night of my thirty-first year — they are right, and not right.\nThe envelopes on this desk are marked by year. Before you open one, light a lamp. A keeper's rule: letters are read by lamplight.`,
+        cont: 'Open the letter from 1989' },
+      n2: { year: '1989 · SPRING', title: 'The Wick', text: `The sea ice is breaking up. Fog tonight; the lamp will burn till dawn.\nI trimmed a new wick, cutting away last year's char. Keeping a light, in the end, is only this: cutting away what has burned, so the flame can go on.\nAnd where you are — what is the weather like?`,
+        replies: [
+          { label: 'It is raining here too. The way you trim the wick — it reminds me of so much.', flag: 'warm', to: 'n3' },
+          { label: 'Wait — you said you "died" on the storm night. What actually happened?', flag: 'probe', to: 'n4' }
+        ]},
+      n3: { year: '1989 · SUMMER', title: 'Voices', text: `You ask if I am lonely.\nThe sea is never quiet: waves, wind, the foghorn, halyards knocking against iron. Loneliness is not the absence of sound. It is having no one who listens.\nSo I write. A letter written is not always sent; sent, not always delivered; delivered, not always answered. But the light is on — let that count as someone watching.\nWould you listen to an old man go on like this?`,
+        replies: [
+          { label: 'I would. Start at the beginning — how did you come to this island?', flag: 'warm', to: 'n5' },
+          { label: 'Don\'t only speak of yourself. Tell me about grandmother — why did she never speak of you?', flag: 'probe', to: 'n6' }
+        ]},
+      n4: { year: '1989 · OCTOBER 4', title: 'The Log (Copied)', text: `You ask about that night. I copy only the record; records do not lie:\n21:17, the foghorn failed. 21:30, a fishing boat requested pilotage. 21:41, the light went dark for four minutes.\nFour minutes. At sea, four minutes is long enough to bury a great deal.\nThe next day they found the life-ring empty. They did not find the man. Believe what you like — in those four minutes, I was not in the lamp room.`,
+        replies: [
+          { label: 'Then where were you, in those four minutes?', flag: 'probe', to: 'n7' },
+          { label: 'That is the official record. I want to hear you tell that night yourself.', flag: 'warm', to: 'n7' }
+        ]},
+      n5: { year: '1962 · RECALLED', title: 'Coming Ashore', text: `I came to this island because of an argument. Young and proud, I felt the whole world owed me an explanation.\nYour great-uncle said: go keep the light. A lamp asks no questions.\nSo I stayed. The first year I counted ships. The second year I counted stars. After the third I counted nothing — I had begun writing letters to the sea.\nAnd you? Why did you push open this door?`,
+        replies: [
+          { label: 'The lighthouse is coming down. I came to say goodbye.', flag: 'warm', to: 'n8' },
+          { label: 'I came looking for you. My family would never speak of you.', flag: 'probe', to: 'n6' }
+        ]},
+      n6: { year: '1975 · RECALLED', title: 'The Waves That Day', text: `Her… I failed her more than anyone.\nThe year I took this post, she was carrying your father. I said two years, then I would come home. Two years beneath a light are not like two years anywhere else — it nails a man in place.\nShe came once, with the child. The ferry could not land; the swell was too high. She stood at the bow and waved up at the lamp room. I saw her. I could not go down. In those waves, going down meant two of us drowning.\nThe brightest four minutes of my life. And the darkest.`,
+        replies: [
+          { label: 'I don\'t blame you. Grandmother always kept a lamp on the windowsill — now I understand.', flag: 'warm', to: 'n8' },
+          { label: 'But she waited her whole life. You owe her an answer.', flag: 'probe', to: 'n8' }
+        ]},
+      n7: { year: '1989 · OCTOBER 4 (CONT.)', title: 'Four Minutes', text: `Very well. At 21:41 the oil line in the lamp room clogged — an old tower\'s old ailment. I took the storm lantern down to the engine room. Four minutes, there and back.\nWhen I returned, the fishing boat\'s mast had already snapped on the reef.\nI sent the distress signal, then went into the sea. October water is cold as iron. I caught hold of a young man, slipped the life-ring over him, and pushed him onto the rocks. When the second wave came, my hands had no strength left.\nWhat else do you want to ask?`,
+        replies: [
+          { label: 'That young man… what became of him?', flag: 'probe', to: 'n9' },
+          { label: 'So you saved him. You were a rescuer, not a deserter.', flag: 'warm', to: 'n9' }
+        ]},
+      n9: { year: '1989 · UNDATED', title: 'Postcard', text: `His name was Chen Chaosheng.\nEvery Qingming since, a postcard has arrived on this island. Thirty-odd years, not one missed. He never knew who I was — by the time he woke, I was already "gone".\nSome debts, the sea repaid for me. Some words only those who come after can say for me.\nThe tower is coming down, isn\'t it.`,
+        replies: [
+          { label: 'It is. They say the light\'s work is done.', flag: 'warm', to: 'n8' }
+        ]},
+      n8: { year: 'FINAL BATCH · I', title: 'The Storm Lantern', text: `Good. A light exists so people come safely home — not so a tower stands forever.\nI ask one thing only: on the day they take it down, light the brass storm lantern in the lamp room. Once. Ten minutes is enough. Let it burn one last time, as if someone were here.\nDo you think they will allow it?`,
+        replies: [
+          { label: 'I will light it. In your name.', flag: 'light', to: 'E1' },
+          { label: 'The tower is going — who would the lantern burn for? Let it rest.', flag: 'letgo', to: 'n10' }
+        ]},
+      n10: { year: 'FINAL BATCH · II', title: 'A Keeper\'s Last Rule', text: `You are right, too. Light lives in people, not in glass.\nThen burn these letters for me. The paper to the sea, the ash to the wind.\nA keeper\'s last rule: when the light goes out, do not look back at the tower. Those who look back will stay in place forever.`,
+        replies: [
+          { label: 'All right. I will burn them for you.', flag: 'burn', to: 'E2' },
+          { label: 'No. These letters should stay, for more people to read.', flag: 'keep', to: 'E3' }
+        ]}
+    },
+    endings: {
+      E1: { title: 'The Light Stays', text: `On demolition day, you carried the brass storm lantern up ninety-nine steps.\nAt six in the evening, the lamp room lit for the last time. The sea was very still — still as if someone, very far away, had finally fallen asleep.\nYou left the lantern where it was, and took only the letters.\n\nLater, at the end of the demolition report, you added one line: recommend preserving the lamp room artifacts.\nNo one asked why.` },
+      E2: { title: 'Homeward', text: `On the reef you burned the letters, one by one. The fire was small and soon out; the ash rose like a flight of white butterflies toward the water.\nIn the wind, perhaps, a very quiet "thank you".\n\nOn the ferry home, you fell asleep.\nFor the first time in thirty years, you did not dream of the sea.` },
+      E3: { title: 'Kept', text: `You gave the thirteen letters to the town maritime museum.\nBehind glass, arranged by year, their label reads: Letters of White Crane Reef Lighthouse.\n\nOn opening day, a white-haired man stood before the first letter for a long, long time, and then bowed deeply.\nHis name tag read: Chen Chaosheng.` },
+      E4: { title: 'The Thirteenth', text: `You asked your way to the very bottom of the stack, where a thirteenth envelope lay — empty.\nInside, a single note:\n\n"If you have read this far, you are like me: one who will not let the sea speak for you.\nOne name is missing from that night\'s roster. Look up the White Crane Reef · Shiyi.\nThe tower may come down. The name may not."` }
+    }
+  }
+};
+const NODE_ORDER = ['n1','n2','n3','n4','n5','n6','n7','n9','n8','n10'];
+
+/* ================= 状态 ================= */
+let lang = localStorage.getItem('letters-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+const save = Object.assign({ node: null, read: 0, flags: [], endings: [], snd: true },
+  JSON.parse(localStorage.getItem('letters-save') || '{}'));
+const persist = () => localStorage.setItem('letters-save', JSON.stringify(save));
+const S = () => STORY[lang];
+
+/* ================= 尘埃粒子 ================= */
+const motes = document.getElementById('motes');
+const mctx = motes.getContext('2d');
+let motesArr = [];
+function resizeMotes() {
+  motes.width = innerWidth; motes.height = innerHeight;
+  motesArr = [];
+  for (let i = 0; i < 46; i++)
+    motesArr.push({ x: Math.random() * motes.width, y: Math.random() * motes.height,
+      r: Math.random() * 1.6 + 0.4, v: 6 + Math.random() * 14, p: Math.random() * Math.PI * 2 });
+}
+window.addEventListener('resize', resizeMotes);
+resizeMotes();
+
+/* ================= 音频 ================= */
+let AC = null, seaGain = null;
+function initAudio() {
+  if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
+  try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  // 海浪底噪
+  const len = AC.sampleRate * 3;
+  const buf = AC.createBuffer(1, len, AC.sampleRate);
+  const d = buf.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < len; i++) {
+    const w = Math.random() * 2 - 1;
+    last = (last + 0.015 * w) / 1.015;
+    d[i] = last * 3;
+  }
+  const src = AC.createBufferSource(); src.buffer = buf; src.loop = true;
+  const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420;
+  seaGain = AC.createGain(); seaGain.gain.value = save.snd ? 0.05 : 0;
+  const lfo = AC.createOscillator(); lfo.frequency.value = 0.09;
+  const lfoG = AC.createGain(); lfoG.gain.value = 160;
+  lfo.connect(lfoG); lfoG.connect(f.frequency);
+  src.connect(f); f.connect(seaGain); seaGain.connect(AC.destination);
+  src.start(); lfo.start();
+}
+function swish() { // 翻信纸声
+  if (!AC || !save.snd) return;
+  const t = AC.currentTime;
+  const len = 0.3, buf = AC.createBuffer(1, AC.sampleRate * len, AC.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * i / d.length);
+  const s = AC.createBufferSource(); s.buffer = buf;
+  const f = AC.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2600; f.Q.value = 0.7;
+  const g = AC.createGain(); g.gain.value = 0.05;
+  s.connect(f); f.connect(g); g.connect(AC.destination); s.start(t);
+}
+function quill() { // 落笔
+  if (!AC || !save.snd) return;
+  const t = AC.currentTime;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(660, t);
+  o.frequency.exponentialRampToValueAtTime(440, t + 0.25);
+  g.gain.setValueAtTime(0.06, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+  o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + 0.55);
+}
+function endBell() {
+  if (!AC || !save.snd) return;
+  const t = AC.currentTime;
+  [392, 523.25, 659.25].forEach((fq, i) => {
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = 'sine'; o.frequency.value = fq;
+    const st = t + i * 0.6;
+    g.gain.setValueAtTime(0.0001, st);
+    g.gain.exponentialRampToValueAtTime(0.13, st + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, st + 2.6);
+    o.connect(g); g.connect(AC.destination); o.start(st); o.stop(st + 2.7);
+  });
+}
+
+/* ================= 引擎 ================= */
+const stage = document.getElementById('stage');
+let visited = new Set(save.flags || []);
+let letterCount = save.read || 0;
+
+function showEnvelope(next) {
+  stage.innerHTML = '';
+  const env = document.createElement('div');
+  env.className = 'envelope';
+  env.innerHTML = `
+    <div class="env-body"></div>
+    <div class="env-letterpeek"></div>
+    <div class="env-flap"></div>
+    <div class="seal">${lang === 'zh' ? '守' : 'Z'}</div>
+    <div class="env-hint">${S().openHint}</div>`;
+  stage.appendChild(env);
+  env.addEventListener('click', () => {
+    initAudio();
+    if (!env.classList.contains('open')) {
+      env.classList.add('open');
+      swish();
+      setTimeout(() => showLetter(next), 900);
+    }
+  }, { once: false });
+}
+
+let revealTimers = [];
+function showLetter(id) {
+  revealTimers.forEach(clearTimeout); revealTimers = [];
+  const nd = S().nodes[id];
+  visited.add('node:' + id);
+  letterCount++;
+  save.read = letterCount;
+  save.node = id;
+  persist();
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('letterNo').textContent = S().letterNo(Math.min(letterCount, 13));
+
+  stage.innerHTML = '';
+  const lt = document.createElement('div');
+  lt.className = 'letter';
+  const paras = nd.text.split('\n').map(p => p.trim()).filter(Boolean);
+  lt.innerHTML = `<div class="yr">${nd.year}</div><h2>${nd.title}</h2>` +
+    paras.map((p, i) => `<p class="${i === 0 ? 'drop' : ''}">${p}</p>`).join('');
+  const actions = document.createElement('div');
+  actions.className = 'replies';
+  if (nd.replies) {
+    actions.innerHTML = `<div class="q">${S().replyQ}</div>`;
+    nd.replies.forEach(r => {
+      const b = document.createElement('button');
+      b.className = 'reply';
+      b.textContent = r.label;
+      b.addEventListener('click', () => {
+        initAudio(); quill();
+        visited.add(r.flag); save.flags = [...visited]; persist();
+        gotoNode(r.to);
+      });
+      actions.appendChild(b);
+    });
+  } else if (nd.cont) {
+    const b = document.createElement('button');
+    b.className = 'reply continue-btn';
+    b.textContent = nd.cont;
+    b.addEventListener('click', () => { swish(); gotoNode(id === 'n1' ? 'n2' : 'n2'); });
+    actions.appendChild(b);
+  }
+  lt.appendChild(actions);
+  stage.appendChild(lt);
+  // 逐段墨迹渐显
+  const ps = lt.querySelectorAll('p');
+  let delay = 200;
+  ps.forEach((p, i) => {
+    revealTimers.push(setTimeout(() => {
+      p.classList.add('in');
+      if (i === ps.length - 1) {
+        revealTimers.push(setTimeout(() => {
+          actions.classList.add('in');
+          lt.scrollTop = lt.scrollHeight;
+        }, 1100));
+      }
+    }, delay));
+    delay += Math.min(1400, 500 + p.textContent.length * 22);
+  });
+  // 点击跳过渐显
+  lt.addEventListener('click', e => {
+    if (e.target.closest('.reply')) return;
+    if (!actions.classList.contains('in')) {
+      revealTimers.forEach(clearTimeout);
+      ps.forEach(p => p.classList.add('in'));
+      actions.classList.add('in');
+    }
+  });
+}
+
+function gotoNode(to) {
+  if (to.startsWith('E')) { showEnding(to); return; }
+  showEnvelope(to);
+}
+
+/* ================= 结局 ================= */
+function showEnding(eid) {
+  // 隐藏结局判定：追问线走完 n4→n7→n9 且已到终点选择
+  const probeDone = ['n4','n7','n9'].every(n => wasRead(n));
+  let final = eid;
+  if (eid === 'E1' && probeDone && !save.endings.includes('E4')) final = 'E4';
+  // wait—E4 应该在追问线到达 n8 抉择点时替换 E1
+  const E = S().endings[final];
+  save.node = null;
+  if (!save.endings.includes(final)) save.endings.push(final);
+  persist();
+  document.getElementById('enKicker').textContent = S().enKicker;
+  document.getElementById('enTitle').textContent = E.title;
+  document.getElementById('enText').innerText = E.text;
+  const path = [...visited].filter(f => f === 'warm' || f === 'probe');
+  const pw = path.filter(f => f === 'warm').length, pp = path.filter(f => f === 'probe').length;
+  document.getElementById('enStats').textContent =
+    S().stats(letterCount, S().paths[pw >= pp ? 'warm' : 'probe']);
+  document.getElementById('endingNote').classList.add('show');
+  document.getElementById('topbar').style.display = 'none';
+  endBell();
+  buildEndingDots();
+}
+function wasRead(n) {
+  // 通过 flags 追溯不可靠，改为在读取时记录
+  return visited.has('node:' + n);
+}
+
+/* ================= 标题屏 ================= */
+function buildEndingDots() {
+  const box = document.getElementById('tsEndings');
+  box.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (save.endings.includes('E' + (i + 1)) ? ' got' : '');
+    d.title = S().endings[i];
+    box.appendChild(d);
+  }
+}
+function applyI18n() {
+  document.documentElement.lang = lang === 'zh' ? 'zh' : 'en';
+  document.title = lang === 'zh' ? '纸间 · LETTERS — 守灯人' : 'LETTERS — The Keeper of the Light';
+  document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+  document.getElementById('tsKicker').textContent = S().kicker;
+  document.getElementById('tsTitle').textContent = S().title;
+  document.getElementById('tsSub').textContent = S().sub;
+  document.getElementById('tsDesc').innerHTML = S().desc;
+  document.getElementById('startBtn').textContent = S().start;
+  document.getElementById('contBtn').textContent = S().cont;
+  document.getElementById('againBtn').textContent = S().again;
+  document.getElementById('sndBtn').textContent = save.snd ? S().sndOn : S().sndOff;
+  buildEndingDots();
+}
+document.getElementById('langBtn').addEventListener('click', () => {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('letters-lang', lang);
+  applyI18n();
+  // 语言切换后重绘当前节点
+  if (save.node && document.getElementById('titleScreen').classList.contains('gone')) {
+    showLetter(save.node);
+  }
+});
+document.getElementById('sndBtn').addEventListener('click', () => {
+  save.snd = !save.snd; persist();
+  if (seaGain) seaGain.gain.value = save.snd ? 0.05 : 0;
+  document.getElementById('sndBtn').textContent = save.snd ? S().sndOn : S().sndOff;
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  initAudio();
+  visited = new Set(); letterCount = 0;
+  save.read = 0; save.flags = []; save.node = null; persist();
+  document.getElementById('titleScreen').classList.add('gone');
+  showEnvelope('n1');
+});
+document.getElementById('contBtn').addEventListener('click', () => {
+  initAudio();
+  document.getElementById('titleScreen').classList.add('gone');
+  showEnvelope(save.node || 'n1');
+});
+document.getElementById('againBtn').addEventListener('click', () => {
+  document.getElementById('endingNote').classList.remove('show');
+  visited = new Set(); letterCount = 0;
+  save.read = 0; save.flags = []; save.node = null; persist();
+  showEnvelope('n1');
+});
+
+/* ================= 主循环（粒子） ================= */
+let prevM = performance.now();
+function mframe(now) {
+  const dt = Math.min((now - prevM) / 1000, 0.05);
+  prevM = now;
+  mctx.clearRect(0, 0, motes.width, motes.height);
+  for (const m of motesArr) {
+    m.y -= m.v * dt;
+    m.x += Math.sin(now / 1000 + m.p) * 0.3;
+    if (m.y < -4) { m.y = motes.height + 4; m.x = Math.random() * motes.width; }
+    const a = 0.14 + 0.12 * Math.sin(now / 900 + m.p * 3);
+    mctx.fillStyle = `rgba(222,204,160,${Math.max(0, a).toFixed(3)})`;
+    mctx.beginPath(); mctx.arc(m.x, m.y, m.r, 0, Math.PI * 2); mctx.fill();
+  }
+  requestAnimationFrame(mframe);
+}
+
+/* ================= 启动 ================= */
+applyI18n();
+// #n<id> 直达信件（测试用）
+if (location.hash.startsWith('#n')) {
+  const nid = location.hash.slice(1);
+  if (S().nodes[nid]) {
+    document.getElementById('titleScreen').classList.add('gone');
+    letterCount = 3;
+    showLetter(nid);
+  }
+}
+if (save.node && !save.endings.length) {
+  document.getElementById('contBtn').style.display = 'inline-block';
+}
+if (save.endings.length && !save.node) {
+  document.getElementById('contBtn').style.display = 'none';
+}
+requestAnimationFrame(mframe);
+</script>
+</body>
+</html>

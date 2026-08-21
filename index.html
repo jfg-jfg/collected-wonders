@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拾遗 · Collected Wonders — 创意站点集</title>
+<style>
+  :root {
+    --bg: #0c0f14;
+    --paper: #ece5d3;
+    --gold: #d9b57c;
+    --dim: rgba(236,229,211,0.55);
+    --line: rgba(236,229,211,0.14);
+    --ink-accent: #b8b3a5;
+    --echo-accent: #8fa5c4;
+    --scape-accent: #8fd8cf;
+    --letters-accent: #e0c08e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Songti SC", "STSong", "SimSun", "Noto Serif SC", Georgia, serif;
+    background: var(--bg); color: var(--paper);
+    min-height: 100vh; overflow-x: hidden;
+  }
+  #bg { position: fixed; inset: 0; z-index: 0; }
+
+  .wrap { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ---------- 头部 ---------- */
+  header {
+    text-align: center; padding: clamp(56px, 10vh, 110px) 24px 30px;
+  }
+  .kicker { font-size: 13px; letter-spacing: 0.7em; color: var(--gold); text-indent: 0.7em; }
+  h1 {
+    font-size: clamp(52px, 10vw, 104px); font-weight: 600; letter-spacing: 0.22em;
+    margin-top: 22px; text-shadow: 0 0 60px rgba(217,181,124,0.28); text-indent: 0.22em;
+  }
+  .h-sub { margin-top: 16px; font-size: 14px; letter-spacing: 0.42em; color: var(--dim); text-indent: 0.42em; }
+  .h-note { margin-top: 26px; font-size: 12.5px; line-height: 2.1; letter-spacing: 0.2em; color: rgba(236,229,211,0.4); }
+
+  .langbtn {
+    position: fixed; top: 22px; right: 24px; z-index: 5;
+    border: 1px solid var(--line); background: rgba(12,15,20,0.6); backdrop-filter: blur(6px);
+    color: var(--dim); font-family: inherit; font-size: 12px; letter-spacing: 0.12em;
+    padding: 6px 14px; border-radius: 999px; cursor: pointer; transition: all .2s;
+  }
+  .langbtn:hover { color: var(--gold); border-color: var(--gold); }
+
+  /* ---------- 卡片区 ---------- */
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 22px; width: min(1180px, 92vw); margin: 10px auto 0; padding-bottom: 30px;
+    flex: 1;
+  }
+  .card {
+    position: relative; border: 1px solid var(--line); border-radius: 14px;
+    background: rgba(18,22,29,0.62); backdrop-filter: blur(8px);
+    padding: 26px 26px 22px; cursor: pointer; overflow: hidden;
+    transition: transform .45s cubic-bezier(.2,.8,.2,1), border-color .45s, box-shadow .45s;
+    text-decoration: none; color: inherit; display: flex; flex-direction: column;
+  }
+  .card::before {
+    content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity .5s;
+    background: radial-gradient(ellipse at 50% -10%, var(--ac, transparent), transparent 62%);
+  }
+  .card:hover { transform: translateY(-8px); border-color: var(--ac); box-shadow: 0 24px 60px rgba(0,0,0,0.45); }
+  .card:hover::before { opacity: 0.14; }
+
+  .emblem { height: 128px; display: grid; place-items: center; }
+
+  .c-title { display: flex; align-items: baseline; gap: 12px; margin-top: 16px; }
+  .c-title .zh { font-size: 26px; font-weight: 600; letter-spacing: 0.14em; }
+  .c-title .en { font-size: 13px; font-style: italic; letter-spacing: 0.12em; color: var(--ac); }
+  .c-tag { font-size: 11px; letter-spacing: 0.3em; color: var(--dim); margin-top: 8px; }
+  .c-desc { font-size: 13.5px; line-height: 2; letter-spacing: 0.06em; color: rgba(236,229,211,0.72); margin-top: 12px; flex: 1; }
+  .c-go {
+    margin-top: 18px; font-size: 12px; letter-spacing: 0.34em; color: var(--ac);
+    opacity: 0; transform: translateX(-8px); transition: all .4s;
+  }
+  .card:hover .c-go { opacity: 1; transform: none; }
+
+  /* ---------- 各作徽记动画 ---------- */
+  /* 墨：漂浮墨滴 */
+  .em-ink { position: relative; width: 90px; height: 90px; }
+  .em-ink .drop {
+    position: absolute; border-radius: 50%; background: radial-gradient(circle at 38% 32%, #6b6f7e, #23252e 68%);
+    animation: dropFloat 5.2s ease-in-out infinite; filter: blur(0.4px);
+  }
+  .em-ink .drop:nth-child(1) { width: 46px; height: 46px; left: 8px; top: 20px; }
+  .em-ink .drop:nth-child(2) { width: 26px; height: 26px; left: 52px; top: 40px; animation-delay: -1.7s; opacity: .8; }
+  .em-ink .drop:nth-child(3) { width: 14px; height: 14px; left: 40px; top: 6px; animation-delay: -3.4s; opacity: .55; }
+  @keyframes dropFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(5px, -7px) scale(1.05); }
+    66% { transform: translate(-6px, 4px) scale(0.96); }
+  }
+  /* 回声：涟漪环 */
+  .em-echo { position: relative; width: 90px; height: 90px; }
+  .em-echo .ring {
+    position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+    border: 1.4px solid var(--echo-accent); border-radius: 50%; opacity: 0;
+    animation: ripple 3.2s ease-out infinite;
+  }
+  .em-echo .ring:nth-child(2) { animation-delay: 1.05s; }
+  .em-echo .ring:nth-child(3) { animation-delay: 2.1s; }
+  .em-echo .core {
+    position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+    width: 9px; height: 9px; border-radius: 50%; background: #e8c07a;
+    box-shadow: 0 0 14px #e8c07a;
+  }
+  @keyframes ripple {
+    0% { width: 8px; height: 8px; opacity: 0.85; }
+    100% { width: 88px; height: 88px; opacity: 0; }
+  }
+  /* 造境：日转夜渐变 */
+  .em-scape { position: relative; width: 90px; height: 90px; }
+  .em-scape .sky {
+    position: absolute; inset: 0; border-radius: 10px; overflow: hidden;
+    background: linear-gradient(180deg, #2a3d5c, #c98d5a 62%, #31435e);
+    background-size: 100% 300%; animation: dayNight 7s ease-in-out infinite alternate;
+  }
+  .em-scape .sunmoon {
+    position: absolute; left: 50%; width: 18px; height: 18px; border-radius: 50%;
+    background: #ffe9b8; box-shadow: 0 0 16px #ffd98a;
+    animation: arc 7s ease-in-out infinite alternate;
+  }
+  @keyframes dayNight { 0% { background-position: 0 0%; } 100% { background-position: 0 100%; } }
+  @keyframes arc { 0% { top: 62%; } 100% { top: 12%; } }
+  /* 纸间：信与蜡封 */
+  .em-letters { position: relative; width: 90px; height: 90px; }
+  .em-letters .env {
+    position: absolute; left: 50%; top: 54%; translate: -50% -50%;
+    width: 62px; height: 42px; background: linear-gradient(160deg, #d9cbae, #c2b28e);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); border-radius: 3px;
+    animation: envBob 4.6s ease-in-out infinite;
+  }
+  .em-letters .flap {
+    position: absolute; left: 50%; top: 54%; translate: -50% -50%;
+    width: 62px; height: 26px; background: #cfc09e;
+    clip-path: polygon(0 0, 100% 0, 50% 100%); border-radius: 3px 3px 0 0;
+    animation: envBob 4.6s ease-in-out infinite;
+  }
+  .em-letters .wax {
+    position: absolute; left: 50%; top: 54%; translate: -50% -34%;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #c65b44, #9e3528 62%);
+    box-shadow: inset 0 0 0 2px rgba(243,226,200,0.3);
+    display: grid; place-items: center; color: #f3e2c8; font-size: 12px;
+    animation: envBob 4.6s ease-in-out infinite;
+  }
+  @keyframes envBob { 0%,100% { transform: translate(-50%, -50%) rotate(-2deg); } 50% { transform: translate(-50%, -54%) rotate(2deg); } }
+
+  /* ---------- 页脚 ---------- */
+  footer {
+    text-align: center; padding: 34px 20px 44px;
+    font-size: 11.5px; letter-spacing: 0.28em; color: rgba(236,229,211,0.34); line-height: 2.4;
+  }
+
+  @media (max-width: 640px) {
+    .grid { width: 92vw; }
+    .c-title .zh { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<button class="langbtn" id="langBtn">EN</button>
+
+<div class="wrap">
+  <header>
+    <div class="kicker" data-t="kicker"></div>
+    <h1 data-t="title"></h1>
+    <div class="h-sub" data-t="sub"></div>
+    <div class="h-note" data-t="note"></div>
+  </header>
+
+  <main class="grid" id="grid"></main>
+
+  <footer data-t="footer"></footer>
+</div>
+
+<script>
+'use strict';
+window.addEventListener('error', e => {
+  const b = document.createElement('div');
+  b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99;background:#401414;color:#ffb4b4;font-size:12px;padding:8px 12px';
+  b.textContent = 'ERR: ' + e.message;
+  document.body.appendChild(b);
+});
+
+/* ============ i18n ============ */
+const I18N = {
+  zh: {
+    kicker: '四 件 小 小 的 奇 物',
+    title: '拾遗',
+    sub: 'COLLECTED WONDERS · 创意站点集',
+    note: '零依赖 · 纯原生 HTML/CSS/JS · 双击即开 · 中英双语',
+    footer: '墨 · 回声 · 造境 · 纸间 —— 各自独立，皆可独赏<br>2026 · 以代码作墨，以浏览器为纸',
+    works: [
+      { zh: '墨', en: 'INK', tag: '视觉实验 · 流体', href: 'ink/',
+        desc: '一支笔，一汪水。手写流体力学引擎让墨在宣纸上晕开——缓行则浓，疾书则淡。画完盖一枚朱印，带走它。',
+        ac: 'var(--ink-accent)' },
+      { zh: '回声', en: 'ECHO', tag: '游戏 · 解谜', href: 'echo/',
+        desc: '无光的沉没之城，你只有声音。每一次回声涟漪短暂照亮迷宫的墙——凭记忆，走到天光那里去。',
+        ac: 'var(--echo-accent)' },
+      { zh: '造境', en: 'SCAPE', tag: '工具 · 声景', href: 'scape/',
+        desc: '雨、风、篝火、溪流、夜虫、远雷——所有声音由数学生成，画面与声音同源。调一个属于你的世界，专注或入眠。',
+        ac: 'var(--scape-accent)' },
+      { zh: '纸间', en: 'LETTERS', tag: '叙事 · 书信', href: 'letters/',
+        desc: '拆除前的灯塔里，守灯人留下一摞写给"后来人"的信。你的每一次回信，都会让往事渗出不同的一面。四个结局。',
+        ac: 'var(--letters-accent)' }
+    ]
+  },
+  en: {
+    kicker: 'FOUR SMALL WONDERS',
+    title: '拾遗',
+    sub: 'COLLECTED WONDERS · a set of tiny art sites',
+    note: 'zero-dependency · plain HTML/CSS/JS · double-click to open · bilingual',
+    footer: 'INK · ECHO · SCAPE · LETTERS — each stands alone<br>2026 · code as ink, browser as paper',
+    works: [
+      { zh: '墨', en: 'INK', tag: 'VISUAL · FLUID', href: 'ink/',
+        desc: 'A brush, a pool of water. A hand-written fluid dynamics engine lets ink bloom across rice paper — slow strokes run heavy, fast ones fly white. Finish with a red seal, and take it home.',
+        ac: 'var(--ink-accent)' },
+      { zh: '回声', en: 'ECHO', tag: 'GAME · PUZZLE', href: 'echo/',
+        desc: 'A drowned city with no light; you have only sound. Each echo briefly lights the maze walls — navigate by memory to the daylight.',
+        ac: 'var(--echo-accent)' },
+      { zh: '造境', en: 'SCAPE', tag: 'TOOL · SOUNDSCAPE', href: 'scape/',
+        desc: 'Rain, wind, fire, stream, crickets, distant thunder — every sound synthesized from math, scene and sound born of one model. Compose a world; focus or drift to sleep.',
+        ac: 'var(--scape-accent)' },
+      { zh: '纸间', en: 'LETTERS', tag: 'NARRATIVE · EPISTOLARY', href: 'letters/',
+        desc: 'In a lighthouse about to be demolished, the keeper left a stack of letters "to whoever comes after". Each reply you choose bleeds a different truth from the past. Four endings.',
+        ac: 'var(--letters-accent)' }
+    ]
+  }
+};
+let lang = localStorage.getItem('gallery-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+const EMBLEMS = {
+  INK: '<div class="em-ink"><div class="drop"></div><div class="drop"></div><div class="drop"></div></div>',
+  ECHO: '<div class="em-echo"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="core"></div></div>',
+  SCAPE: '<div class="em-scape"><div class="sky"></div><div class="sunmoon"></div></div>',
+  LETTERS: '<div class="em-letters"><div class="env"></div><div class="flap"></div><div class="wax">守</div></div>'
+};
+function applyI18n() {
+  document.documentElement.lang = lang === 'zh' ? 'zh' : 'en';
+  document.title = lang === 'zh' ? '拾遗 · Collected Wonders — 创意站点集' : 'Collected Wonders — tiny art sites';
+  document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const k = el.getAttribute('data-t');
+    if (I18N[lang][k] !== undefined) el.innerHTML = I18N[lang][k];
+  });
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  for (const w of I18N[lang].works) {
+    const a = document.createElement('a');
+    a.className = 'card';
+    a.style.setProperty('--ac', w.ac);
+    a.href = w.href;
+    a.innerHTML = `
+      <div class="emblem">${EMBLEMS[w.en]}</div>
+      <div class="c-title"><span class="zh">${w.zh}</span><span class="en">${w.en}</span></div>
+      <div class="c-tag">${w.tag}</div>
+      <div class="c-desc">${w.desc}</div>
+      <div class="c-go">${lang === 'zh' ? '进 入 →' : 'ENTER →'}</div>`;
+    grid.appendChild(a);
+  }
+}
+document.getElementById('langBtn').addEventListener('click', () => {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('gallery-lang', lang);
+  applyI18n();
+});
+
+/* ============ 生成艺术背景：墨色流场粒子 ============ */
+const bg = document.getElementById('bg');
+const bctx = bg.getContext('2d');
+let BW = 0, BH = 0;
+function resizeBg() {
+  BW = bg.width = innerWidth; BH = bg.height = innerHeight;
+}
+window.addEventListener('resize', resizeBg);
+resizeBg();
+
+const COLORS = ['217,181,124', '143,165,196', '143,216,207', '224,192,142', '184,179,165'];
+let parts = [];
+function spawn(n) {
+  for (let i = 0; i < n; i++)
+    parts.push({
+      x: Math.random() * BW, y: Math.random() * BH,
+      c: COLORS[Math.floor(Math.random() * COLORS.length)],
+      life: 0, maxLife: 240 + Math.random() * 400,
+      a: 0.05 + Math.random() * 0.1
+    });
+}
+spawn(60);
+
+// 简易流场（正弦叠加）
+function field(x, y, t) {
+  const s = 0.0016;
+  return [
+    Math.sin(x * s * 2.1 + t * 0.21) + Math.sin(y * s * 3.3 - t * 0.13),
+    Math.cos(x * s * 1.7 - t * 0.17) + Math.sin(y * s * 2.6 + t * 0.11)
+  ];
+}
+let bt = 0, bprev = performance.now();
+function bframe(now) {
+  const dt = Math.min((now - bprev) / 1000, 0.05);
+  bprev = now; bt += dt;
+  // 拖影：缓慢擦除
+  bctx.fillStyle = 'rgba(12,15,20,0.028)';
+  bctx.fillRect(0, 0, BW, BH);
+  if (parts.length < 60) spawn(2);
+  for (const p of parts) {
+    const [fx, fy] = field(p.x, p.y, bt);
+    const v = 26;
+    p.x += fx * v * dt; p.y += fy * v * dt;
+    p.life++;
+    if (p.x < -10) p.x = BW + 10; if (p.x > BW + 10) p.x = -10;
+    if (p.y < -10) p.y = BH + 10; if (p.y > BH + 10) p.y = -10;
+    if (p.life > p.maxLife) {
+      p.x = Math.random() * BW; p.y = Math.random() * BH; p.life = 0;
+    }
+    const fadeIn = Math.min(1, p.life / 40);
+    const fadeOut = Math.min(1, (p.maxLife - p.life) / 60);
+    bctx.fillStyle = `rgba(${p.c},${(p.a * fadeIn * fadeOut).toFixed(3)})`;
+    bctx.fillRect(p.x, p.y, 1.6, 1.6);
+  }
+  requestAnimationFrame(bframe);
+}
+
+applyI18n();
+requestAnimationFrame(bframe);
+</script>
+</body>
+</html>

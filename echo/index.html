@@ -6,17 +6,18 @@
 <meta name="theme-color" content="#07090d">
 <title>回声 · ECHO — 回声定位迷宫</title>
 <style>
+  html { color-scheme: dark; }
   :root {
     --bg: #07090d;
     --wall: #5d6b85;
     --ember: #e8c07a;
     --pale: #9db0c9;
     --cyan: #7fd8d0;
+    --gold: #e8c07a;
     --hairline: rgba(157,176,201,0.22);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; overflow: hidden; }
-  html { color-scheme: dark; }
   body {
     font-family: "Songti SC", "STSong", "SimSun", "Noto Serif SC", Georgia, serif;
     background: var(--bg); color: var(--pale);
@@ -27,7 +28,7 @@
   /* ---------- HUD ---------- */
   .hud {
     position: fixed; top: 22px; left: 50%; transform: translateX(-50%);
-    z-index: 5; display: flex; gap: 26px; align-items: baseline;
+    z-index: 5; display: flex; gap: 22px; align-items: baseline;
     font-size: 14px; letter-spacing: 0.22em; color: var(--pale);
     text-shadow: 0 0 12px rgba(157,176,201,0.35);
     pointer-events: none; white-space: nowrap;
@@ -45,7 +46,7 @@
   }
   .btn-ghost:hover { color: var(--ember); border-color: var(--ember); }
 
-  /* ---------- 覆盖层（菜单/过关/终章） ---------- */
+  /* ---------- 覆盖层 ---------- */
   .overlay {
     position: fixed; inset: 0; z-index: 10;
     display: none; flex-direction: column; align-items: center; justify-content: center;
@@ -60,18 +61,20 @@
   .btn-main {
     border: 1px solid var(--ember); background: none; color: var(--ember);
     font-family: inherit; font-size: 15px; letter-spacing: 0.3em;
-    padding: 13px 34px; border-radius: 2px; cursor: pointer; transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
+    padding: 13px 34px; border-radius: 2px; cursor: pointer;
+    transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
   }
   .btn-main:hover { background: var(--ember); color: #0a0c10; box-shadow: 0 0 30px rgba(232,192,122,0.4); }
   .btn-sub {
     border: 1px solid var(--hairline); background: none; color: var(--pale);
     font-family: inherit; font-size: 13.5px; letter-spacing: 0.22em;
-    padding: 12px 26px; border-radius: 2px; cursor: pointer; transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
+    padding: 12px 26px; border-radius: 2px; cursor: pointer;
+    transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
   }
   .btn-sub:hover { border-color: var(--pale); }
 
   /* 关卡选择 */
-  .levels { margin-top: 30px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .levels { margin-top: 26px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .lv {
     border: 1px solid var(--hairline); background: rgba(20,26,38,0.5);
     color: var(--pale); font-family: inherit; cursor: pointer;
@@ -83,6 +86,29 @@
   .lv .n { font-size: 17px; letter-spacing: 0.1em; }
   .lv .t { font-size: 11px; letter-spacing: 0.28em; margin-top: 6px; color: var(--cyan); }
   .lv .b { font-size: 11px; margin-top: 6px; color: var(--pale); opacity: 0.75; }
+
+  /* 每日挑战入口 */
+  .daily-row { margin-top: 20px; }
+  .daily-chip {
+    border: 1px solid rgba(127,216,208,0.4); background: rgba(10,16,18,0.6);
+    color: var(--cyan); font-family: inherit; font-size: 13px; letter-spacing: 0.24em;
+    padding: 10px 26px; border-radius: 999px; cursor: pointer;
+    transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
+  }
+  .daily-chip:hover { box-shadow: 0 0 22px rgba(127,216,208,0.25); }
+  .daily-chip.done { opacity: 0.5; }
+
+  /* 成就墙 */
+  .ach-wall { margin-top: 28px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 560px; }
+  .ach {
+    border: 1px solid var(--hairline); border-radius: 5px; padding: 10px 8px;
+    font-size: 11px; letter-spacing: 0.12em; line-height: 1.7; color: rgba(157,176,201,0.4);
+    text-align: center; background: rgba(14,18,26,0.5); min-width: 118px;
+    transition: color .3s, border-color .3s, box-shadow .3s, opacity .3s;
+  }
+  .ach .ico { font-size: 17px; display: block; margin-bottom: 4px; filter: grayscale(1); opacity: 0.5; }
+  .ach.got { color: var(--gold); border-color: rgba(232,192,122,0.45); box-shadow: 0 0 14px rgba(232,192,122,0.12) inset; }
+  .ach.got .ico { filter: none; opacity: 1; }
 
   /* 过关面板 */
   .panel { border: 1px solid var(--hairline); background: rgba(14,18,26,0.85); padding: 34px 44px; border-radius: 6px; max-width: 560px; }
@@ -103,6 +129,32 @@
   }
   .frag.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  /* 关卡开场卡 */
+  .levelcard {
+    position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%);
+    z-index: 8; text-align: center; pointer-events: none;
+    opacity: 0; transition: opacity .8s;
+  }
+  .levelcard.show { opacity: 1; }
+  .levelcard .no { font-size: 13px; letter-spacing: 0.6em; color: var(--cyan); text-indent: 0.6em; }
+  .levelcard .nm { font-size: clamp(30px, 5vw, 44px); letter-spacing: 0.3em; color: var(--pale); margin-top: 10px; text-shadow: 0 0 26px rgba(157,176,201,0.4); }
+  .levelcard .sb { font-size: 13.5px; letter-spacing: 0.2em; color: rgba(157,176,201,0.75); margin-top: 14px; }
+
+  /* 成就 toast */
+  .ach-toast {
+    position: fixed; right: 26px; top: 84px; z-index: 9;
+    display: flex; gap: 12px; align-items: center;
+    border: 1px solid rgba(232,192,122,0.5); border-radius: 6px;
+    background: rgba(24,20,12,0.94); padding: 13px 18px;
+    opacity: 0; transform: translateX(18px); pointer-events: none;
+    transition: opacity .5s, transform .5s;
+  }
+  .ach-toast.show { opacity: 1; transform: none; }
+  .ach-toast .ico { font-size: 24px; }
+  .ach-toast .tx { text-align: left; }
+  .ach-toast .tx .n { font-size: 14.5px; letter-spacing: 0.2em; color: var(--gold); }
+  .ach-toast .tx .d { font-size: 11.5px; letter-spacing: 0.1em; color: var(--pale); margin-top: 3px; }
+
   /* 结局诗 */
   .poem { margin-top: 26px; font-size: 15.5px; line-height: 2.4; letter-spacing: 0.14em; color: var(--pale); max-width: 560px; }
   .poem .miss { color: rgba(157,176,201,0.3); }
@@ -121,10 +173,13 @@
   }
   .home-link:hover { color: var(--ember); border-color: var(--ember); transform: translateY(-3px); }
 
+  button:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+
   @media (max-width: 640px) {
-    .hud { gap: 14px; font-size: 12px; top: 14px; }
+    .hud { gap: 12px; font-size: 12px; top: 14px; }
     .topbar { top: 12px; right: 12px; }
     .levels { grid-template-columns: repeat(2, 1fr); }
+    .ach-wall { grid-template-columns: repeat(2, 1fr); }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -141,7 +196,8 @@
 <div class="hud" id="hud" style="display:none">
   <span id="hudLevel"></span><span class="sep">·</span>
   <span id="hudSteps"></span><span class="sep">·</span>
-  <span id="hudPings"></span>
+  <span id="hudPings"></span><span class="sep">·</span>
+  <span id="hudTime"></span>
 </div>
 
 <div class="topbar" id="topbar" style="display:none">
@@ -156,7 +212,11 @@
   <div class="ov-actions">
     <button class="btn-main" id="startBtn" data-t="start"></button>
   </div>
+  <div class="daily-row">
+    <button class="daily-chip" id="dailyBtn"></button>
+  </div>
   <div class="levels" id="levels"></div>
+  <div class="ach-wall" id="achWall"></div>
   <div class="kbd-hint" data-t="kbd"></div>
 </div>
 
@@ -183,7 +243,9 @@
   </div>
 </div>
 
+<div class="levelcard" id="levelcard"></div>
 <div class="frag" id="frag"></div>
+<div class="ach-toast" id="achToast"></div>
 <a class="home-link" href="../index.html" title="拾遗 · 序">序</a>
 <div id="errbox"></div>
 
@@ -199,7 +261,7 @@ const I18N = {
   zh: {
     menuSub: '无光的深处，唯回声与你同行。<br>以声照路，走出这座沉没之城。', start: '入 井',
     kbd: '<span>方向键 / WASD</span> 移动　<span>空格 / 点击</span> 发出回声',
-    steps: '步', pings: '回声', level: '层', par: '定额',
+    steps: '步', pings: '回声', par: '定额', time: '时',
     sndOn: '声 · 开', sndOff: '声 · 关', menu: '回廊', toMenu: '回廊',
     clearTitle: '回声抵达', next: '下 潜', retry: '重来', again: '再入井',
     endEn: 'T H E   D A Y L I G H T',
@@ -208,12 +270,24 @@ const I18N = {
     lantern: ['灯', '灯', '灯'],
     lvNames: ['一 · 深井', '二 · 回廊', '三 · 蜂巢', '四 · 迷津', '五 · 巨殿', '六 · 归途'],
     locked: '未至', best: '最佳',
-    lvSub: ['醒来时，头顶的井口已是一枚远星。', '水声在回廊尽头折返，像有人应答。', '蜂巢般的居所，门都朝着黑暗敞开。', '迷津不在乎方向，只在乎你还愿意走。', '巨殿的柱影比夜更旧。', '归途上，每一步回声都更接近自己。']
+    lvSub: ['醒来时，头顶的井口已是一枚远星。', '水声在回廊尽头折返，像有人应答。', '蜂巢般的居所，门都朝着黑暗敞开。', '迷津不在乎方向，只在乎你还愿意走。', '巨殿的柱影比夜更旧。', '归途上，每一步回声都更接近自己。'],
+    daily: '每 日 深 潜', dailyDone: '今日已抵达 · 明日再来', dailyTitle: '每日深潜', dailySub: '同一日，全城同一个迷宫。',
+    exp: '照亮', achTitle: '灯 下 集 · ACHIEVEMENTS',
+    achs: [
+      { id: 'first', ico: '✦', n: '初啼', d: '发出第一声回声' },
+      { id: 'lv1', ico: '◈', n: '深井之底', d: '通过第一层' },
+      { id: 'all', ico: '☀', n: '重见天光', d: '走完六层' },
+      { id: 'par', ico: '🏮', n: '三灯满座', d: '任一层拿到三盏灯' },
+      { id: 'frag3', ico: '❖', n: '半卷听城', d: '集齐三枚碎片' },
+      { id: 'frag6', ico: '✧', n: '全卷听城', d: '集齐六枚碎片' },
+      { id: 'swift', ico: '⚡', n: '疾行者', d: '步数低于定额通关' },
+      { id: 'daily', ico: '☾', n: '每日回访', d: '完成一次每日深潜' }
+    ]
   },
   en: {
     menuSub: 'In the lightless deep, only echoes walk with you.<br>Sound out the dark. Climb out of the drowned city.', start: 'DESCEND',
     kbd: '<span>Arrows / WASD</span> move　<span>Space / click</span> echo',
-    steps: 'steps', pings: 'echoes', level: 'Depth', par: 'par',
+    steps: 'steps', pings: 'echoes', par: 'par', time: 'time',
     sndOn: 'SND ON', sndOff: 'SND OFF', menu: 'MENU', toMenu: 'MENU',
     clearTitle: 'ECHO ARRIVED', next: 'DESCEND', retry: 'RETRY', again: 'DESCEND AGAIN',
     endEn: 'T H E   D A Y L I G H T',
@@ -222,7 +296,19 @@ const I18N = {
     lantern: ['◆', '◆', '◆'],
     lvNames: ['I · The Well', 'II · Corridors', 'III · The Hive', 'IV · Labyrinth', 'V · Great Hall', 'VI · The Way Back'],
     locked: 'locked', best: 'best',
-    lvSub: ['Waking, the well mouth above is one far star.', 'Water turns at the corridor\'s end, like an answer.', 'Hive-homes, every door open to the dark.', 'The labyrinth cares not for direction, only that you still walk.', 'Pillar-shadows older than night in the great hall.', 'On the way back, each echo is nearer to yourself.']
+    lvSub: ['Waking, the well mouth above is one far star.', 'Water turns at the corridor\'s end, like an answer.', 'Hive-homes, every door open to the dark.', 'The labyrinth cares not for direction, only that you still walk.', 'Pillar-shadows older than night in the great hall.', 'On the way back, each echo is nearer to yourself.'],
+    daily: 'DAILY DIVE', dailyDone: 'ARRIVED TODAY · COME BACK TOMORROW', dailyTitle: 'Daily Dive', dailySub: 'One maze per day, same for everyone.',
+    exp: 'lit', achTitle: 'LAMPS · ACHIEVEMENTS',
+    achs: [
+      { id: 'first', ico: '✦', n: 'First Cry', d: 'emit your first echo' },
+      { id: 'lv1', ico: '◈', n: 'Bottom of the Well', d: 'clear depth I' },
+      { id: 'all', ico: '☀', n: 'Daylight Again', d: 'clear all six depths' },
+      { id: 'par', ico: '🏮', n: 'Three Lanterns', d: 'earn 3 lanterns on any depth' },
+      { id: 'frag3', ico: '❖', n: 'Half the City', d: 'collect 3 fragments' },
+      { id: 'frag6', ico: '✧', n: 'The Whole City', d: 'collect all 6 fragments' },
+      { id: 'swift', ico: '⚡', n: 'Swift One', d: 'clear under par steps' },
+      { id: 'daily', ico: '☾', n: 'Daily Visitor', d: 'complete a daily dive' }
+    ]
   }
 };
 let lang = localStorage.getItem('echo-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
@@ -236,13 +322,10 @@ function applyI18n() {
   document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
   document.getElementById('menuBtn').textContent = T().menu;
   document.title = lang === 'zh' ? '回声 · ECHO — 回声定位迷宫' : 'ECHO — the echolocation maze';
-  buildLevelGrid(); updateHud();
+  buildLevelGrid(); buildAchWall(); updateDailyBtn(); updateHud();
 }
 
-/* ================= 关卡数据 =================
-   # 墙  . 地  S 起点  G 出口  * 记忆碎片
-   关卡由种子化迷宫生成器产生（递归回溯保证连通），
-   再经 BFS 连通性校验（见 validateLevels）双重保障 */
+/* ================= 关卡数据 ================= */
 function mulberry32(seed) {
   let a = seed >>> 0;
   return function () {
@@ -267,7 +350,6 @@ function genMaze(w, h, rng, braid) {
     g[y + dy][x + dx] = '.';
     stack.push([x + dx, y + dy]);
   }
-  // 编织：按比例打通部分死胡同，形成环路（提升后期关卡的探索感）
   if (braid > 0) {
     for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
       if (g[y][x] !== '.') continue;
@@ -315,35 +397,50 @@ function buildLevels() {
   ];
   return specs.map(({ w, h, braid, seed, hall }) => {
     const g = genMaze(w, h, mulberry32(seed), braid);
-    if (hall) { // 五 · 巨殿：中央凿空成柱厅
+    if (hall) {
       for (let y = 6; y <= 8; y++) for (let x = 8; x <= 12; x++) g[y][x] = '.';
-      g[7][8] = '.'; g[7][12] = '.';   // 东西门
-      g[6][10] = '#'; g[8][10] = '#';  // 双柱
+      g[7][8] = '.'; g[7][12] = '.';
+      g[6][10] = '#'; g[8][10] = '#';
     }
-    const dist = bfsDist(g, 1, 1);
-    // G = 距 S 最远的格子
-    let gx = 1, gy = 1, best = -1;
-    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++)
-      if (dist[y][x] > best) { best = dist[y][x]; gx = x; gy = y; }
-    g[1][1] = 'S'; g[gy][gx] = 'G';
-    // 碎片：中远距离、彼此远离的 3 格
-    const cand = [];
-    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++)
-      if (g[y][x] === '.' && dist[y][x] > best * 0.35) cand.push([x, y, dist[y][x]]);
-    cand.sort((a, b) => b[2] - a[2]);
-    const picked = [];
-    for (const c of cand) {
-      if (picked.length >= 3) break;
-      if (picked.every(p => Math.abs(p[0] - c[0]) + Math.abs(p[1] - c[1]) > 4)) picked.push(c);
-    }
-    picked.forEach(([x, y]) => g[y][x] = '*');
-    const par = Math.round(best * 1.2) + 4;
-    return { par, map: g.map(r => r.join('')) };
+    return finishLevel(g);
   });
+}
+/* 通用关卡完成器：S/G/碎片/par */
+function finishLevel(g) {
+  const h = g.length, w = g[0].length;
+  const dist = bfsDist(g, 1, 1);
+  let gx = 1, gy = 1, best = -1;
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++)
+    if (dist[y][x] > best) { best = dist[y][x]; gx = x; gy = y; }
+  g[1][1] = 'S'; g[gy][gx] = 'G';
+  const cand = [];
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++)
+    if (g[y][x] === '.' && dist[y][x] > best * 0.35) cand.push([x, y, dist[y][x]]);
+  cand.sort((a, b) => b[2] - a[2]);
+  const picked = [];
+  for (const c of cand) {
+    if (picked.length >= 3) break;
+    if (picked.every(p => Math.abs(p[0] - c[0]) + Math.abs(p[1] - c[1]) > 4)) picked.push(c);
+  }
+  picked.forEach(([x, y]) => g[y][x] = '*');
+  const par = Math.round(best * 1.2) + 4;
+  return { par, map: g.map(r => r.join('')) };
 }
 const LEVELS = buildLevels();
 
-/* BFS 连通性校验：不可达则启动时报错（保障手作关卡质量） */
+/* 每日挑战：日期种子迷宫 */
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function buildDaily() {
+  let s = 0;
+  for (const ch of todayKey()) s = (s * 31 + ch.charCodeAt(0)) >>> 0;
+  const g = genMaze(19, 13, mulberry32(s), 0.3);
+  return finishLevel(g);
+}
+
+/* BFS 连通性校验 */
 function validateLevels() {
   LEVELS.forEach((L, li) => {
     const g = L.map;
@@ -368,14 +465,13 @@ function validateLevels() {
       }
     }
     if (!seen.has(goal.join(','))) throw new Error('level ' + li + ': goal unreachable');
-    // 碎片也须可达
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++)
-      if (g[y][x] === '*' && !seen.has(x + ',' + y)) throw new Error('level ' + li + ': fragment unreachable at ' + x + ',' + y);
+      if (g[y][x] === '*' && !seen.has(x + ',' + y)) throw new Error('level ' + li + ': fragment unreachable');
   });
 }
 validateLevels();
 
-/* 剧情碎片（按关卡顺序，双语） */
+/* 剧情碎片：每层一句（双语） */
 const FRAGS = {
   zh: [
     '「井口的星升起来，又落下去。有人数过一万次。」',
@@ -396,7 +492,8 @@ const FRAGS = {
 };
 
 /* ================= 存档 ================= */
-const save = Object.assign({ unlocked: 0, best: {}, frags: [], snd: true },
+const save = Object.assign(
+  { unlocked: 0, best: {}, frags: [], ach: {}, daily: {}, snd: true },
   JSON.parse(localStorage.getItem('echo-save') || '{}'));
 const persist = () => localStorage.setItem('echo-save', JSON.stringify(save));
 
@@ -416,7 +513,6 @@ function sndPing() {
   o.frequency.exponentialRampToValueAtTime(220, t + 0.42);
   g.gain.setValueAtTime(0.16, t);
   g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
-  // 回声：延迟反馈
   const d = ac.createDelay(1.2), fb = ac.createGain(), wet = ac.createGain();
   d.delayTime.value = 0.31; fb.gain.value = 0.34; wet.gain.value = 0.5;
   o.connect(g); g.connect(ac.destination);
@@ -461,45 +557,78 @@ function sndWin() {
     o.start(t + i * 0.14); o.stop(t + i * 0.14 + 1);
   });
 }
+function sndAch() {
+  const ac = audio(); if (!ac || !save.snd) return;
+  const t = ac.currentTime;
+  [783.99, 987.77, 1174.66].forEach((fq, i) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.value = fq;
+    g.gain.setValueAtTime(0.001, t + i * 0.08);
+    g.gain.exponentialRampToValueAtTime(0.09, t + i * 0.08 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.08 + 0.8);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t + i * 0.08); o.stop(t + i * 0.08 + 0.9);
+  });
+}
 
 /* ================= 游戏状态 ================= */
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
-let state = 'menu';           // menu | play | clear | end
-let li = 0;                   // 当前关卡
+let state = 'menu';
+let li = 0;
+let isDaily = false;
 let grid = [], cols = 0, rows = 0;
-let px = 0, py = 0;           // 玩家格坐标
+let px = 0, py = 0;
 let steps = 0, pings = 0;
-let ripples = [];             // {x,y,r,maxR}
-let lights = null;            // 每格照明度
-let cell = 40, ox = 0, oy = 0; // 渲染布局
+let startTime = 0, elapsed = 0;
+let ripples = [];
+let lights = null;
+let litWalls = null;      // Set: 被照亮过的墙（探索率）
+let totalWalls = 0;
+let cell = 40, ox = 0, oy = 0;
 let moveCooldown = 0;
 let goalPulse = 0;
+const FRAG_CELLS = [];
+let fragTakenSet = null;
 
-const FRAG_STEPS = [];        // 本关碎片格
-let fragTakenSet = null;      // 'x,y' 已拾取
-
-function loadLevel(i) {
+function loadLevel(i, daily) {
   li = i;
-  const L = LEVELS[i];
+  isDaily = !!daily;
+  const L = isDaily ? buildDaily() : LEVELS[i];
   grid = L.map.map(r => r.split(''));
   rows = grid.length; cols = grid[0].length;
-  FRAG_STEPS.length = 0;
+  par = L.par;
+  FRAG_CELLS.length = 0;
   fragTakenSet = new Set();
   for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
     if (grid[y][x] === 'S') { px = x; py = y; }
-    if (grid[y][x] === '*') FRAG_STEPS.push([x, y]);
+    if (grid[y][x] === '*') FRAG_CELLS.push([x, y]);
   }
-  steps = 0; pings = 0;
+  steps = 0; pings = 0; elapsed = 0; startTime = performance.now();
   ripples = [];
   lights = new Float32Array(cols * rows);
+  litWalls = new Set();
+  totalWalls = 0;
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++)
+    if (grid[y][x] === '#') totalWalls++;
   state = 'play';
   document.getElementById('hud').style.display = 'flex';
   document.getElementById('topbar').style.display = 'flex';
   hideAll();
   layout();
   updateHud();
-  showFrag(T().lvSub[i], false);
+  showLevelCard();
+}
+let par = 0;
+
+function showLevelCard() {
+  const lc = document.getElementById('levelcard');
+  const nm = isDaily ? T().dailyTitle : T().lvNames[li];
+  const sb = isDaily ? T().dailySub : T().lvSub[li];
+  const no = isDaily ? '◈ ' + todayKey() : ['一', '二', '三', '四', '五', '六'][li] + ' / 六';
+  lc.innerHTML = `<div class="no">${no}</div><div class="nm">${nm.split(' · ')[isDaily ? 0 : 1] || nm}</div><div class="sb">${sb}</div>`;
+  lc.classList.add('show');
+  setTimeout(() => lc.classList.remove('show'), 2400);
 }
 
 function layout() {
@@ -523,15 +652,14 @@ function tryMove(dx, dy) {
   if (G(nx, ny) === '#') { sndStep(); return; }
   px = nx; py = ny; steps++;
   sndStep();
-  // 脚步自带微光涟漪（半径小）
   ripples.push({ x: px + 0.5, y: py + 0.5, r: 0, maxR: 1.8, soft: true });
-  const k = nx + ',' + ny;
   if (G(nx, ny) === '*') {
-    fragTakenSet.add(k);
-    save.frags[li * 3 + FRAG_STEPS.findIndex(f => f[0] === nx && f[1] === ny)] = true;
+    fragTakenSet.add(nx + ',' + ny);
+    save.frags[isDaily ? li : li] = true;   // 每层一句，任一碎片点亮
     persist();
     sndFrag();
     showFrag((lang === 'zh' ? FRAGS.zh : FRAGS.en)[li], true);
+    checkAchs();
   }
   if (G(nx, ny) === 'G') levelClear();
   updateHud();
@@ -542,15 +670,14 @@ function ping(cx, cy) {
   pings++;
   ripples.push({ x: cx !== undefined ? cx : px + 0.5, y: cy !== undefined ? cy : py + 0.5, r: 0, maxR: 7.5 });
   sndPing();
+  award('first');
   updateHud();
 }
 
 /* ================= 涟漪照明 ================= */
 function propagate(dt) {
   for (const rp of ripples) rp.r += 9.5 * dt;
-  // 衰减
   for (let i = 0; i < lights.length; i++) lights[i] *= Math.exp(-dt * 1.1);
-  // 涟漪扫过的墙亮起
   for (const rp of ripples) {
     const x0 = Math.max(0, Math.floor(rp.x - rp.r - 1));
     const x1 = Math.min(cols - 1, Math.ceil(rp.x + rp.r + 1));
@@ -562,6 +689,7 @@ function propagate(dt) {
         const inten = (1 - d / rp.maxR) * (rp.soft ? 0.35 : 1) * 0.95;
         const idx = y * cols + x;
         if (inten > lights[idx]) lights[idx] = inten;
+        if (!rp.soft && inten > 0.18 && grid[y][x] === '#') litWalls.add(x + ',' + y);
       }
     }
   }
@@ -575,24 +703,16 @@ function render(dt) {
   const W = innerWidth, H = innerHeight;
   ctx.fillStyle = '#07090d';
   ctx.fillRect(0, 0, W, H);
-
   if (state !== 'play') return;
-
-  // 暗角
   const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.72);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
   vg.addColorStop(1, 'rgba(0,0,0,0.6)');
-
-  // 玩家光晕亮度（呼吸）
   const breathe = 0.85 + Math.sin(time * 2.2) * 0.15;
   const pcx = ox + (px + 0.5) * cell, pcy = oy + (py + 0.5) * cell;
 
-  // 墙体
   for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
-    const c = grid[y][x];
-    if (c === '#') {
+    if (grid[y][x] === '#') {
       const l = lights[y * cols + x];
-      // 玩家近旁常亮微光
       const dpx = Math.hypot(x - px, y - py);
       const near = Math.max(0, 1 - dpx / 2.2) * 0.4 * breathe;
       const a = Math.min(1, l + near);
@@ -606,8 +726,7 @@ function render(dt) {
     }
   }
 
-  // 出口（涟漪照亮后留有余辉；近时脉动）
-  {
+  { // 出口
     let gx = 0, gy = 0;
     for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) if (grid[y][x] === 'G') { gx = x; gy = y; }
     const d = Math.hypot(gx - px, gy - py);
@@ -628,8 +747,7 @@ function render(dt) {
     }
   }
 
-  // 碎片
-  for (const [fx, fy] of FRAG_STEPS) {
+  for (const [fx, fy] of FRAG_CELLS) {
     if (fragTakenSet.has(fx + ',' + fy)) continue;
     const d = Math.hypot(fx - px, fy - py);
     const twinkle = 0.5 + 0.5 * Math.sin(time * 3 + fx * 2.1 + fy * 1.3);
@@ -648,7 +766,6 @@ function render(dt) {
     ctx.shadowBlur = 0;
   }
 
-  // 涟漪环
   for (const rp of ripples) {
     const t = rp.r / rp.maxR;
     const a = Math.max(0, (1 - t)) * (rp.soft ? 0.14 : 0.5);
@@ -660,13 +777,12 @@ function render(dt) {
     ctx.stroke();
   }
 
-  // 玩家：灯芯
   const pg = ctx.createRadialGradient(pcx, pcy, 0, pcx, pcy, cell * 1.5);
   pg.addColorStop(0, `rgba(232,192,122,${(0.5 * breathe).toFixed(3)})`);
   pg.addColorStop(1, 'rgba(232,192,122,0)');
   ctx.fillStyle = pg;
   ctx.fillRect(pcx - cell * 1.6, pcy - cell * 1.6, cell * 3.2, cell * 3.2);
-  ctx.fillStyle = `rgba(246,214,150,${(0.95).toFixed(3)})`;
+  ctx.fillStyle = 'rgba(246,214,150,0.95)';
   ctx.shadowColor = 'rgba(232,192,122,1)';
   ctx.shadowBlur = 12;
   ctx.beginPath();
@@ -688,13 +804,18 @@ function roundRectC(x, y, w, h, r) {
   ctx.closePath();
 }
 
-/* ================= HUD / 覆盖层 ================= */
+/* ================= HUD / 弹层 ================= */
+function fmtTime(ms) {
+  const s = Math.floor(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
 function updateHud() {
-  const h = document.getElementById('hud');
-  if (state !== 'play') { h.style.display = 'none'; return; }
-  document.getElementById('hudLevel').innerHTML = `<b>${T().lvNames[li]}</b>`;
-  document.getElementById('hudSteps').innerHTML = `${T().steps} <b>${steps}</b> / ${T().par} ${LEVELS[li].par}`;
+  if (state !== 'play') { document.getElementById('hud').style.display = 'none'; return; }
+  const nm = isDaily ? T().dailyTitle : T().lvNames[li];
+  document.getElementById('hudLevel').innerHTML = `<b>${nm}</b>`;
+  document.getElementById('hudSteps').innerHTML = `${T().steps} <b>${steps}</b> / ${T().par} ${par}`;
   document.getElementById('hudPings').innerHTML = `${T().pings} <b>${pings}</b>`;
+  document.getElementById('hudTime').innerHTML = `${T().time} <b>${fmtTime(elapsed)}</b>`;
 }
 let fragTimer = null;
 function showFrag(text, isStory) {
@@ -708,27 +829,77 @@ function hideAll() {
   document.querySelectorAll('.overlay').forEach(o => o.classList.remove('show'));
 }
 
+/* ================= 成就 ================= */
+function award(id) {
+  if (save.ach[id]) return;
+  const def = T().achs.find(a => a.id === id);
+  if (!def) return;
+  save.ach[id] = true;
+  persist();
+  sndAch();
+  const t = document.getElementById('achToast');
+  t.innerHTML = `<span class="ico">${def.ico}</span><span class="tx"><span class="n">${def.n}</span><span class="d" style="display:block">${def.d}</span></span>`;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+  buildAchWall();
+}
+function checkAchs() {
+  if (li === 0 && state === 'play') award('lv1'); // 过关时另计
+  const n = save.frags.filter(Boolean).length;
+  if (n >= 3) award('frag3');
+  if (n >= 6) award('frag6');
+}
+function buildAchWall() {
+  const wall = document.getElementById('achWall');
+  wall.innerHTML = `<div style="grid-column:1/-1;font-size:12px;letter-spacing:0.4em;color:var(--dim,#9db0c9);opacity:.7">${T().achTitle}</div>`;
+  for (const a of T().achs) {
+    const d = document.createElement('div');
+    d.className = 'ach' + (save.ach[a.id] ? ' got' : '');
+    d.innerHTML = `<span class="ico">${a.ico}</span>${a.n}<br><span style="opacity:.75">${a.d}</span>`;
+    wall.appendChild(d);
+  }
+}
+
 /* ================= 过关 / 结局 ================= */
 function levelClear() {
   state = 'clear';
+  elapsed = performance.now() - startTime;
   sndWin();
-  // 存档
-  if (li + 1 > save.unlocked) { save.unlocked = li + 1; }
-  const prev = save.best[li];
-  if (!prev || steps + pings < prev.s + prev.p) save.best[li] = { s: steps, p: pings };
+  if (!isDaily) {
+    if (li + 1 > save.unlocked) save.unlocked = li + 1;
+  } else {
+    save.daily = { date: todayKey(), done: true };
+  }
+  // 探索率
+  const exp = Math.round(litWalls.size / Math.max(1, totalWalls) * 100);
+  const prev = save.best[keyOf()];
+  if (!prev || steps + pings < prev.s + prev.p) save.best[keyOf()] = { s: steps, p: pings, t: Math.round(elapsed), exp };
+  else save.best[keyOf()].exp = Math.max(save.best[keyOf()].exp, exp);
   persist();
-  const par = LEVELS[li].par;
+
   const score = steps <= par ? 3 : steps <= par * 1.5 ? 2 : 1;
+  if (score === 3) award('par');
+  if (steps < par) award('swift');
+  if (isDaily) award('daily');
+  if (!isDaily && li === 0) award('lv1');
+  if (!isDaily && li === LEVELS.length - 1) award('all');
+  const n = save.frags.filter(Boolean).length;
+  if (n >= 3) award('frag3');
+  if (n >= 6) award('frag6');
+
   const L = T().lantern;
   document.getElementById('clearTitle').textContent = T().clearTitle;
   document.getElementById('lanterns').innerHTML =
     L.map((c, i) => `<span class="${i < score ? '' : 'off'}">${c}</span>`).join('');
+  const nm = isDaily ? T().dailyTitle : T().lvNames[li];
   document.getElementById('clearStats').innerHTML =
-    `${T().steps}：${steps}　·　${T().pings}：${pings}<br>${T().lvNames[li]}`;
+    `${T().steps}：${steps}　·　${T().pings}：${pings}　·　${T().time}：${fmtTime(elapsed)}<br>` +
+    `${T().exp}：${exp}%　·　${nm}`;
   document.getElementById('nextBtn').textContent =
-    li + 1 < LEVELS.length ? T().next : (lang === 'zh' ? '归 途 尽 头' : 'THE END');
+    isDaily ? T().toMenu : (li + 1 < LEVELS.length ? T().next : (lang === 'zh' ? '归 途 尽 头' : 'THE END'));
   document.getElementById('clearOv').classList.add('show');
 }
+function keyOf() { return isDaily ? 'daily' : li; }
 
 function showEnding() {
   state = 'end';
@@ -748,7 +919,7 @@ function showEnding() {
   document.getElementById('hud').style.display = 'none';
 }
 
-/* ================= 菜单构建 ================= */
+/* ================= 菜单 ================= */
 function buildLevelGrid() {
   const box = document.getElementById('levels');
   box.innerHTML = '';
@@ -758,12 +929,19 @@ function buildLevelGrid() {
     const locked = i > save.unlocked;
     b.disabled = locked;
     const best = save.best[i];
-    b.innerHTML = `<div class="n">${T().lvNames[i].split(' · ')[0]}</div>
-      <div class="t">${locked ? T().locked : T().lvNames[i].split(' · ')[1]}</div>
-      <div class="b">${best ? `${T().best} ${best.s}${lang === 'zh' ? '步' : 's'} / ${best.p}` : ''}</div>`;
+    const parts = T().lvNames[i].split(' · ');
+    b.innerHTML = `<div class="n">${parts[0]}</div>
+      <div class="t">${locked ? T().locked : parts[1]}</div>
+      <div class="b">${best ? `${T().best} ${best.s}${lang === 'zh' ? '步' : 's'} · ${fmtTime(best.t)}` : ''}</div>`;
     if (!locked) b.addEventListener('click', () => loadLevel(i));
     box.appendChild(b);
   });
+}
+function updateDailyBtn() {
+  const b = document.getElementById('dailyBtn');
+  const done = save.daily && save.daily.date === todayKey() && save.daily.done;
+  b.textContent = done ? T().dailyDone : T().daily;
+  b.classList.toggle('done', !!done);
 }
 
 /* ================= 输入 ================= */
@@ -784,18 +962,14 @@ window.addEventListener('keydown', e => {
 });
 window.addEventListener('keyup', () => moveCooldown = 0);
 
-// 点击画布 = 在点击处发回声；触屏滑动 = 移动
 let touchStart = null;
-cv.addEventListener('pointerdown', e => {
-  touchStart = [e.clientX, e.clientY];
-});
+cv.addEventListener('pointerdown', e => { touchStart = [e.clientX, e.clientY]; });
 cv.addEventListener('pointerup', e => {
   if (!touchStart) return;
   const dx = e.clientX - touchStart[0], dy = e.clientY - touchStart[1];
   const dist = Math.hypot(dx, dy);
   if (state === 'play') {
     if (dist > 30) {
-      // 滑动：择主轴移动
       if (Math.abs(dx) > Math.abs(dy)) tryMove(Math.sign(dx), 0);
       else tryMove(0, Math.sign(dy));
     } else {
@@ -807,8 +981,10 @@ cv.addEventListener('pointerup', e => {
 
 /* ================= 按钮 ================= */
 document.getElementById('startBtn').addEventListener('click', () => loadLevel(0));
-document.getElementById('retryBtn').addEventListener('click', () => loadLevel(li));
+document.getElementById('dailyBtn').addEventListener('click', () => loadLevel(0, true));
+document.getElementById('retryBtn').addEventListener('click', () => loadLevel(li, isDaily));
 document.getElementById('nextBtn').addEventListener('click', () => {
+  if (isDaily) { document.getElementById('menuBtn').click(); return; }
   if (li + 1 < LEVELS.length) loadLevel(li + 1);
   else showEnding();
 });
@@ -817,7 +993,7 @@ document.getElementById('menuBtn').addEventListener('click', () => {
   state = 'menu'; hideAll();
   document.getElementById('hud').style.display = 'none';
   document.getElementById('topbar').style.display = 'none';
-  buildLevelGrid();
+  buildLevelGrid(); buildAchWall(); updateDailyBtn();
   document.getElementById('menuOv').classList.add('show');
 });
 document.getElementById('clearMenuBtn').addEventListener('click', () => document.getElementById('menuBtn').click());
@@ -837,6 +1013,8 @@ function frame(now) {
   const dt = Math.min((now - prev) / 1000, 0.05);
   prev = now;
   if (state === 'play') {
+    elapsed = performance.now() - startTime;
+    if (Math.floor(elapsed / 1000) % 2 === 0) updateHud();
     propagate(dt);
     if (moveCooldown > 0) moveCooldown -= dt;
   }
@@ -847,7 +1025,6 @@ function frame(now) {
 /* ================= 启动 ================= */
 applyI18n();
 updSnd();
-// #lv<N> 直达关卡（测试/分享用）
 const m = location.hash.match(/^#lv(\d+)/);
 if (m && +m[1] < LEVELS.length) loadLevel(+m[1]);
 requestAnimationFrame(frame);

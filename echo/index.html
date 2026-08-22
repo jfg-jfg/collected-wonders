@@ -89,6 +89,14 @@
 
   /* 每日挑战入口 */
   .daily-row { margin-top: 20px; }
+  .well-chip {
+    border: 1px solid rgba(232,192,122,0.35); background: rgba(26,20,12,0.6);
+    color: var(--gold); font-family: inherit; font-size: 12.5px; letter-spacing: 0.2em;
+    padding: 9px 20px; border-radius: 999px; cursor: pointer;
+    transition: color .25s, border-color .25s, box-shadow .25s, opacity .25s;
+  }
+  .well-chip:hover { box-shadow: 0 0 18px rgba(232,192,122,0.2); }
+  .well-chip small { opacity: 0.65; font-size: 10.5px; margin-left: 6px; letter-spacing: 0.1em; }
   .daily-chip {
     border: 1px solid rgba(127,216,208,0.4); background: rgba(10,16,18,0.6);
     color: var(--cyan); font-family: inherit; font-size: 13px; letter-spacing: 0.24em;
@@ -257,6 +265,7 @@
   <div class="daily-row">
     <button class="daily-chip" id="dailyBtn"></button>
   </div>
+  <div class="daily-row" id="wellRow" style="margin-top:12px"></div>
   <div class="levels" id="levels"></div>
   <div class="ach-wall" id="achWall"></div>
   <div class="kbd-hint" data-t="kbd"></div>
@@ -368,6 +377,7 @@ const I18N = {
     locked: '未至', best: '最佳',
     lvSub: ['醒来时，头顶的井口已是一枚远星。', '水声在回廊尽头折返，像有人应答。', '蜂巢般的居所，门都朝着黑暗敞开。', '迷津不在乎方向，只在乎你还愿意走。', '巨殿的柱影比夜更旧。', '归途上，每一步回声都更接近自己。'],
     daily: '每 日 深 潜', dailyDone: '今日已抵达 · 明日再来', dailyTitle: '每日深潜', dailySub: '同一日，全城同一个迷宫。',
+    wellsLbl: '名 井 集 · CURATED WELLS', wellsBest: b => `${b.s}步·${fmtTime(b.t)}`,
     exp: '照亮', heatLbl: '你 的 足 迹 · YOUR TRAIL', achTitle: '灯 下 集 · ACHIEVEMENTS',
     achs: [
       { id: 'first', ico: '✦', n: '初啼', d: '发出第一声回声' },
@@ -418,6 +428,7 @@ const I18N = {
     locked: 'locked', best: 'best',
     lvSub: ['Waking, the well mouth above is one far star.', 'Water turns at the corridor\'s end, like an answer.', 'Hive-homes, every door open to the dark.', 'The labyrinth cares not for direction, only that you still walk.', 'Pillar-shadows older than night in the great hall.', 'On the way back, each echo is nearer to yourself.'],
     daily: 'DAILY DIVE', dailyDone: 'ARRIVED TODAY · COME BACK TOMORROW', dailyTitle: 'Daily Dive', dailySub: 'One maze per day, same for everyone.',
+    wellsLbl: 'C U R A T E D   W E L L S', wellsBest: b => `${b.s} steps · ${fmtTime(b.t)}`,
     exp: 'lit', heatLbl: 'YOUR TRAIL', achTitle: 'LAMPS · ACHIEVEMENTS',
     achs: [
       { id: 'first', ico: '✦', n: 'First Cry', d: 'emit your first echo' },
@@ -445,7 +456,7 @@ function applyI18n() {
   document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
   document.getElementById('menuBtn').textContent = T().menu;
   document.title = lang === 'zh' ? '回声 · ECHO — 回声定位迷宫' : 'ECHO — the echolocation maze';
-  buildLevelGrid(); buildAchWall(); updateDailyBtn(); updateHud();
+  buildLevelGrid(); buildAchWall(); updateDailyBtn(); buildWells(); updateHud();
 }
 
 /* ================= 关卡数据 ================= */
@@ -551,13 +562,23 @@ function finishLevel(g) {
 }
 const LEVELS = buildLevels();
 
+/* 名井集：精选关卡码（tools/gen-wells.mjs 生成，种子手选） */
+const WELL_PACK = [
+  { name: "回纹井", nameEn: "Fret Well", par: 62, ghosts: 0,
+    code: "IyMjIyMjIyMjIyMjIyMjCiNTLi4jLi4uLi4uLi4uIwojIyMuIyMjIyMjIy4jLiMKIyojLiMuLi4uLi4uIy4jCiMuIy4jLiMjIyMjIyMuIwojLiMuLi4jLipHIy4uLiMKIy4jIyMjIy4jIyMuIyMjCiMuLi4uLi4uIy4uLiMuIwojLiMuIyMjIyMuIyMjLiMKIyojLi4uLi4uLi4uLi4jCiMjIyMjIyMjIyMjIyMjIw==" },
+  { name: "螺旋井", nameEn: "Spiral Well", par: 62, ghosts: 1,
+    code: "IyMjIyMjIyMjIyMjIyMjIyMjIwojUy4uIy4uLi4uLi4jRyouLi4jCiMuIy4jLiMuIyMjLiMjIyMjLiMKIy4jLiMuIy4uLiMuIy4uLiMuIwojLiMuIy4jIyMuIy4jLiMuIy4jCiMuIy4jLi4uIy4jLiMqIy4jLiMKIy4jLiMjIy4jLiMuIy4jLiMuIwojLi4uIy4uLiMuIy4uLiMuLi4jCiMuIyMjLiMjIy4jIyMjIyMjLiMKIy4uLiMqIy4uLiMuLi4uLiMuIwojIyMuIyMjLiMuIy4jIyMuIy4jCiMuLi4uLi4uIy4uLi4uIy4uLiMKIyMjIyMjIyMjIyMjIyMjIyMjIw==" },
+  { name: "千廊井", nameEn: "Thousand Halls", par: 131, ghosts: 2,
+    code: "IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKI1MuLiMuLi4uLi4uLi4uLiMuLi4uLiMKIyMjLiMuIyMjLiMjIyMjLiMuIy4jLiMKI0cjLiMuLi4jLiMuLi4jLiMuIy4uLiMKIyojLiMjIy4jLiMuIy4jLiMjIyMjLiMKIy4jLi4uIy4jLi4uIy4jLi4uLi4uLiMKIy4jIyMuIy4jIyMjIy4jIyMjIyMjLiMKIy4uKiMuIy4jLi4uLi4jLi4uIy4uLiMKIyMjLiMuIyMjLiMjIyMjIyMuIy4jIyMKIy4uLiMuLi4uLiMuLi4uLi4uIy4uLiMKIyojLiMjIyMjIyMuIyMjIyMuIyMjLiMKIy4jLiMuLi4uLi4uIy4uLiMuIy4uLiMKIy4jIyMuIyMjLiMuIy4jLiMjIy4jIyMKIy4uLi4uLi4uLiMuLi4jLi4uLi4uLiMKIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyM=" }
+];
+
 /* 无尽层：通关六层后解锁，尺寸与密度随深度增长 */
 function buildEndless(di) {
   const w = Math.min(29, 21 + di * 2), h = Math.min(21, 15 + di);
   const g = genMaze(w, h, mulberry32(7700 + di * 137), 0.3 + Math.min(0.25, di * 0.03));
   return finishLevel(g);
 }
-const lvName = i => isCustom ? T().edCustomName : (i < LEVELS.length ? T().lvNames[i] : T().endlessName(i - 5));
+const lvName = i => isCustom ? customName : (i < LEVELS.length ? T().lvNames[i] : T().endlessName(i - 5));
 
 /* 每日挑战：日期种子迷宫 */
 function todayKey() {
@@ -1068,17 +1089,16 @@ function edDecode(str) {
     return rows;
   } catch (e) { return null; }
 }
-/* 试玩：以自定义地图进入游戏 */
-function edPlay() {
-  const d = edValidate();
-  if (d < 0) return;
-  const map = editor.map.map(r => r.join(''));
+/* 试玩 / 名井：以自定义地图进入游戏 */
+let customName = '', customFrom = 'editor', curWell = -1;
+function enterCustomPlay(map, parVal, name, ghostCount) {
   isCustom = true;
   isDaily = false;
   li = 0;
+  customName = name;
   grid = map.map(r => r.split(''));
   rows = grid.length; cols = grid[0].length;
-  par = Math.round(d * 1.2) + 4;
+  par = parVal;
   FRAG_CELLS.length = 0;
   fragTakenSet = new Set();
   for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
@@ -1090,11 +1110,21 @@ function edPlay() {
   lights = new Float32Array(cols * rows);
   afterglow = new Float32Array(cols * rows);
   visits = new Float32Array(cols * rows);
-  ghosts = [];
   litWalls = new Set();
   totalWalls = 0;
   for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++)
     if (grid[y][x] === '#') totalWalls++;
+  // 游魂（名井可带）
+  ghosts = [];
+  let guard = 0;
+  const gcount = ghostCount || 0;
+  while (ghosts.length < gcount && guard++ < 500) {
+    const x = 1 + Math.floor(Math.random() * (cols - 2));
+    const y = 1 + Math.floor(Math.random() * (rows - 2));
+    if (G(x, y) === '#' || G(x, y) === 'G' || G(x, y) === '*') continue;
+    if (Math.hypot(x - px, y - py) < 6) continue;
+    ghosts.push({ x, y, dx: 0, dy: 1, t: 0, phase: Math.random() * 10 });
+  }
   state = 'play';
   editor.on = false;
   document.getElementById('edBar').classList.remove('show');
@@ -1104,6 +1134,21 @@ function edPlay() {
   layout();
   updateHud();
   showLevelCard();
+}
+function edPlay() {
+  const d = edValidate();
+  if (d < 0) return;
+  customFrom = 'editor';
+  curWell = -1;
+  enterCustomPlay(editor.map.map(r => r.join('')), Math.round(d * 1.2) + 4, T().edCustomName, 0);
+}
+function playWell(i) {
+  const w = WELL_PACK[i];
+  const rows = edDecode(w.code);
+  if (!rows) return;
+  customFrom = 'well';
+  curWell = i;
+  enterCustomPlay(rows, w.par, lang === 'zh' ? w.name : w.nameEn, w.ghosts);
 }
 /* 编辑器输入 */
 cv.addEventListener('pointerdown', e => {
@@ -1396,15 +1441,23 @@ function levelClear() {
   elapsed = performance.now() - startTime;
   sndWin();
   if (isCustom) {
-    // 自造之井：不计存档与成就，只展示成绩
+    // 自造之井 / 名井：不计主线存档与成就，只展示成绩
     const score = steps <= par ? 3 : steps <= par * 1.5 ? 2 : 1;
     const L = T().lantern;
+    if (curWell >= 0) {
+      save.wells = save.wells || {};
+      const pw = save.wells[curWell];
+      if (!pw || steps + pings < pw.s + pw.p) save.wells[curWell] = { s: steps, p: pings, t: Math.round(elapsed) };
+      persist();
+    }
     document.getElementById('clearTitle').textContent = T().clearTitle;
     document.getElementById('lanterns').innerHTML =
       L.map((c, i) => `<span class="${i < score ? '' : 'off'}">${c}</span>`).join('');
     document.getElementById('clearStats').innerHTML =
-      `${T().steps}：${steps}　·　${T().pings}：${pings}　·　${T().time}：${fmtTime(elapsed)}<br>${T().edCustomName}`;
-    document.getElementById('nextBtn').textContent = lang === 'zh' ? '回 到 造 井' : 'BACK TO BUILD';
+      `${T().steps}：${steps}　·　${T().pings}：${pings}　·　${T().time}：${fmtTime(elapsed)}<br>${customName}`;
+    document.getElementById('nextBtn').textContent = customFrom === 'editor'
+      ? (lang === 'zh' ? '回 到 造 井' : 'BACK TO BUILD')
+      : T().toMenu;
     document.getElementById('heatLbl').textContent = T().heatLbl;
     drawHeat();
     document.getElementById('clearOv').classList.add('show');
@@ -1535,6 +1588,19 @@ function buildLevelGrid() {
   if (!eLocked) eb.addEventListener('click', () => loadLevel(LEVELS.length));
   box.appendChild(eb);
 }
+function buildWells() {
+  const row = document.getElementById('wellRow');
+  row.innerHTML = `<div style="width:100%;text-align:center;font-size:11px;letter-spacing:0.4em;color:rgba(232,192,122,0.55)">${T().wellsLbl}</div>`;
+  WELL_PACK.forEach((w, i) => {
+    const b = document.createElement('button');
+    b.className = 'well-chip';
+    const best = save.wells && save.wells[i];
+    b.innerHTML = (lang === 'zh' ? w.name : w.nameEn) +
+      (best ? `<small>${T().wellsBest(best)}</small>` : `<small>par ${w.par}${w.ghosts ? ' · 👻' + w.ghosts : ''}</small>`);
+    b.addEventListener('click', () => playWell(i));
+    row.appendChild(b);
+  });
+}
 function updateDailyBtn() {
   const b = document.getElementById('dailyBtn');
   const done = save.daily && save.daily.date === todayKey() && save.daily.done;
@@ -1588,7 +1654,12 @@ document.getElementById('retryBtn').addEventListener('click', () => {
   loadLevel(li, isDaily);
 });
 document.getElementById('nextBtn').addEventListener('click', () => {
-  if (isCustom) { isCustom = false; edEnter(editor.map.length ? editor.map : null); return; }
+  if (isCustom) {
+    isCustom = false;
+    if (customFrom === 'editor') edEnter(editor.map.length ? editor.map : null);
+    else document.getElementById('menuBtn').click();
+    return;
+  }
   if (isDaily) { document.getElementById('menuBtn').click(); return; }
   if (li >= LEVELS.length) { loadLevel(li + 1); return; }   // 无尽继续
   if (li + 1 < LEVELS.length) loadLevel(li + 1);
@@ -1599,7 +1670,7 @@ document.getElementById('menuBtn').addEventListener('click', () => {
   state = 'menu'; hideAll();
   document.getElementById('hud').style.display = 'none';
   document.getElementById('topbar').style.display = 'none';
-  buildLevelGrid(); buildAchWall(); updateDailyBtn();
+  buildLevelGrid(); buildAchWall(); updateDailyBtn(); buildWells();
   document.getElementById('menuOv').classList.add('show');
 });
 document.getElementById('clearMenuBtn').addEventListener('click', () => document.getElementById('menuBtn').click());

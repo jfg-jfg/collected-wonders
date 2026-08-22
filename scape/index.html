@@ -755,6 +755,34 @@ function scene(dt) {
     }
   }
 
+  // 极光：大雪深夜（雪>0.5 且 21-4 点）的罕见帷幕
+  const auroraOk = S.snow > 0.5 && (S.time >= 21 || S.time <= 4);
+  if (auroraOk) {
+    const aa = Math.min(0.5, (S.snow - 0.5) * 1.6) * (1 - sky.L * 4);
+    if (aa > 0.02) {
+      for (let band = 0; band < 3; band++) {
+        ctx.beginPath();
+        const baseY = H * (0.16 + band * 0.07);
+        ctx.moveTo(-40, baseY);
+        for (let x = -40; x <= W + 40; x += 24) {
+          const y = baseY + Math.sin(x * 0.004 + time * 0.24 + band * 1.7) * H * 0.05
+                  + Math.sin(x * 0.011 - time * 0.13 + band) * H * 0.02;
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(W + 40, baseY - H * 0.3);
+        ctx.lineTo(-40, baseY - H * 0.3);
+        ctx.closePath();
+        const hue = 140 + band * 26;
+        const ag = ctx.createLinearGradient(0, baseY - H * 0.28, 0, baseY + 8);
+        ag.addColorStop(0, `hsla(${hue},72%,58%,0)`);
+        ag.addColorStop(0.75, `hsla(${hue},72%,58%,${(aa * 0.5).toFixed(3)})`);
+        ag.addColorStop(1, `hsla(${hue + 30},80%,70%,${(aa * 0.14).toFixed(3)})`);
+        ctx.fillStyle = ag;
+        ctx.fill();
+      }
+    }
+  }
+
   // 飞鸟（日间 + 鸟鸣声道开启）
   if (S.birds > 0.05 && L > 0.25) {
     for (let i = 0; i < 4; i++) {

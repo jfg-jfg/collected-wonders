@@ -38,6 +38,9 @@
   }
   .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
   .btn-ghost.on { border-color: var(--gold); color: var(--gold); }
+  #recBtn.recording { border-color: #e88; color: #e88; animation: recPulse 1.6s ease-in-out infinite; }
+  @keyframes recPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(238,136,136,0.4); } 50% { box-shadow: 0 0 0 6px rgba(238,136,136,0); } }
+  @media (prefers-reduced-motion: reduce) { #recBtn.recording { animation: none; } }
   .timer-badge { position: relative; }
   .timer-badge .ring { width: 18px; height: 18px; vertical-align: -4px; margin-right: 7px; }
   .timer-badge.on { border-color: var(--gold); color: var(--gold); }
@@ -142,6 +145,7 @@
     <svg class="ring" viewBox="0 0 20 20"><circle id="ringBg" cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2"/><circle id="ringFg" cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="50.3" stroke-dashoffset="50.3" transform="rotate(-90 10 10)"/></svg><span id="timerTxt">25:00</span>
   </button>
   <button class="btn-ghost" id="sleepBtn" title="">☾ ∞</button>
+  <button class="btn-ghost" id="recBtn">● 录</button>
   <button class="btn-ghost" id="langBtn">EN</button>
 </div>
 
@@ -175,6 +179,7 @@ const I18N = {
     customName: i => `境·${'一二三四五六'[i]}`,
     delTip: '长按删除此境',
     sleepTip: '睡眠渐弱', paused: '已暂停 · 空格继续',
+    rec: '● 录', recStop: '■ 停止', recDone: '✓ 录像已保存', recFail: '此浏览器不支持录制',
     timer: ['专注 25 分', '专注 45 分', '专注 60 分', '取消计时'],
     timeNames: ['夜', '晨', '昼', '暮'],
     sndTip: '点任意滑杆开启声音'
@@ -190,6 +195,7 @@ const I18N = {
     customName: i => 'Scene ' + (i + 1),
     delTip: 'long-press to delete',
     sleepTip: 'sleep fade', paused: 'PAUSED · SPACE TO RESUME',
+    rec: '● REC', recStop: '■ STOP', recDone: '✓ recording saved', recFail: 'recording unsupported here',
     timer: ['FOCUS 25', 'FOCUS 45', 'FOCUS 60', 'CANCEL'],
     timeNames: ['NIGHT', 'DAWN', 'DAY', 'DUSK'],
     sndTip: 'touch any dial to start sound'
@@ -1040,6 +1046,7 @@ function applyI18n() {
   document.documentElement.lang = lang === 'zh' ? 'zh' : 'en';
   document.title = lang === 'zh' ? '造境 · SCAPE — 程序化声景' : 'SCAPE — procedural soundscape';
   document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+  if (!recorder) document.getElementById('recBtn').textContent = T().rec;
   document.getElementById('hint').textContent = T().hint;
   updTimerUI();
   buildPresets(); buildBoard(); updateClock();
@@ -1085,6 +1092,49 @@ function wake() {
   }
 }
 window.addEventListener('pointerdown', wake);
+
+/* 音画录制 */
+let recorder = null, recChunks = [], recDest = null;
+const recBtn = document.getElementById('recBtn');
+function updRecBtn() { recBtn.textContent = recorder ? T().recStop : T().rec; recBtn.classList.toggle('recording', !!recorder); }
+recBtn.addEventListener('click', () => {
+  initAudio();
+  if (recorder) { recorder.stop(); return; }
+  if (!AC || !window.MediaRecorder || !cv.captureStream) {
+    recBtn.textContent = T().recFail;
+    setTimeout(updRecBtn, 1800);
+    return;
+  }
+  try {
+    const stream = cv.captureStream(30);
+    recDest = AC.createMediaStreamDestination();
+    master.connect(recDest);
+    recDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+    recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm' });
+    recChunks = [];
+    recorder.ondataavailable = e => { if (e.data.size) recChunks.push(e.data); };
+    recorder.onstop = () => {
+      try { master.disconnect(recDest); } catch (e) {}
+      recDest = null;
+      const blob = new Blob(recChunks, { type: 'video/webm' });
+      const a = document.createElement('a');
+      a.download = `scape-${Date.now()}.webm`;
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      recorder = null;
+      updRecBtn();
+      recBtn.textContent = T().recDone;
+      setTimeout(updRecBtn, 1800);
+    };
+    recorder.start(500);
+    updRecBtn();
+  } catch (e) {
+    recorder = null;
+    recBtn.textContent = T().recFail;
+    setTimeout(updRecBtn, 1800);
+  }
+});
 
 /* 空格暂停 / 数字键预设（1-5） */
 let audioPaused = false;

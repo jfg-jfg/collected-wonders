@@ -1216,6 +1216,13 @@ resize();
 applyI18n();
 // 开卷：午后山谷
 Object.assign(S, PRESETS.valley());
+// #key=val&… 测试直达：snow=0.9&time=23&rain=0.7 等（覆盖默认预设）
+location.hash.slice(1).split('&').forEach(kv => {
+  const [k, v] = kv.split('=');
+  if (k && v !== undefined && (k === 'time' || CH_ORDER.includes(k))) {
+    S[k] = +v;
+  }
+});
 buildBoard(); updateClock();
 requestAnimationFrame(frame);
 </script>

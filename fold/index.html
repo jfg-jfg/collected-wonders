@@ -657,6 +657,15 @@ if (hm) {
   view.x = +hm[1]; view.y = +hm[2]; view.s = +hm[3];
   target.x = view.x; target.y = view.y; target.s = view.s;
 }
+// #julia 或 #julia,cx,gy 测试直达
+const jm = location.hash.match(/julia(?:,([-\d.e+]+),([-\d.e+]+))?/);
+if (jm) {
+  juliaOn = true;
+  if (jm[1] !== undefined) juliaC = { x: +jm[1], y: +jm[2] };
+  else juliaC = { x: view.x, y: view.y };
+  view.x = 0; view.y = 0; view.s = 1.6;
+  target.x = 0; target.y = 0; target.s = 1.6;
+}
 render();
 requestAnimationFrame(frame);
 </script>

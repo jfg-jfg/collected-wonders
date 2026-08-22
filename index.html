@@ -437,6 +437,28 @@ function bframe(now) {
 
 const REDUCED_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
 applyI18n();
+/* 键盘导航：←→ 在卡片间移动，Enter 进入 */
+let focusedCard = -1;
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const cards = document.querySelectorAll('.card');
+  if (!cards.length) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    focusedCard = Math.min(focusedCard + 1, cards.length - 1);
+    cards[focusedCard].focus();
+    cards[focusedCard].style.outline = '2px solid var(--gold)';
+    cards.forEach((c, i) => { if (i !== focusedCard) c.style.outline = ''; });
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    focusedCard = Math.max(focusedCard - 1, 0);
+    cards[focusedCard].focus();
+    cards[focusedCard].style.outline = '2px solid var(--gold)';
+    cards.forEach((c, i) => { if (i !== focusedCard) c.style.outline = ''; });
+  } else if (e.key === 'Enter' && focusedCard >= 0) {
+    cards[focusedCard].click();
+  }
+});
 if (!REDUCED_MOTION) requestAnimationFrame(bframe);
 </script>
 </body>

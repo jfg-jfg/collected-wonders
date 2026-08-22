@@ -148,6 +148,7 @@
     <svg class="ring" viewBox="0 0 20 20"><circle id="ringBg" cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2"/><circle id="ringFg" cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="50.3" stroke-dashoffset="50.3" transform="rotate(-90 10 10)"/></svg><span id="timerTxt">25:00</span>
   </button>
   <button class="btn-ghost" id="sleepBtn" title="">☾ ∞</button>
+  <button class="btn-ghost" id="moodBtn">✦ 心境</button>
   <button class="btn-ghost" id="themeBtn">⛰ 山</button>
   <button class="btn-ghost" id="seasonBtn">🌸 樱</button>
   <button class="btn-ghost" id="flowBtn">⏳ 流转</button>
@@ -1294,6 +1295,33 @@ function wake() {
   }
 }
 window.addEventListener('pointerdown', wake);
+
+/* 心境：一键生成情绪连贯的场景组合 */
+const MOODS = [
+  { name: '山雨欲来',  rain: 0.5, wind: 0.4, fire: 0, stream: 0.2, cricket: 0, thunder: 0.3, birds: 0, bell: 0, snow: 0, time: 16, theme: 0, season: 0 },
+  { name: '雪夜炉火',  rain: 0, wind: 0.15, fire: 0.8, stream: 0, cricket: 0, thunder: 0, birds: 0, bell: 0.2, snow: 0.9, time: 21.5, theme: 0, season: 0 },
+  { name: '城市黄昏',  rain: 0, wind: 0.2, fire: 0, stream: 0, cricket: 0, thunder: 0, birds: 0.3, bell: 0, snow: 0, time: 18.2, theme: 2, season: 0 },
+  { name: '海雾清晨',  rain: 0.15, wind: 0.3, fire: 0, stream: 0.5, cricket: 0, thunder: 0, birds: 0.4, bell: 0, snow: 0, time: 6.5, theme: 1, season: 0 },
+  { name: '樱花午后',  rain: 0, wind: 0.25, fire: 0, stream: 0.3, cricket: 0, thunder: 0, birds: 0.5, bell: 0, snow: 0, time: 14, theme: 0, season: 1 },
+  { name: '极夜深城',  rain: 0.3, wind: 0.3, fire: 0, stream: 0, cricket: 0, thunder: 0.15, birds: 0, bell: 0.3, snow: 0.8, time: 23, theme: 2, season: 0 },
+  { name: '秋枫听雨',  rain: 0.6, wind: 0.2, fire: 0, stream: 0.4, cricket: 0, thunder: 0, birds: 0, bell: 0, snow: 0, time: 17, theme: 0, season: 2 },
+  { name: '深海电台',  rain: 0.1, wind: 0.1, fire: 0, stream: 0, cricket: 0, thunder: 0.5, birds: 0, bell: 0.4, snow: 0, time: 2, theme: 1, season: 0 }
+];
+const moodBtn = document.getElementById('moodBtn');
+moodBtn.addEventListener('click', () => {
+  initAudio();
+  const m = MOODS[Math.floor(Math.random() * MOODS.length)];
+  CH_ORDER.forEach(c => S[c] = m[c] !== undefined ? m[c] : 0);
+  S.time = m.time;
+  theme = m.theme;
+  season = m.season;
+  rebuildScenery();
+  buildBoard(); updateClock();
+  updThemeBtn(); updSeasonBtn();
+  if (S.thunder > 0.03) nextThunder = performance.now() + 4000 + Math.random() * 8000;
+  else nextThunder = Infinity;
+  document.getElementById('hint').classList.add('gone');
+});
 
 /* 场景主题：0 山 · 1 海 · 2 城 */
 let theme = 0;

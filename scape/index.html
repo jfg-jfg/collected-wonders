@@ -498,6 +498,8 @@ function rebuildScenery() {
   embers = [];
 }
 let stars = [], clouds = [], raindrops = [], embers = [], snowflakes = [];
+let meteors = [];       // 夜间流星
+let nextMeteor = 0;
 function resize() {
   dpr = Math.min(window.devicePixelRatio || 1, 2);
   W = innerWidth; H = innerHeight;
@@ -531,6 +533,40 @@ function scene(dt) {
       ctx.fillStyle = `rgba(240,244,255,${(starA * tw * 0.85).toFixed(3)})`;
       ctx.fillRect(st.x, st.y, st.r, st.r);
     }
+    // 流星：深夜更密，雨雪时无
+    if (S.rain < 0.1 && S.snow < 0.3 && time > nextMeteor) {
+      nextMeteor = time + 6 + Math.random() * 20;
+      const nightDeep = Math.max(0, 1 - sky.L * 6);
+      meteors.push({
+        x: W * (0.15 + Math.random() * 0.7), y: H * (0.04 + Math.random() * 0.2),
+        vx: (Math.random() > 0.5 ? 1 : -1) * (420 + Math.random() * 300),
+        vy: 150 + Math.random() * 110,
+        life: 1
+      });
+      if (Math.random() < 0.4 * nightDeep) meteors.push({ // 偶发双流星
+        x: W * (0.15 + Math.random() * 0.7), y: H * (0.04 + Math.random() * 0.2),
+        vx: (Math.random() > 0.5 ? 1 : -1) * (420 + Math.random() * 300),
+        vy: 150 + Math.random() * 110, life: 1, delay: 0.4 + Math.random() * 0.5
+      });
+    }
+  }
+  for (let i = meteors.length - 1; i >= 0; i--) {
+    const m = meteors[i];
+    if (m.delay > 0) { m.delay -= dt; continue; }
+    m.x += m.vx * dt; m.y += m.vy * dt;
+    m.life -= dt * 0.85;
+    if (m.life <= 0 || m.y > H * 0.7) { meteors.splice(i, 1); continue; }
+    const a = Math.min(1, m.life * 1.6);
+    const tailX = m.x - m.vx * 0.16, tailY = m.y - m.vy * 0.16;
+    const mg = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
+    mg.addColorStop(0, `rgba(255,252,240,${(a * 0.9).toFixed(3)})`);
+    mg.addColorStop(1, 'rgba(255,252,240,0)');
+    ctx.strokeStyle = mg;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(m.x, m.y);
+    ctx.lineTo(tailX, tailY);
+    ctx.stroke();
   }
 
   // 日 / 月

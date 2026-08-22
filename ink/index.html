@@ -270,6 +270,7 @@
     <div><span class="k">Z / Ctrl+Z</span><span data-i18n="hUndo"></span></div>
     <div><span class="k">C</span><span data-i18n="hColor"></span></div>
     <div><span class="k" data-i18n="hAutoK"></span><span data-i18n="hAuto"></span></div>
+  <div><span class="k" data-i18n="hZoomK"></span><span data-i18n="hZoom"></span></div>
   <div><span class="k">W / S</span><span data-i18n="hWash"></span></div>
   </div>
 </div>
@@ -285,7 +286,7 @@
   <div class="row">
     <div class="ctrl">
       <label for="brushSize" data-i18n="brush"></label>
-      <input type="range" id="brushSize" min="0.1" max="1.4" step="0.02" value="0.5">
+      <input type="range" id="brushSize" min="0.02" max="1.4" step="0.01" value="0.5">
       <span class="val" id="brushSizeVal"></span>
     </div>
     <div class="ctrl">
@@ -302,12 +303,15 @@
     <button class="btn" id="undoBtn" data-i18n="undo"></button>
     <button class="btn" id="washBtn" data-i18n="wash"></button>
     <button class="btn" id="sealBtn" data-i18n="seal"></button>
+    <button class="btn" id="sealUpBtn" data-i18n="sealUp"></button>
+    <button class="btn" id="sealResetBtn" data-i18n="sealReset" style="display:none"></button>
     <button class="btn" id="saveBtn" data-i18n="save"></button>
     <button class="btn" id="albumBtn" data-i18n="album"></button>
   </div>
 </div>
 
 <div class="hint" id="hint" data-i18n="hint"></div>
+<input type="file" id="sealUpload" accept="image/*" style="display:none">
 
 <div class="album" id="albumOv">
   <div class="box">
@@ -351,7 +355,8 @@ const I18N = {
     hColor: '循环墨色', hWash: '洗纸 / 保存作品',
     hAutoK: '存档', hAuto: '画作自动存于本机，刷新可续',
     brush: '笔宽', density: '墨浓',
-    undo: '撤销', wash: '洗纸', seal: '印章', save: '保存', album: '画册',
+    undo: '撤销', wash: '洗纸', seal: '印章', sealUp: '印面', sealReset: '复原印', save: '保存', album: '画册',
+    hZoomK: '检视', hZoom: '滚轮缩放 · Shift拖移 · 双指捏合 · 0 复位',
     albumTitle: '画 册 · 八 页', albumSave: '存 入 本 页', albumClose: '合 上', albumEmpty: '＋',
     albumScroll: '导 出 长 卷', scrollTitle: '拾 遗 · 墨 册',
     albumLoaded: '✓ 已展开这一页', albumDeleted: '已撕去这一页',
@@ -375,7 +380,8 @@ const I18N = {
     hColor: 'cycle ink color', hWash: 'wash paper / save artwork',
     hAutoK: 'Archive', hAuto: 'auto-saved locally — refresh to resume',
     brush: 'Brush', density: 'Ink',
-    undo: 'Undo', wash: 'Wash', seal: 'Seal', save: 'Save', album: 'Album',
+    undo: 'Undo', wash: 'Wash', seal: 'Seal', sealUp: 'Seal Img', sealReset: 'Reset Seal', save: 'Save', album: 'Album',
+    hZoomK: 'View', hZoom: 'wheel zoom · Shift-drag pan · pinch · 0 reset',
     albumTitle: 'ALBUM · EIGHT PAGES', albumSave: 'SAVE TO THIS PAGE', albumClose: 'CLOSE', albumEmpty: '＋',
     albumScroll: 'EXPORT SCROLL', scrollTitle: '拾 遗 · 墨 册',
     albumLoaded: '✓ page restored', albumDeleted: 'page removed',
@@ -604,7 +610,7 @@ void main(){
   fragColor = vec4(vel, 0.0, 1.0);
 }`;
 
-/* 水墨显示：R=墨密度，G=密度×色相坐标 → 四色颜料渐变 */
+/* 水墨显示：R=墨密度，G=密度×色相坐标 → 四色颜料渐变；支持纸面缩放平移 */
 const FRAG_DISPLAY = `#version 300 es
 precision highp float;
 in vec2 vUv; in vec2 vL; in vec2 vR; in vec2 vT; in vec2 vB; out vec4 fragColor;
@@ -613,6 +619,8 @@ uniform sampler2D uPaper;
 uniform vec2 texelSize;
 uniform float flatPaper;
 uniform vec3 paperTint;
+uniform float uZoom;
+uniform vec2 uViewC;
 
 vec3 pigment(float t){
   vec3 black = vec3(0.44, 0.46, 0.53);   /* 玄墨 */
@@ -625,11 +633,17 @@ vec3 pigment(float t){
   return c;
 }
 void main(){
-  vec4 s  = texture(uDye, vUv);
-  vec4 sL = texture(uDye, vL);
-  vec4 sR = texture(uDye, vR);
-  vec4 sT = texture(uDye, vT);
-  vec4 sB = texture(uDye, vB);
+  /* 视图变换：屏幕 uv → 纸面 uv */
+  vec2 uv = (vUv - vec2(0.5)) / uZoom + uViewC;
+  vec2 texel = texelSize / uZoom;
+  vec2 L = uv - vec2(texel.x, 0.0), R = uv + vec2(texel.x, 0.0);
+  vec2 T = uv + vec2(0.0, texel.y), B = uv - vec2(0.0, texel.y);
+  bool inside = uv.x >= 0.0 && uv.x <= 1.0 && uv.y >= 0.0 && uv.y <= 1.0;
+  vec4 s  = inside ? texture(uDye, uv) : vec4(0.0);
+  vec4 sL = texture(uDye, clamp(L, vec2(0.001), vec2(0.999)));
+  vec4 sR = texture(uDye, clamp(R, vec2(0.001), vec2(0.999)));
+  vec4 sT = texture(uDye, clamp(T, vec2(0.001), vec2(0.999)));
+  vec4 sB = texture(uDye, clamp(B, vec2(0.001), vec2(0.999)));
 
   float d = s.x;
   float grad = abs(sL.x - sR.x) + abs(sT.x - sB.x);
@@ -644,7 +658,7 @@ void main(){
   inkTone = mix(inkTone, heavy, smoothstep(0.55, 1.2, d));
 
   float coverage = smoothstep(0.015, 0.42, d);
-  vec3 paper = flatPaper > 0.5 ? vec3(1.0) : texture(uPaper, vUv).rgb * paperTint;
+  vec3 paper = flatPaper > 0.5 ? vec3(1.0) : texture(uPaper, uv).rgb * paperTint;
   float grain = 0.88 + 0.24 * paper.g;
   inkTone *= mix(1.0, grain, coverage * (1.0 - flatPaper));
 
@@ -826,7 +840,14 @@ const BRUSHES = [
   { force: 0.7,  radiusMul: 1.25, dyeMul: 0.8 },
   { force: 0.85, radiusMul: 1.05, dyeMul: 1.0 }
 ];
-const brushRadius = () => (0.004 + Math.pow(brushSize, 1.55) * 0.055) * BRUSHES[brushType].radiusMul;
+const brushRadius = () => (0.0004 + Math.pow(brushSize, 1.75) * 0.055) * BRUSHES[brushType].radiusMul;
+/* 纸面视图：缩放与平移（dye-uv 空间） */
+const view = { zoom: 1, cx: 0.5, cy: 0.5 };
+function resetView() { view.zoom = 1; view.cx = 0.5; view.cy = 0.5; renderSeals(); }
+/* 屏幕 uv → 纸面 uv */
+function screenToDye(u, v) {
+  return [(u - 0.5) / view.zoom + view.cx, (v - 0.5) / view.zoom + view.cy];
+}
 
 /* ---------------- 撤销栈 ---------------- */
 const undoStack = [];
@@ -894,7 +915,9 @@ const cursorEl = document.getElementById('brushCursor');
 
 function evtPos(e) {
   const r = canvas.getBoundingClientRect();
-  return [(e.clientX - r.left) / r.width, 1 - (e.clientY - r.top) / r.height];
+  const u = (e.clientX - r.left) / r.width;
+  const v = 1 - (e.clientY - r.top) / r.height;
+  return screenToDye(u, v);
 }
 function pressureOf(e) {
   return (e.pressure && e.pressure > 0) ? e.pressure : 0.5;
@@ -923,7 +946,8 @@ function stats(nStrokes, nSaved) {
 }
 
 canvas.addEventListener('pointerdown', e => {
-  if (sealMode) { stampSeal(e.clientX, e.clientY); return; }
+  if (sealMode) { if (!e.shiftKey && e.button !== 1) stampSeal(e.clientX, e.clientY); return; }
+  if (e.shiftKey || e.button === 1 || pointers.size > 1) return;
   pointerDown = true;
   const [x, y] = evtPos(e);
   lastX = x; lastY = y; lastT = performance.now();
@@ -973,66 +997,196 @@ canvas.addEventListener('pointermove', e => {
 window.addEventListener('pointerup', () => pointerDown = false);
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-/* 笔刷预览光标：真实半径可视化 */
+/* 笔刷预览光标：真实半径可视化（随缩放显示实际落墨范围） */
 window.addEventListener('pointermove', e => {
-  if (sealMode || e.target !== canvas) { cursorEl.style.display = 'none'; return; }
-  const rPx = 2.4 * Math.sqrt(brushRadius()) * canvas.clientHeight;
+  if (sealMode || e.target !== canvas || pointers.size > 1 || panning) { cursorEl.style.display = 'none'; return; }
+  const rPx = 2.4 * Math.sqrt(brushRadius()) * view.zoom * canvas.clientHeight;
   cursorEl.style.display = 'block';
-  cursorEl.style.width = cursorEl.style.height = Math.max(8, Math.round(rPx * 2)) + 'px';
+  cursorEl.style.width = cursorEl.style.height = Math.max(5, Math.round(rPx * 2)) + 'px';
   cursorEl.style.left = e.clientX + 'px';
   cursorEl.style.top = e.clientY + 'px';
   cursorEl.classList.toggle('water', brushType === 3);
 });
 canvas.addEventListener('pointerleave', () => cursorEl.style.display = 'none');
 
+/* ---------------- 纸面缩放平移 ---------------- */
+const pointers = new Map();   // 活动触点（双指缩放）
+let panning = false, panStart = null;
+canvas.addEventListener('wheel', e => {
+  if (sealMode) return;
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  const u = (e.clientX - r.left) / r.width;
+  const v = 1 - (e.clientY - r.top) / r.height;
+  const f = Math.exp(-e.deltaY * 0.0016);
+  const nz = Math.max(0.5, Math.min(10, view.zoom * f));
+  // 光标处纸面点保持不动
+  const [dx, dy] = screenToDye(u, v);
+  view.cx = dx - (u - 0.5) / nz;
+  view.cy = dy - (v - 0.5) / nz;
+  view.zoom = nz;
+  lastInteract = performance.now();
+  renderSeals();
+}, { passive: false });
+canvas.addEventListener('pointerdown', e => {
+  pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pointers.size === 2) { pointerDown = false; cursorEl.style.display = 'none'; }
+});
+canvas.addEventListener('pointermove', e => {
+  if (!pointers.has(e.pointerId)) return;
+  const prevPt = pointers.get(e.pointerId);
+  pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pointers.size === 2) {
+    // 双指：缩放 + 平移
+    const [a, b] = [...pointers.values()];
+    const dist = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    if (canvas._pinch) {
+      const r = canvas.getBoundingClientRect();
+      const mu = ((a[0] + b[0]) / 2 - r.left) / r.width;
+      const mv = 1 - ((a[1] + b[1]) / 2 - r.top) / r.height;
+      const nz = Math.max(0.5, Math.min(10, view.zoom * dist / canvas._pinch));
+      const [dx, dy] = screenToDye(mu, mv);
+      view.cx = dx - (mu - 0.5) / nz;
+      view.cy = dy - (mv - 0.5) / nz;
+      view.zoom = nz;
+    }
+    canvas._pinch = dist;
+  } else if (panning && panStart) {
+    // Shift/中键 拖拽平移
+    view.cx = panStart.cx - (e.clientX - panStart.x) / canvas.clientWidth / view.zoom;
+    view.cy = panStart.cy + (e.clientY - panStart.y) / canvas.clientHeight / view.zoom;
+    renderSeals();
+  }
+  if (panning) e.preventDefault?.();
+}, { passive: false });
+window.addEventListener('pointerup', e => {
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) canvas._pinch = null;
+  if (panning) { panning = false; panStart = null; }
+});
+canvas.addEventListener('pointerdown', e => {
+  if (e.shiftKey || e.button === 1) {
+    panning = true;
+    panStart = { x: e.clientX, y: e.clientY, cx: view.cx, cy: view.cy };
+    e.preventDefault();
+  }
+});
+
 /* ---------------- 洗纸 ---------------- */
 let washFrames = 0;
 function wash() {
   if (washFrames === 0) snapshotDye();
   washFrames = 48;
-  overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+  seals = [];
+  renderSeals();
 }
 document.getElementById('washBtn').addEventListener('click', wash);
 
-/* ---------------- 印章 ---------------- */
+/* ---------------- 印章（视图跟随 + 可上传图章） ---------------- */
 const overlay = document.getElementById('overlay');
 const overlayCtx = overlay.getContext('2d');
 let sealMode = false;
+let seals = [];      // {x, y 为纸面uv, size, rot, img}
+let sealImg = null;  // 用户上传的印面
+try {
+  const d = localStorage.getItem('ink-seal-img');
+  if (d) { sealImg = new Image(); sealImg.src = d; }
+} catch (e) { /* 忽略 */ }
 const sealBtn = document.getElementById('sealBtn');
 sealBtn.addEventListener('click', () => {
   sealMode = !sealMode;
   sealBtn.classList.toggle('seal-on', sealMode);
   document.body.classList.toggle('seal-mode', sealMode);
 });
-function stampSeal(cx, cy) {
-  const size = 56 + Math.random() * 10;
-  const rot = (Math.random() - 0.5) * 0.16;
-  overlayCtx.save();
-  overlayCtx.translate(cx, cy);
-  overlayCtx.rotate(rot);
-  overlayCtx.fillStyle = INKS[inkIdx].tint > 0.9 ? '#2f4a7d' : '#b03a2e';
-  roundRect(overlayCtx, -size / 2, -size / 2, size, size, 5);
-  overlayCtx.fill();
-  overlayCtx.strokeStyle = 'rgba(246,242,231,0.85)';
-  overlayCtx.lineWidth = 1.4;
-  roundRect(overlayCtx, -size / 2 + 4, -size / 2 + 4, size - 8, size - 8, 3);
-  overlayCtx.stroke();
-  overlayCtx.fillStyle = '#f6f2e7';
-  overlayCtx.textAlign = 'center';
-  overlayCtx.textBaseline = 'middle';
-  overlayCtx.font = `${Math.round(size * 0.42)}px "KaiTi", "STKaiti", "Songti SC", "SimSun", serif`;
-  overlayCtx.fillText('拾', 0, -size * 0.21);
-  overlayCtx.fillText('遗', 0, size * 0.21);
-  overlayCtx.globalCompositeOperation = 'destination-out';
+function drawVectorSeal(ctx, size) {
+  ctx.fillStyle = INKS[inkIdx].tint > 0.9 ? '#2f4a7d' : '#b03a2e';
+  roundRect(ctx, -size / 2, -size / 2, size, size, 5);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(246,242,231,0.85)';
+  ctx.lineWidth = 1.4;
+  roundRect(ctx, -size / 2 + 4, -size / 2 + 4, size - 8, size - 8, 3);
+  ctx.stroke();
+  ctx.fillStyle = '#f6f2e7';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `${Math.round(size * 0.42)}px "KaiTi", "STKaiti", "Songti SC", "SimSun", serif`;
+  ctx.fillText('拾', 0, -size * 0.21);
+  ctx.fillText('遗', 0, size * 0.21);
+  ctx.globalCompositeOperation = 'destination-out';
   for (let i = 0; i < 26; i++) {
     const a = Math.random() * Math.PI * 2, r = size * (0.2 + Math.random() * 0.32);
-    overlayCtx.beginPath();
-    overlayCtx.arc(Math.cos(a) * r, Math.sin(a) * r, Math.random() * 1.8, 0, Math.PI * 2);
-    overlayCtx.fillStyle = 'rgba(0,0,0,' + (0.25 + Math.random() * 0.5) + ')';
-    overlayCtx.fill();
+    ctx.beginPath();
+    ctx.arc(Math.cos(a) * r, Math.sin(a) * r, Math.random() * 1.8, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,' + (0.25 + Math.random() * 0.5) + ')';
+    ctx.fill();
   }
-  overlayCtx.restore();
+  ctx.globalCompositeOperation = 'source-over';
+}
+/* 把印章重绘到 overlay（dpr 校正 + 视图变换，修复位置不一致） */
+function renderSeals() {
+  overlayCtx.setTransform(1, 0, 0, 1, 0, 0);
+  overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+  const dpr = canvas.clientWidth ? overlay.width / canvas.clientWidth : 1;
+  overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  for (const s of seals) {
+    const px = ((s.x - view.cx) * view.zoom + 0.5) * canvas.clientWidth;
+    const py = (1 - ((s.y - view.cy) * view.zoom + 0.5)) * canvas.clientHeight;
+    const size = s.size * view.zoom;
+    if (px < -size || py < -size || px > canvas.clientWidth + size || py > canvas.clientHeight + size) continue;
+    overlayCtx.save();
+    overlayCtx.translate(px, py);
+    overlayCtx.rotate(s.rot);
+    if (s.img && s.img.complete && s.img.naturalWidth) {
+      overlayCtx.drawImage(s.img, -size / 2, -size / 2, size, size);
+    } else {
+      drawVectorSeal(overlayCtx, size);
+    }
+    overlayCtx.restore();
+  }
+}
+function stampSeal(clientX, clientY) {
+  const r = canvas.getBoundingClientRect();
+  const u = (clientX - r.left) / r.width;
+  const v = 1 - (clientY - r.top) / r.height;
+  const [dx, dy] = screenToDye(u, v);
+  seals.push({ x: dx, y: dy, size: 56 + Math.random() * 10, rot: (Math.random() - 0.5) * 0.16, img: sealImg });
+  renderSeals();
   lastInteract = performance.now();
+}
+/* 上传印面图片（160px 降采样存 localStorage） */
+const sealUpload = document.getElementById('sealUpload');
+document.getElementById('sealUpBtn').addEventListener('click', () => sealUpload.click());
+sealUpload.addEventListener('change', () => {
+  const f = sealUpload.files && sealUpload.files[0];
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    const im = new Image();
+    im.onload = () => {
+      const c = document.createElement('canvas');
+      const sc = Math.min(1, 160 / Math.max(im.width, im.height));
+      c.width = Math.max(1, Math.round(im.width * sc));
+      c.height = Math.max(1, Math.round(im.height * sc));
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      const url = c.toDataURL('image/png');
+      try { localStorage.setItem('ink-seal-img', url); } catch (e) { /* 超限时忽略 */ }
+      sealImg = new Image();
+      sealImg.onload = () => updSealUpBtn();
+      sealImg.src = url;
+      updSealUpBtn();
+    };
+    im.src = rd.result;
+  };
+  rd.readAsDataURL(f);
+  sealUpload.value = '';
+});
+document.getElementById('sealResetBtn').addEventListener('click', () => {
+  try { localStorage.removeItem('ink-seal-img'); } catch (e) {}
+  sealImg = null;
+  updSealUpBtn();
+});
+function updSealUpBtn() {
+  document.getElementById('sealResetBtn').style.display = sealImg ? '' : 'none';
 }
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -1057,10 +1211,16 @@ function ganzhi(y) {
 async function saveArtwork() {
   const W = 2048;
   const H = Math.round(W / (canvas.width / canvas.height));
+  // 导出用恒等视图（全幅纸面），印章同步重绘
+  const vSave = { ...view };
+  view.zoom = 1; view.cx = 0.5; view.cy = 0.5;
+  renderSeals();
   flatPaperNext = true;
   renderFrame(0.016, true);
   flatPaperNext = false;
   const inkURL = canvas.toDataURL('image/png');
+  Object.assign(view, vSave);
+  renderSeals();
   const inkImg = new Image();
   await new Promise(res => { inkImg.onload = res; inkImg.src = inkURL; });
   const P = PAPERS[paperIdx];
@@ -1445,6 +1605,9 @@ function renderFrame(dt, forceFlat) {
   gl.uniform1i(progDisplay.uni.uPaper, 1);
   gl.uniform1f(progDisplay.uni.flatPaper, forceFlat || flatPaperNext ? 1.0 : 0.0);
   gl.uniform3f(progDisplay.uni.paperTint, P.tint[0], P.tint[1], P.tint[2]);
+  const z = forceFlat || flatPaperNext ? 1 : view.zoom;
+  gl.uniform1f(progDisplay.uni.uZoom, z);
+  gl.uniform2f(progDisplay.uni.uViewC, forceFlat || flatPaperNext ? 0.5 : view.cx, forceFlat || flatPaperNext ? 0.5 : view.cy);
   blit(null);
 }
 
@@ -1466,6 +1629,7 @@ function resize() {
   if (canvas.width !== w || canvas.height !== h) {
     canvas.width = w; canvas.height = h;
     overlay.width = w; overlay.height = h;
+    renderSeals();
   }
 }
 window.addEventListener('resize', resize);
@@ -1520,8 +1684,9 @@ document.getElementById('undoBtn').addEventListener('click', undo);
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   const k = e.key.toLowerCase();
-  if (k === '[') { brushSize = Math.max(0.1, brushSize - 0.08); brushSizeEl.value = brushSize; updSizeVal(); }
-  else if (k === ']') { brushSize = Math.min(1.4, brushSize + 0.08); brushSizeEl.value = brushSize; updSizeVal(); }
+  if (k === '[') { brushSize = Math.max(0.02, brushSize - 0.06); brushSizeEl.value = brushSize; updSizeVal(); }
+  else if (k === ']') { brushSize = Math.min(1.4, brushSize + 0.06); brushSizeEl.value = brushSize; updSizeVal(); }
+  else if (k === '0') { resetView(); }
   else if (k === '1' || k === '2' || k === '3' || k === '4') { brushType = +k - 1; buildChips(); }
   else if (k === 'z') { undo(); }
   else if (k === 'c') { inkIdx = (inkIdx + 1) % INKS.length; buildChips(); }
@@ -1543,6 +1708,7 @@ document.getElementById('helpBtn').addEventListener('click', () => helpPanel.cla
 applyI18n();
 updSizeVal();
 updateUndoBtn();
+updSealUpBtn();
 resize();
 // 续档：有存档则恢复，无则落开卷三笔
 loadArtArchive().then(ok => {

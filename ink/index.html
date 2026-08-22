@@ -728,8 +728,38 @@ function simDims(base) {
   return aspect >= 1 ? [max, min] : [min, max];
 }
 /* 自适应染料分辨率：小屏（手机）降载，大屏保持 1024 */
-const DYE_RES = Math.min(1024, Math.max(640, Math.round(Math.min(screen.width, screen.height) * 1.6)));
-const SIM_RES = 144, PRESSURE_ITERS = 24;
+let DYE_RES = Math.min(1024, Math.max(560, Math.round(Math.min(screen.width, screen.height) * 1.4)));
+let SIM_RES = 112, PRESSURE_ITERS = 12;
+/* 动态降质：帧时间超阈值时逐步降低 */
+let qualityLevel = 2;  // 2=高 1=中 0=低
+let frameTimes = [];
+function updateQuality(dt) {
+  frameTimes.push(dt);
+  if (frameTimes.length < 30) return;
+  const avg = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length;
+  frameTimes = [];
+  const ms = avg * 1000;
+  if (ms > 22 && qualityLevel > 0) {
+    qualityLevel--;
+    applyQuality();
+  } else if (ms < 10 && qualityLevel < 2) {
+    qualityLevel++;
+    applyQuality();
+  }
+}
+function applyQuality() {
+  switch (qualityLevel) {
+    case 2: PRESSURE_ITERS = 12; SIM_RES = 112; break;
+    case 1: PRESSURE_ITERS = 8;  SIM_RES = 96;  break;
+    case 0: PRESSURE_ITERS = 5;  SIM_RES = 72;  break;
+  }
+  // 重建模拟网格
+  const [sw, sh] = simDims(SIM_RES);
+  velocity = createDoubleFBO(sw, sh);
+  divergence = createFBO(sw, sh);
+  curl = createFBO(sw, sh);
+  pressure = createDoubleFBO(sw, sh);
+}
 let dye, velocity, divergence, curl, pressure;
 {
   const [dw, dh] = simDims(DYE_RES);
@@ -1572,19 +1602,23 @@ function idleDrop(now, dt) {
 function step(dt) {
   const P = PAPERS[paperIdx];
   gl.disable(gl.BLEND);
+  updateQuality(dt);
 
-  gl.useProgram(progCurl.p);
-  gl.uniform2f(progCurl.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-  gl.uniform1i(progCurl.uni.uVelocity, velocity.read.attach(0));
-  blit(curl);
+  // 低配跳过涡度约束（两趟全屏 pass）
+  if (qualityLevel > 0) {
+    gl.useProgram(progCurl.p);
+    gl.uniform2f(progCurl.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+    gl.uniform1i(progCurl.uni.uVelocity, velocity.read.attach(0));
+    blit(curl);
 
-  gl.useProgram(progVorticity.p);
-  gl.uniform2f(progVorticity.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-  gl.uniform1i(progVorticity.uni.uVelocity, velocity.read.attach(0));
-  gl.uniform1i(progVorticity.uni.uCurl, curl.attach(1));
-  gl.uniform1f(progVorticity.uni.curl, P.curl);
-  gl.uniform1f(progVorticity.uni.dt, dt);
-  blit(velocity.write); velocity.swap();
+    gl.useProgram(progVorticity.p);
+    gl.uniform2f(progVorticity.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+    gl.uniform1i(progVorticity.uni.uVelocity, velocity.read.attach(0));
+    gl.uniform1i(progVorticity.uni.uCurl, curl.attach(1));
+    gl.uniform1f(progVorticity.uni.curl, P.curl);
+    gl.uniform1f(progVorticity.uni.dt, dt);
+    blit(velocity.write); velocity.swap();
+  }
 
   gl.useProgram(progDivergence.p);
   gl.uniform2f(progDivergence.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);

@@ -145,6 +145,7 @@
     <svg class="ring" viewBox="0 0 20 20"><circle id="ringBg" cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2"/><circle id="ringFg" cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="50.3" stroke-dashoffset="50.3" transform="rotate(-90 10 10)"/></svg><span id="timerTxt">25:00</span>
   </button>
   <button class="btn-ghost" id="sleepBtn" title="">☾ ∞</button>
+  <button class="btn-ghost" id="seasonBtn">🌸 樱</button>
   <button class="btn-ghost" id="flowBtn">⏳ 流转</button>
   <button class="btn-ghost" id="recBtn">● 录</button>
   <button class="btn-ghost" id="langBtn">EN</button>
@@ -182,6 +183,7 @@ const I18N = {
     sleepTip: '睡眠渐弱', paused: '已暂停 · 空格继续',
     rec: '● 录', recStop: '■ 停止', recDone: '✓ 录像已保存', recFail: '此浏览器不支持录制',
     flowOn: '⏳ 流转 · 开', flowOff: '⏳ 流转', flowTip: '时光流转：昼夜每 4 分钟一轮回',
+    seasons: ['无花', '春樱', '秋枫'], seasonTip: '季节花瓣',
     timer: ['专注 25 分', '专注 45 分', '专注 60 分', '取消计时'],
     timeNames: ['夜', '晨', '昼', '暮'],
     sndTip: '点任意滑杆开启声音'
@@ -199,6 +201,7 @@ const I18N = {
     sleepTip: 'sleep fade', paused: 'PAUSED · SPACE TO RESUME',
     rec: '● REC', recStop: '■ STOP', recDone: '✓ recording saved', recFail: 'recording unsupported here',
     flowOn: '⏳ FLOW ON', flowOff: '⏳ FLOW', flowTip: 'time flows — a full day every 4 minutes',
+    seasons: ['NONE', 'SAKURA', 'MAPLE'], seasonTip: 'seasonal petals',
     timer: ['FOCUS 25', 'FOCUS 45', 'FOCUS 60', 'CANCEL'],
     timeNames: ['NIGHT', 'DAWN', 'DAY', 'DUSK'],
     sndTip: 'touch any dial to start sound'
@@ -504,11 +507,16 @@ function rebuildScenery() {
   snowflakes = [];
   for (let i = 0; i < 190; i++)
     snowflakes.push({ x: Math.random() * W, y: Math.random() * H, v: 26 + Math.random() * 52, r: 1 + Math.random() * 2.4, p: Math.random() * Math.PI * 2 });
+  petals = [];
+  for (let i = 0; i < 90; i++)
+    petals.push({ x: Math.random() * W, y: Math.random() * H, v: 18 + Math.random() * 30, s: 2.5 + Math.random() * 3, p: Math.random() * Math.PI * 2, spin: Math.random() * Math.PI * 2 });
   embers = [];
 }
-let stars = [], clouds = [], raindrops = [], embers = [], snowflakes = [];
+let stars = [], clouds = [], raindrops = [], embers = [], snowflakes = [], petals = [];
 let meteors = [];       // 夜间流星
 let nextMeteor = 0;
+let season = 0;         // 0 无 1 春樱 2 秋枫
+let petals = [];
 function resize() {
   dpr = Math.min(window.devicePixelRatio || 1, 2);
   W = innerWidth; H = innerHeight;
@@ -703,6 +711,27 @@ function scene(dt) {
     sgr.addColorStop(1, `rgba(235,242,252,${sgA.toFixed(3)})`);
     ctx.fillStyle = sgr;
     ctx.fillRect(0, H * 0.9, W, H * 0.1);
+  }
+
+  // 季节花瓣：春樱（粉）或秋枫（橙），随风旋落
+  if (season > 0) {
+    const col = season === 1 ? '255,183,197' : '226,138,72';
+    for (const pt of petals) {
+      pt.y += pt.v * dt;
+      pt.x += Math.sin(time * 1.1 + pt.p) * 22 * dt + S.wind * 70 * dt;
+      pt.spin += dt * 2.2;
+      if (pt.y > H + 8) { pt.y = -8; pt.x = Math.random() * W; }
+      if (pt.x > W + 8) pt.x -= W + 16;
+      if (pt.x < -8) pt.x += W + 16;
+      ctx.save();
+      ctx.translate(pt.x, pt.y);
+      ctx.rotate(pt.spin + Math.sin(time + pt.p));
+      ctx.fillStyle = `rgba(${col},${(0.5 + 0.3 * Math.sin(pt.p + time)).toFixed(3)})`;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, pt.s, pt.s * 0.55, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
   }
 
   // 篝火（右下角）
@@ -1078,6 +1107,7 @@ function applyI18n() {
   document.title = lang === 'zh' ? '造境 · SCAPE — 程序化声景' : 'SCAPE — procedural soundscape';
   document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
   if (!recorder) document.getElementById('recBtn').textContent = T().rec;
+  updSeasonBtn();
   updFlowBtn();
   document.getElementById('hint').textContent = T().hint;
   updTimerUI();
@@ -1124,6 +1154,15 @@ function wake() {
   }
 }
 window.addEventListener('pointerdown', wake);
+
+/* 季节花瓣 */
+const seasonBtn = document.getElementById('seasonBtn');
+function updSeasonBtn() {
+  seasonBtn.textContent = season === 1 ? '🌸 樱' : season === 2 ? '🍁 枫' : '🍃 季';
+  seasonBtn.title = T().seasonTip;
+  seasonBtn.classList.toggle('on', season > 0);
+}
+seasonBtn.addEventListener('click', () => { season = (season + 1) % 3; updSeasonBtn(); });
 
 /* 时光流转 */
 let timeFlow = false;

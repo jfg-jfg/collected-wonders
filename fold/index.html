@@ -346,7 +346,9 @@ resize();
 function render() {
   const [xh, xl] = split64(view.x);
   const [yh, yl] = split64(view.y);
-  const iter = Math.min(2000, Math.round(160 + 42 * Math.log2(3 / view.s) * 0.5 + 80));
+  // 交互期降迭代：拖拽/缩放进行中减负，静止后恢复全质量
+  const busy = dragStart !== null || fly !== null || Math.abs(view.s - target.s) / target.s > 0.01;
+  const iter = Math.min(2000, Math.round((160 + 42 * Math.log2(3 / view.s) * 0.5 + 80) * (busy ? 0.45 : 1)));
   const [cxh, cxl] = split64(juliaC.x);
   const [cyh, cyl] = split64(juliaC.y);
   gl.uniform2f(U.uCenterX, xh, xl);

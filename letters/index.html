@@ -303,6 +303,7 @@
   <div class="sel-sub" id="selSub"></div>
   <div class="story-list" id="storyList"></div>
   <div class="sel-actions">
+    <button class="btn-sub" id="writeBtn"></button>
     <button class="btn-sub" id="importBtn"></button>
     <button class="btn-sub" id="aiBtn"></button>
   </div>
@@ -360,11 +361,38 @@
 <div class="io-ov" id="aiOv">
   <div class="box">
     <h3 id="aiTitle"></h3>
+    <div style="display:flex;gap:14px;margin-top:12px;flex-wrap:wrap;align-items:center;font-size:12px;color:rgba(236,229,210,0.7)">
+      <label><span id="aiLenL"></span> <input type="range" id="aiLen" min="4" max="16" step="1" value="8" style="vertical-align:middle;width:80px"> <b id="aiLenV">8</b></label>
+      <label><span id="aiEndL"></span> <input type="range" id="aiEnd" min="1" max="6" step="1" value="3" style="vertical-align:middle;width:60px"> <b id="aiEndV">3</b></label>
+    </div>
+    <input type="text" id="aiExtra" spellcheck="false" style="width:100%;margin-top:8px;background:rgba(7,9,13,0.8);color:#cfe0d8;border:1px solid rgba(240,232,214,0.14);border-radius:6px;font-family:inherit;font-size:12px;padding:8px 10px;outline:none" placeholder="">
     <div class="tip" id="aiTip"></div>
     <textarea id="aiText" spellcheck="false" readonly></textarea>
     <div class="io-acts">
       <button class="btn-main" id="aiCopy"></button>
       <button class="btn-sub" id="aiClose"></button>
+    </div>
+  </div>
+</div>
+
+<div class="io-ov" id="writeOv">
+  <div class="box" style="max-height:92vh">
+    <h3 id="wrTitle"></h3>
+    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+      <input type="text" id="wrTitleIn" style="flex:1;min-width:140px;background:rgba(7,9,13,0.8);color:#cfe0d8;border:1px solid rgba(240,232,214,0.14);border-radius:6px;font-family:inherit;font-size:13px;padding:8px 10px;outline:none" spellcheck="false">
+      <input type="text" id="wrKickerIn" style="flex:1;min-width:140px;background:rgba(7,9,13,0.8);color:#cfe0d8;border:1px solid rgba(240,232,214,0.14);border-radius:6px;font-family:inherit;font-size:13px;padding:8px 10px;outline:none" spellcheck="false">
+    </div>
+    <textarea id="wrDescIn" rows="2" style="width:100%;margin-top:8px;background:rgba(7,9,13,0.8);color:#cfe0d8;border:1px solid rgba(240,232,214,0.14);border-radius:6px;font-family:inherit;font-size:12px;padding:8px;outline:none;resize:none" spellcheck="false"></textarea>
+    <div id="wrStyleSel" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"></div>
+    <div style="margin-top:10px;font-size:12px;letter-spacing:0.2em;color:var(--gold)" id="wrLettersL"></div>
+    <div id="wrLetterList" style="margin-top:6px;max-height:300px;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button class="btn-sub" id="wrAddLetter" style="font-size:12px;padding:8px 16px">＋ 信</button>
+      <button class="btn-sub" id="wrAddEnding" style="font-size:12px;padding:8px 16px">＋ 结局</button>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn-main" id="wrSave" style="font-size:13px;padding:10px 24px"></button>
+      <button class="btn-sub" id="wrClose"></button>
     </div>
   </div>
 </div>
@@ -396,7 +424,22 @@ window.addEventListener('error', e => {
 const UI = {
   zh: {
     selSub: '三个信箱 · 或导入你的故事',
-    importB: '导 入 故 事', aiB: '让 AI 写一个',
+    importB: '导 入 故 事', aiB: '让 AI 写一个', writeB: '✎ 手 写 故 事',
+    aiLenL: '信件数', aiEndL: '结局数', aiExtraPh: '额外要求（可选：风格/题材/情感基调…）',
+    aiTip2: '调好参数 → 复制提示词 → 发给任意 AI → 粘回导入。',
+    wrTitleT: '手 写 故 事', wrTitlePh: '故事名…', wrKickerPh: '一句话引子…', wrDescPh: '开场简介…',
+    wrLettersL: '信件（拖序无效，按添加顺序阅读）', wrAddL: '＋ 信', wrAddE: '＋ 结局',
+    wrSaveB: '保 存 并 游 玩', wrCloseB: '关 闭',
+    wrYrPh: '年份/日期…', wrTiPh: '信题…', wrTxPh: '信的正文…',wrRpPh: '回信选项（每行一条，→节点ID如 n3 或 E1）',
+    wrEndTiPh: '结局名…', wrEndTxPh: '结局正文…', wrStyleL: '信纸风格',
+    styles: ['素笺', '蓝笺', '暗笺', '绢黄'],
+    styleDefs: [
+      { n: '素笺', paper: '#f0e8d6', ink: '#33302a', seal: '#9e3528', gold: '#d9b57c', ruling: 'rgba(130,108,64,0.09)', bg1: '#101a20', bg2: '#1a2732', font: '"Songti SC","SimSun",serif' },
+      { n: '蓝笺', paper: '#e9eef3', ink: '#2e3a46', seal: '#4a7a9b', gold: '#8fb4d4', ruling: 'rgba(90,120,150,0.10)', bg1: '#141c26', bg2: '#1f2c3c', font: '"KaiTi","STKaiti",serif' },
+      { n: '暗笺', paper: '#0e1d17', ink: '#a8cdbd', seal: '#e07a5f', gold: '#7fd8cf', ruling: null, bg1: '#060d0a', bg2: '#0c1a14', font: '"FangSong","STFangsong",serif' },
+      { n: '绢黄', paper: '#f4ecd4', ink: '#4a3c28', seal: '#8b6914', gold: '#c9a227', ruling: 'rgba(160,130,60,0.08)', bg1: '#1a1608', bg2: '#2a2410', font: '"Songti SC","SimSun",serif' }
+    ],
+    fragPh: '✎ 碎片台词'
     start: '拆 开 第 一 封 信', cont: '继 续 读 信', again: '再 读 一 遍',
     stack: '信 堆', shareStory: '分享此故事',
     openHint: '点 击 拆 封', replyQ: '—— 你 要 如 何 回 信 ——',
@@ -417,7 +460,22 @@ const UI = {
   },
   en: {
     selSub: 'three mailboxes · or import your own',
-    importB: 'IMPORT STORY', aiB: 'ASK AN AI',
+    importB: 'IMPORT STORY', aiB: 'ASK AN AI', writeB: '✎ WRITE A STORY',
+    aiLenL: 'Letters', aiEndL: 'Endings', aiExtraPh: 'Extra requirements (optional: style/theme/tone…)',
+    aiTip2: 'Set parameters → copy prompt → send to any AI → paste into Import.',
+    wrTitleT: 'WRITE A STORY', wrTitlePh: 'Story title…', wrKickerPh: 'One-line kicker…', wrDescPh: 'Opening…',
+    wrLettersL: 'Letters (read in order added)', wrAddL: '＋ Letter', wrAddE: '＋ Ending',
+    wrSaveB: 'SAVE & PLAY', wrCloseB: 'CLOSE',
+    wrYrPh: 'Year/date…', wrTiPh: 'Letter title…', wrTxPh: 'Letter body…', wrRpPh: 'Reply options (one per line, → node ID like n3 or E1)',
+    wrEndTiPh: 'Ending title…', wrEndTxPh: 'Ending text…', wrStyleL: 'Paper style',
+    styles: ['Plain', 'Blue', 'Dark', 'Silk'],
+    styleDefs: [
+      { n: 'Plain', paper: '#f0e8d6', ink: '#33302a', seal: '#9e3528', gold: '#d9b57c', ruling: 'rgba(130,108,64,0.09)', bg1: '#101a20', bg2: '#1a2732', font: '"Songti SC","SimSun",serif' },
+      { n: 'Blue', paper: '#e9eef3', ink: '#2e3a46', seal: '#4a7a9b', gold: '#8fb4d4', ruling: 'rgba(90,120,150,0.10)', bg1: '#141c26', bg2: '#1f2c3c', font: '"KaiTi","STKaiti",serif' },
+      { n: 'Dark', paper: '#0e1d17', ink: '#a8cdbd', seal: '#e07a5f', gold: '#7fd8cf', ruling: null, bg1: '#060d0a', bg2: '#0c1a14', font: '"FangSong","STFangsong",serif' },
+      { n: 'Silk', paper: '#f4ecd4', ink: '#4a3c28', seal: '#8b6914', gold: '#c9a227', ruling: 'rgba(160,130,60,0.08)', bg1: '#1a1608', bg2: '#2a2410', font: '"Songti SC","SimSun",serif' }
+    ],
+    fragPh: '✎ Fragment lines'
     start: 'OPEN THE FIRST LETTER', cont: 'CONTINUE', again: 'READ AGAIN',
     stack: 'STACK', shareStory: 'SHARE STORY',
     openHint: 'CLICK TO UNSEAL', replyQ: '— HOW WILL YOU REPLY —',
@@ -538,6 +596,7 @@ function buildSelect() {
   document.getElementById('selSub').textContent = T().selSub;
   document.getElementById('importBtn').textContent = T().importB;
   document.getElementById('aiBtn').textContent = T().aiB;
+  document.getElementById('writeBtn').textContent = T().writeB;
   const list = document.getElementById('storyList');
   list.innerHTML = '';
   const all = [...BUILTIN_STORIES, ...imports];
@@ -861,12 +920,15 @@ function flashImp(msg) {
   tip.style.color = msg.startsWith('✓') ? '#8fd8cf' : '#e8a0a0';
   setTimeout(() => { tip.textContent = old; tip.style.color = ''; }, 2400);
 }
-/* AI 提示词 */
+/* AI 提示词（参数化） */
 function aiPromptText() {
+  const nL = +document.getElementById('aiLen').value;
+  const nE = +document.getElementById('aiEnd').value;
+  const extra = document.getElementById('aiExtra').value.trim();
   return `请为一款"互动书信"网页游戏创作一个可导入的故事，输出【一个 JSON 代码块】，不要输出其它解释。
 
 要求：
-1. 主题自选（建议：旧物、旅途、告别、重逢、悬疑、科幻皆可），篇幅 6-10 封信，2-4 个结局。
+1. 主题自选（建议：旧物、旅途、告别、重逢、悬疑、科幻皆可），恰好 ${nL} 封信，${nE} 个结局。${extra ? '\n额外要求：' + extra : ''}
 2. 文字风格：克制、有留白，每封信 60-140 字，像真的手写信。
 3. 剧情结构：玩家读到一封信后，从 1-3 个"回信"中选择其一，导向不同的下一封信（letters 的 replies[].to 指向另一个信的 id，或以 E 开头的结局 id）。
 4. 双语：优先写 zh；如有能力可附 en（缺省将回退 zh）。
@@ -877,13 +939,13 @@ JSON 格式（严格遵守，可直接解析）：
   "title": "故事名", "titleEn": "英文题名",
   "kicker": "一句话引子", "kickerEn": "English kicker",
   "desc": "开场简介，可用<br>换行", "descEn": "English desc",
-  "order": ["n1","n2",...,"E1","E2"],   // 信与结局的图鉴顺序（E 开头是结局）
-  "style": {  // 可选，信纸气质
+  "order": ["n1","n2",...,"E1","E2"],
+  "style": {
     "paper": "#f0e8d6", "paper2": "#e8ddc4", "ink": "#33302a",
     "seal": "#9e3528", "gold": "#d9b57c",
-    "ruling": "rgba(130,108,64,0.09)",   // 信纸横格颜色，暗色故事可设 null
+    "ruling": "rgba(130,108,64,0.09)",
     "bg1": "#101a20", "bg2": "#1a2732",
-    "font": "KaiTi, STKaiti, serif"      // 可用：楷体 KaiTi / 仿宋 FangSong / 宋体 SimSun
+    "font": "KaiTi, STKaiti, serif"
   },
   "letters": {
     "zh": {
@@ -905,15 +967,29 @@ JSON 格式（严格遵守，可直接解析）：
   }
 }
 
-规则：id 只用字母数字连字符；所有 to 指向的 id 必须存在；至少一个结局；不要输出注释。现在，创作你的故事。`;
+规则：id 只用字母数字连字符；所有 to 指向的 id 必须存在；恰好 ${nL} 封信；恰好 ${nE} 个结局；不要输出注释。现在，创作你的故事。`;
 }
 document.getElementById('aiBtn').addEventListener('click', () => {
   document.getElementById('aiTitle').textContent = T().aiTitle;
-  document.getElementById('aiTip').textContent = T().aiTip;
+  document.getElementById('aiTip').textContent = T().aiTip2 || T().aiTip;
+  document.getElementById('aiLenL').textContent = T().aiLenL;
+  document.getElementById('aiEndL').textContent = T().aiEndL;
+  document.getElementById('aiExtra').placeholder = T().aiExtraPh;
   document.getElementById('aiCopy').textContent = T().aiCopy;
   document.getElementById('aiClose').textContent = T().aiClose;
   document.getElementById('aiText').value = aiPromptText();
   document.getElementById('aiOv').classList.add('show');
+});
+document.getElementById('aiLen').addEventListener('input', () => {
+  document.getElementById('aiLenV').textContent = document.getElementById('aiLen').value;
+  document.getElementById('aiText').value = aiPromptText();
+});
+document.getElementById('aiEnd').addEventListener('input', () => {
+  document.getElementById('aiEndV').textContent = document.getElementById('aiEnd').value;
+  document.getElementById('aiText').value = aiPromptText();
+});
+document.getElementById('aiExtra').addEventListener('input', () => {
+  document.getElementById('aiText').value = aiPromptText();
 });
 document.getElementById('aiClose').addEventListener('click', () =>
   document.getElementById('aiOv').classList.remove('show'));
@@ -922,6 +998,147 @@ document.getElementById('aiCopy').addEventListener('click', async () => {
   const b = document.getElementById('aiCopy');
   b.textContent = T().aiCopied;
   setTimeout(() => b.textContent = T().aiCopy, 1600);
+});
+
+/* ================= 手写故事编辑器 ================= */
+let wrLetters = [];   // {id, year, title, text, replies:[{label,to}], cont}
+let wrEndings = [];   // {id, title, text}
+let wrStyleIdx = 0;
+let wrLetterSeq = 0, wrEndingSeq = 0;
+function buildWriteUI() {
+  document.getElementById('wrTitle').textContent = T().wrTitleT;
+  document.getElementById('wrTitleIn').placeholder = T().wrTitlePh;
+  document.getElementById('wrKickerIn').placeholder = T().wrKickerPh;
+  document.getElementById('wrDescIn').placeholder = T().wrDescPh;
+  document.getElementById('wrLettersL').textContent = T().wrLettersL;
+  document.getElementById('wrAddLetter').textContent = T().wrAddL;
+  document.getElementById('wrAddEnding').textContent = T().wrAddE;
+  document.getElementById('wrSave').textContent = T().wrSaveB;
+  document.getElementById('wrClose').textContent = T().wrCloseB;
+  // 风格选择
+  const ss = document.getElementById('wrStyleSel');
+  ss.innerHTML = `<span style="font-size:12px;color:var(--gold);margin-right:4px">${T().wrStyleL}</span>`;
+  T().styleDefs.forEach((sd, i) => {
+    const b = document.createElement('button');
+    b.className = 'ed-t';
+    b.style.fontSize = '11px';
+    b.style.padding = '4px 10px';
+    b.textContent = sd.n;
+    b.classList.toggle('on', wrStyleIdx === i);
+    b.addEventListener('click', () => { wrStyleIdx = i; buildWriteUI(); });
+    ss.appendChild(b);
+  });
+  buildWrLetterList();
+}
+function buildWrLetterList() {
+  const list = document.getElementById('wrLetterList');
+  list.innerHTML = '';
+  const allIds = [...wrLetters.map(l => l.id), ...wrEndings.map(e => e.id)];
+  const cardStyle = 'background:rgba(7,9,13,0.7);border:1px solid rgba(240,232,214,0.12);border-radius:6px;padding:10px 12px';
+  const inpStyle = 'width:100%;background:rgba(14,18,26,0.8);color:#cfe0d8;border:1px solid rgba(240,232,214,0.1);border-radius:4px;font-family:inherit;font-size:12px;padding:6px 8px;outline:none;margin-bottom:6px';
+  wrLetters.forEach((L, i) => {
+    const d = document.createElement('div');
+    d.style.cssText = cardStyle;
+    d.innerHTML = `
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+        <b style="color:var(--gold);font-size:11px;min-width:28px">${L.id}</b>
+        <input type="text" value="${L.year || ''}" data-wr="year" data-i="${i}" placeholder="${T().wrYrPh}" style="flex:0.3;${inpStyle.replace('margin-bottom:6px','')}">
+        <input type="text" value="${L.title || ''}" data-wr="title" data-i="${i}" placeholder="${T().wrTiPh}" style="flex:1;${inpStyle.replace('margin-bottom:6px','')}">
+        <button class="ed-t" data-wr="del" data-i="${i}" style="font-size:11px;padding:3px 8px">✕</button>
+      </div>
+      <textarea data-wr="text" data-i="${i}" rows="3" placeholder="${T().wrTxPh}" style="${inpStyle}resize:none">${L.text || ''}</textarea>
+      <textarea data-wr="replies" data-i="${i}" rows="2" placeholder="${T().wrRpPh}" style="${inpStyle}resize:none;font-family:Georgia,monospace;font-size:11px">${L.replies ? L.replies.map(r => r.label + ' → ' + r.to).join('\n') : ''}</textarea>`;
+    list.appendChild(d);
+  });
+  wrEndings.forEach((E, i) => {
+    const d = document.createElement('div');
+    d.style.cssText = cardStyle + ';border-color:rgba(217,181,124,0.25)';
+    d.innerHTML = `
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+        <b style="color:var(--gold);font-size:11px;min-width:28px">${E.id}</b>
+        <input type="text" value="${E.title || ''}" data-wr="endTitle" data-i="${i}" placeholder="${T().wrEndTiPh}" style="flex:1;${inpStyle.replace('margin-bottom:6px','')}">
+        <button class="ed-t" data-wr="endDel" data-i="${i}" style="font-size:11px;padding:3px 8px">✕</button>
+      </div>
+      <textarea data-wr="endText" data-i="${i}" rows="3" placeholder="${T().wrEndTxPh}" style="${inpStyle}resize:none">${E.text || ''}</textarea>`;
+    list.appendChild(d);
+  });
+  // 事件
+  list.querySelectorAll('[data-wr]').forEach(el => {
+    const k = el.getAttribute('data-wr');
+    const i = +el.getAttribute('data-i');
+    if (k === 'del') {
+      el.addEventListener('click', () => { wrLetters.splice(i, 1); buildWrLetterList(); });
+    } else if (k === 'endDel') {
+      el.addEventListener('click', () => { wrEndings.splice(i, 1); buildWrLetterList(); });
+    } else if (k === 'year') {
+      el.addEventListener('input', () => wrLetters[i].year = el.value);
+    } else if (k === 'title') {
+      el.addEventListener('input', () => wrLetters[i].title = el.value);
+    } else if (k === 'text') {
+      el.addEventListener('input', () => wrLetters[i].text = el.value);
+    } else if (k === 'replies') {
+      el.addEventListener('input', () => {
+        wrLetters[i].replies = el.value.split('\n').filter(l => l.trim()).map(line => {
+          const m2 = line.match(/^(.*?)\s*→\s*(\w+)$/);
+          return m2 ? { label: m2[1].trim(), to: m2[2] } : { label: line.trim(), to: 'n1' };
+        });
+      });
+    } else if (k === 'endTitle') {
+      el.addEventListener('input', () => wrEndings[i].title = el.value);
+    } else if (k === 'endText') {
+      el.addEventListener('input', () => wrEndings[i].text = el.value);
+    }
+  });
+}
+document.getElementById('wrAddLetter').addEventListener('click', () => {
+  wrLetterSeq++;
+  wrLetters.push({ id: 'n' + wrLetterSeq, year: '', title: '', text: '', replies: [] });
+  buildWrLetterList();
+});
+document.getElementById('wrAddEnding').addEventListener('click', () => {
+  wrEndingSeq++;
+  wrEndings.push({ id: 'E' + wrEndingSeq, title: '', text: '' });
+  buildWrLetterList();
+});
+document.getElementById('wrSave').addEventListener('click', () => {
+  if (wrLetters.length < 2 || wrEndings.length < 1) return;
+  const sd = T().styleDefs[wrStyleIdx];
+  const letters = {};
+  wrLetters.forEach(L => {
+    letters[L.id] = { year: L.year || '—', title: L.title || '—', text: L.text || '' };
+    if (L.replies && L.replies.length) letters[L.id].replies = L.replies;
+    else letters[L.id].cont = '继续';
+  });
+  const endings = {};
+  wrEndings.forEach(E => { endings[E.id] = { title: E.title || '—', text: E.text || '' }; });
+  const story = normalizeStory({
+    id: 'my-' + Date.now().toString(36),
+    title: document.getElementById('wrTitleIn').value.trim() || (lang === 'zh' ? '我的故事' : 'My Story'),
+    titleEn: document.getElementById('wrTitleIn').value.trim(),
+    kicker: document.getElementById('wrKickerIn').value.trim() || (lang === 'zh' ? '亲手写下' : 'handwritten'),
+    desc: document.getElementById('wrDescIn').value.trim() || '（你写下的故事）',
+    order: [...wrLetters.map(l => l.id), ...wrEndings.map(e => e.id)],
+    style: sd,
+    letters: { zh: letters },
+    endings: { zh: endings }
+  });
+  if (story) {
+    imports.push(story);
+    saveImports();
+    document.getElementById('writeOv').classList.remove('show');
+    buildSelect();
+    loadPack(story);
+    showTitle();
+  }
+});
+document.getElementById('wrClose').addEventListener('click', () =>
+  document.getElementById('writeOv').classList.remove('show'));
+document.getElementById('writeBtn').addEventListener('click', () => {
+  wrLetters = [{ id: 'n1', year: '', title: '', text: '', replies: [] }];
+  wrEndings = [{ id: 'E1', title: '', text: '' }];
+  wrLetterSeq = 1; wrEndingSeq = 1; wrStyleIdx = 0;
+  buildWriteUI();
+  document.getElementById('writeOv').classList.add('show');
 });
 
 /* ================= 音频 ================= */

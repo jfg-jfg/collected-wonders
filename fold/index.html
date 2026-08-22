@@ -123,7 +123,7 @@ const I18N = {
     share: '分享坐标', copied: '已复制链接', copyFail: '链接已写入地址栏，请手动复制',
     reset: '回母港', zoom: '倍率', palette: '色',
     addSpot: '存此地', delSpot: '长按删除',
-    juliaOn: '儒', juliaOff: '曼',
+    juliaOn: '儒', juliaOff: '曼', shipName: '舰',
     juliaTipOn: '切换到儒利亚集合（以当前中心为 c）', juliaTipOff: '回到曼德博集合',
     palTip: '切换调色板', shot: '存图', shotOk: '✓ 已保存',
     places: [
@@ -142,7 +142,7 @@ const I18N = {
     share: 'SHARE SPOT', copied: 'link copied', copyFail: 'link is in the address bar — copy manually',
     reset: 'HOME PORT', zoom: 'mag', palette: 'PAL',
     addSpot: 'MARK SPOT', delSpot: 'long-press to delete',
-    juliaOn: 'JULIA', juliaOff: 'MSET',
+    juliaOn: 'JULIA', juliaOff: 'MSET', shipName: 'SHIP',
     juliaTipOn: 'switch to the Julia set (c = current center)', juliaTipOff: 'back to the Mandelbrot set',
     palTip: 'cycle palette', shot: 'SHOT', shotOk: '✓ saved',
     places: [
@@ -225,6 +225,8 @@ uniform float uJulia;
 uniform vec2 uCx;
 uniform vec2 uCy;
 uniform float uPal;
+uniform float uMode;
+uniform float uMode;   /* 0 曼德博 1 儒利亚 2 燃烧之舰 */
 
 vec2 ds_add(vec2 a, vec2 b) {
   float t1 = a.x + b.x;
@@ -277,10 +279,19 @@ void main() {
     zx = vec2(0.0); zy = vec2(0.0);
     Cx = cxc; Cy = cyc;
   }
+  if (uMode > 1.5) {
+    /* 燃烧之舰：先取模再平方 */
+    zx = vec2(abs(zx.x), abs(zx.y));
+    zy = vec2(abs(zy.x), abs(zy.y));
+  }
   float i = 0.0;
   float dd = 0.0;
   for (int k = 0; k < 2048; k++) {
     if (float(k) >= uIter) break;
+    if (uMode > 1.5) {
+      zx = vec2(abs(zx.x), abs(zx.y));
+      zy = vec2(abs(zy.x), abs(zy.y));
+    }
     vec2 xx = ds_mul(zx, zx);
     vec2 yy = ds_mul(zy, zy);
     vec2 xy = ds_mul(zx, zy);
@@ -322,7 +333,9 @@ const target = { x: -0.6, y: 0, s: 1.4 }; // 平滑追踪目标
 let fly = null;                            // 飞行动画 {x0,y0,s0,x1,y1,s1,t0,dur}
 const MAG_LIMIT = 1e-13;
 let juliaOn = false, juliaC = { x: -0.7269, y: 0.1889 };
+let shipMode = false;
 let palIdx = 0;
+let phaseT = 0;
 const PAL_NAMES = { zh: ['墨', '极光', '炉火', '素宣'], en: ['INK', 'AURORA', 'EMBER', 'PLAIN'] };
 
 function split64(v) {
@@ -362,6 +375,8 @@ function render() {
   gl.uniform2f(U.uCx, cxh, cxl);
   gl.uniform2f(U.uCy, cyh, cyl);
   gl.uniform1f(U.uPal, palIdx);
+  gl.uniform1f(U.uMode, shipMode ? 2.0 : 0.0);
+  gl.uniform1f(U.uPhase, phaseT);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   lastIter = iter;
   updateCoords();
@@ -538,12 +553,19 @@ document.getElementById('resetBtn').addEventListener('click', () => flyTo(T().pl
 /* Julia / 调色板 / 截图 */
 const juliaBtn = document.getElementById('juliaBtn');
 juliaBtn.addEventListener('click', () => {
-  if (!juliaOn) {
-    juliaC = { x: view.x, y: view.y };   // 以当前中心为 c
+  if (!juliaOn && !shipMode) {
+    // 曼 → 儒
+    juliaC = { x: view.x, y: view.y };
     juliaOn = true;
     view.x = 0; view.y = 0; view.s = 1.6;
-  } else {
+  } else if (juliaOn && !shipMode) {
+    // 儒 → 舰
     juliaOn = false;
+    shipMode = true;
+    view.x = -1.75; view.y = -0.03; view.s = 0.35;
+  } else {
+    // 舰 → 曼
+    shipMode = false;
     view.x = -0.6; view.y = 0; view.s = 1.4;
   }
   target.x = view.x; target.y = view.y; target.s = view.s;
@@ -551,9 +573,16 @@ juliaBtn.addEventListener('click', () => {
   updateJuliaBtn(); updateCoords(); requestRender();
 });
 function updateJuliaBtn() {
-  juliaBtn.textContent = juliaOn ? T().juliaOff : T().juliaOn;
-  juliaBtn.title = juliaOn ? T().juliaTipOff : T().juliaTipOn;
+  juliaBtn.textContent = shipMode ? T().shipName : (juliaOn ? T().juliaOff : T().juliaOn);
+  juliaBtn.title = T().juliaTipOn;
 }
+/* 色相缓移：低频重绘让调色板缓缓流动 */
+const REDUCED_PHASE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+setInterval(() => {
+  if (REDUCED_PHASE) return;
+  phaseT += 0.004;
+  requestRender();
+}, 160);
 const palBtn = document.getElementById('palBtn');
 palBtn.addEventListener('click', () => {
   palIdx = (palIdx + 1) % 4;

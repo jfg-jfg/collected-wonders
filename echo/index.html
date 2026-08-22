@@ -1596,7 +1596,7 @@ function buildWells() {
     b.className = 'well-chip';
     const best = save.wells && save.wells[i];
     b.innerHTML = (lang === 'zh' ? w.name : w.nameEn) +
-      (best ? `<small>${T().wellsBest(best)}</small>` : `<small>par ${w.par}${w.ghosts ? ' · 👻' + w.ghosts : ''}</small>`);
+      (best ? `<small>${best.s <= w.par ? '🏆 ' : ''}${T().wellsBest(best)}</small>` : `<small>par ${w.par}${w.ghosts ? ' · 👻' + w.ghosts : ''}</small>`);
     b.addEventListener('click', () => playWell(i));
     row.appendChild(b);
   });

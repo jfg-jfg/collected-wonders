@@ -57,8 +57,18 @@ toy/
 
 ## 开发
 
+- **在线版**：<https://jfg-jfg.github.io/collected-wonders/> · **源码**：<https://github.com/jfg-jfg/collected-wonders>
 - 冒烟测试：`bash tools/smoke-test.sh`（无头 Edge 逐站检查 JS 错误）
 - 设计文档：`docs/DESIGN.md`
+
+## 迭代史
+
+- **1.0** 五站创作 + 门户（每站截图验证）
+- **2.0** 深度打磨：INK 笔刷/墨色/纸质/撤销 · ECHO 成就/每日 · SCAPE 八声道/自定义境 · LETTERS 新信两封 · FOLD Julia
+- **3.0** INK IndexedDB 存档 · ECHO 游魂/余像 · SCAPE 雪 · LETTERS 信堆图鉴 · FOLD 惯性缩放
+- **4.0** ECHO 通关热力图+成就十一枚 · SCAPE 夜间流星 · LETTERS 图鉴重读 · INK 题款装裱 · FOLD 待机深潜
+- **5.0** ECHO 无尽下潜 · SCAPE 音画录制 · INK 自动画笔 · 门户在线/源码链接
+- **6.0** SCAPE 极光彩蛋 · LETTERS 四结局 SVG 小景
 
 ---
 

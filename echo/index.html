@@ -583,6 +583,20 @@ function finishLevel(g) {
 }
 const LEVELS = buildLevels();
 
+/* 层级视觉主题：九层从浅到深的色调递变 */
+const LV_THEMES = [
+  { wall: [93,107,133], vig: [7,9,13],     glow: [125,145,180] },  // 一 · 深井：冷蓝灰
+  { wall: [101,109,125], vig: [8,10,14],   glow: [130,148,172] },  // 二 · 回廊：微暖石板
+  { wall: [133,113,83],  vig: [10,9,7],    glow: [180,158,120] },  // 三 · 蜂巢：琥珀蜜色
+  { wall: [83,125,125],  vig: [6,10,10],   glow: [120,175,175] },  // 四 · 迷津：青碧
+  { wall: [108,93,133],  vig: [9,7,13],    glow: [150,128,185] },  // 五 · 巨殿：深紫
+  { wall: [133,108,75],  vig: [11,9,6],    glow: [195,168,115] },  // 六 · 归途：暖金
+  { wall: [125,95,70],   vig: [10,7,5],    glow: [180,138,100] },  // 七 · 旧钟楼：铜锈
+  { wall: [73,113,88],   vig: [5,10,7],    glow: [100,165,125] },  // 八 · 沉街：深绿
+  { wall: [140,140,150], vig: [9,9,11],    glow: [200,200,215] }   // 九 · 门：银白
+];
+function lvTheme() { return LV_THEMES[Math.min(li, LV_THEMES.length - 1)]; }
+
 /* 名井集：精选关卡码（tools/gen-wells.mjs 生成，种子手选） */
 const WELL_PACK = [
   { name: "回纹井", nameEn: "Fret Well", par: 62, ghosts: 0,
@@ -1397,9 +1411,10 @@ function render(dt) {
   ctx.fillRect(0, 0, W, H);
   if (state === 'edit') { renderEditor(); return; }
   if (state !== 'play') return;
+  const vgT = lvTheme();
   const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.72);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
-  vg.addColorStop(1, 'rgba(0,0,0,0.6)');
+  vg.addColorStop(1, `rgba(${vgT.vig[0]},${vgT.vig[1]},${vgT.vig[2]},0.6)`);
   const breathe = 0.85 + Math.sin(time * 2.2) * 0.15;
   const pcx = ox + (px + 0.5) * cell, pcy = oy + (py + 0.5) * cell;
 
@@ -1411,8 +1426,9 @@ function render(dt) {
       const near = Math.max(0, 1 - dpx / 2.2) * 0.4 * breathe;
       const a = Math.min(1, l + near + mem);
       if (a < 0.015) continue;
-      ctx.fillStyle = `rgba(93,107,133,${(a * 0.92).toFixed(3)})`;
-      ctx.shadowColor = 'rgba(125,145,180,0.8)';
+      const th = lvTheme();
+      ctx.fillStyle = `rgba(${th.wall[0]},${th.wall[1]},${th.wall[2]},${(a * 0.92).toFixed(3)})`;
+      ctx.shadowColor = `rgba(${th.glow[0]},${th.glow[1]},${th.glow[2]},0.8)`;
       ctx.shadowBlur = 14 * a;
       roundRectC(x * cell + ox + 1.5, y * cell + oy + 1.5, cell - 3, cell - 3, 3);
       ctx.fill();

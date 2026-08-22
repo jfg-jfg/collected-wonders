@@ -922,6 +922,13 @@ function evtPos(e) {
 function pressureOf(e) {
   return (e.pressure && e.pressure > 0) ? e.pressure : 0.5;
 }
+/* 画笔倾斜：数位笔 tiltX/tiltY（-90~90）→ 墨偏移向量 */
+function tiltOf(e) {
+  if (e.tiltX === undefined || e.tiltY === undefined) return [0, 0];
+  const tx = (e.tiltX / 90) * 0.003;   // 归一化到墨面偏移
+  const ty = (e.tiltY / 90) * 0.003;
+  return [tx, ty];
+}
 /* 泼墨：一簇随机墨点 */
 function splashBurst(x, y, scale) {
   const n = 9 + Math.floor(Math.random() * 7);
@@ -983,7 +990,9 @@ canvas.addEventListener('pointermove', e => {
     // 飞白：快速运笔时墨量骤降，随机留白（纸底透出）
     const flying = speedNorm > 0.45 && brushType !== 3;
     const flyFactor = flying ? (1 - speedNorm * 0.75) * (Math.random() < 0.35 ? 0.1 : 1) : 1;
-    splat(lastX + dxUv * t, lastY + dyUv * t,
+    // 数位笔倾斜偏移
+    const [txOff, tyOff] = tiltOf(e);
+    splat(lastX + dxUv * t + txOff, lastY + dyUv * t + tyOff,
           dxUv * config.SPLAT_FORCE * dt / steps,
           dyUv * config.SPLAT_FORCE * dt / steps,
           amt * m * flyFactor / steps, 1);

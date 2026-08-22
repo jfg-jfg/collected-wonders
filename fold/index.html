@@ -519,18 +519,7 @@ function flyTo(p) {
 function buildPlaces() {
   const box = document.getElementById('places');
   box.innerHTML = '';
-  T().places.forEach(p => {
-    const b = document.createElement('button');
-    b.className = 'place';
-    b.textContent = p.name;
-    b.addEventListener('click', () => {
-      flyTo(p);
-      document.querySelectorAll('.place').forEach(x => x.classList.remove('on'));
-      b.classList.add('on');
-    });
-    box.appendChild(b);
-  });
-  // 自定义书签
+  // 自定义书签（不再有预设地名）
   customSpots.forEach((p, i) => {
     const b = document.createElement('button');
     b.className = 'place';
@@ -584,32 +573,79 @@ function flashTitle(btn, txt) {
   btn.textContent = txt;
   setTimeout(() => btn.textContent = old, 1800);
 }
-document.getElementById('resetBtn').addEventListener('click', () => flyTo(T().places[0]));
-/* 自动巡航 */
-let tourOn = false, tourIdx = 0, tourTimer = null;
+document.getElementById('resetBtn').addEventListener('click', () => {
+  view.x = -0.6; view.y = 0; view.s = 1.4;
+  target.x = view.x; target.y = view.y; target.s = view.s;
+  fly = null; juliaOn = false; shipMode = false;
+  requestRender();
+});
+
+/* ============ 智能巡航：按分形图案密度自动导航 ============ */
+let tourOn = false, tourTimer = null;
 const tourBtn = document.getElementById('tourBtn');
 function updTourBtn() {
   tourBtn.textContent = tourOn ? T().tourStop : T().tour;
-  tourBtn.title = T().tourTip;
   tourBtn.classList.toggle('on', tourOn);
 }
 tourBtn.addEventListener('click', () => {
   tourOn = !tourOn;
   updTourBtn();
-  if (tourOn) {
-    tourIdx = 0;
-    tourNext();
-  } else {
-    clearTimeout(tourTimer);
-  }
+  if (tourOn) tourNext();
+  else clearTimeout(tourTimer);
 });
+/* 找最有趣的区域：读取画布像素，计算局部方差，选方差最高的子区域 */
+function findInterestingSpot() {
+  // 渲染当前帧到画布
+  render();
+  // 从画布读取低分辨率采样（8×6 网格）
+  const SX = 8, SY = 6;
+  const cw = Math.floor(canvas.width / SX), ch2 = Math.floor(canvas.height / SY);
+  const pixels = new Uint8Array(4);
+  const scores = [];
+  for (let sy = 0; sy < SY; sy++) {
+    for (let sx = 0; sx < SX; sx++) {
+      // 每个格子中心采一个点
+      const px2 = Math.floor((sx + 0.5) * cw);
+      const py2 = Math.floor((sy + 0.5) * ch2);
+      gl.readPixels(px2, py2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+      // 也采四个角用于方差
+      const p2 = new Uint8Array(4);
+      const samples = [];
+      for (const [ox, oy] of [[0,0],[cw-1,0],[0,ch2-1],[cw-1,ch2-1],[cw>>1,ch2>>1]]) {
+        gl.readPixels(px2 - (cw>>1) + ox, py2 - (ch2>>1) + oy, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, p2);
+        samples.push(p2[0] + p2[1] + p2[2]);
+      }
+      // 计算方差
+      const mean = samples.reduce((a,b) => a+b, 0) / samples.length;
+      const variance = samples.reduce((a,b) => a + (b - mean) ** 2, 0) / samples.length;
+      // 也考虑绝对亮度（太暗的内部不太有趣）
+      const brightness = pixels[0] + pixels[1] + pixels[2];
+      scores.push({ sx, sy, score: variance + brightness * 0.1 });
+    }
+  }
+  // 选分数最高的区域
+  scores.sort((a, b) => b.score - a.score);
+  const best = scores[Math.floor(Math.random() * Math.min(3, scores.length))];  // 前3随机选
+  // 转换为坐标
+  const u = (best.sx + 0.5) / SX - 0.5;
+  const v = 0.5 - (best.sy + 0.5) / SY;
+  return {
+    x: view.x + u * view.s * 2,
+    y: view.y + v * view.s * 2,
+    s: view.s * (0.3 + Math.random() * 0.25)  // 缩小 25-45%
+  };
+}
 function tourNext() {
   if (!tourOn) return;
-  const places = T().places;
-  if (tourIdx >= places.length) tourIdx = 0;
-  flyTo(places[tourIdx]);
-  tourIdx++;
-  tourTimer = setTimeout(tourNext, 6000);
+  const spot = findInterestingSpot();
+  // 飞到有趣区域
+  fly = {
+    x0: view.x, y0: view.y, s0: view.s,
+    x1: spot.x, y1: spot.y, s1: Math.max(spot.s, 1e-13),
+    t0: performance.now(), dur: 3000
+  };
+  // 停留 4 秒后继续
+  tourTimer = setTimeout(tourNext, 7000);
 }
 ['pointerdown', 'wheel', 'keydown'].forEach(ev =>
   window.addEventListener(ev, () => {

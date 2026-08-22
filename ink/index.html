@@ -303,6 +303,7 @@
     <div class="slots" id="albumSlots"></div>
     <div class="acts">
       <button class="chip" id="albumSave" style="border-color:var(--ink); color:var(--ink)"></button>
+      <button class="chip" id="albumScroll"></button>
       <button class="chip" id="albumClose"></button>
     </div>
   </div>
@@ -340,6 +341,7 @@ const I18N = {
     brush: '笔宽', density: '墨浓',
     undo: '撤销', wash: '洗纸', seal: '印章', save: '保存', album: '画册',
     albumTitle: '画 册 · 八 页', albumSave: '存 入 本 页', albumClose: '合 上', albumEmpty: '＋',
+    albumScroll: '导 出 长 卷', scrollTitle: '拾 遗 · 墨 册',
     albumLoaded: '✓ 已展开这一页', albumDeleted: '已撕去这一页',
     hint: '落 笔 成 墨 · 缓 行 则 浓',
     fallback: '此浏览器不支持 WebGL2，无法展卷。请换用新版 Chrome / Edge / Firefox。',
@@ -363,6 +365,7 @@ const I18N = {
     brush: 'Brush', density: 'Ink',
     undo: 'Undo', wash: 'Wash', seal: 'Seal', save: 'Save', album: 'Album',
     albumTitle: 'ALBUM · EIGHT PAGES', albumSave: 'SAVE TO THIS PAGE', albumClose: 'CLOSE', albumEmpty: '＋',
+    albumScroll: 'EXPORT SCROLL', scrollTitle: '拾 遗 · 墨 册',
     albumLoaded: '✓ page restored', albumDeleted: 'page removed',
     hint: 'EACH STROKE BECOMES INK',
     fallback: 'WebGL2 is unavailable in this browser. Please try a recent Chrome / Edge / Firefox.',
@@ -1202,6 +1205,55 @@ document.getElementById('albumBtn').addEventListener('click', async () => {
   albumOv.classList.add('show');
 });
 document.getElementById('albumClose').addEventListener('click', () => albumOv.classList.remove('show'));
+/* 长卷导出：所有页纵向拼合 */
+document.getElementById('albumScroll').addEventListener('click', async () => {
+  try {
+    const pages = [];
+    for (let i = 0; i < 8; i++) {
+      const rec = await idbGet('slot-' + i).catch(() => null);
+      if (rec && rec.png) pages.push(rec);
+    }
+    if (!pages.length) return;
+    const PW = 640, GAP = 26, HEAD = 150, FOOT = 60;
+    const imgs = await Promise.all(pages.map(rec => new Promise(res => {
+      const im = new Image();
+      im.onload = () => res(im);
+      im.onerror = () => res(null);
+      im.src = rec.png;
+    })));
+    const valid = imgs.filter(Boolean);
+    const ph = valid.map(im => Math.round(PW / im.width * im.height));
+    const total = HEAD + valid.reduce((a, h) => a + h + GAP, 0) + FOOT - GAP;
+    const out = document.createElement('canvas');
+    out.width = PW + 120; out.height = total;
+    const ctx = out.getContext('2d');
+    ctx.fillStyle = '#f6f2e7';
+    ctx.fillRect(0, 0, out.width, out.height);
+    // 题头
+    ctx.fillStyle = '#2b2b33';
+    ctx.textAlign = 'center';
+    ctx.font = '44px "Songti SC", "STSong", "SimSun", serif';
+    ctx.fillText(I18N[lang].scrollTitle, out.width / 2, 84);
+    ctx.font = '14px Georgia, serif';
+    ctx.fillStyle = '#55555f';
+    ctx.fillText('INK ALBUM · ' + new Date().toLocaleDateString(), out.width / 2, 116);
+    ctx.strokeStyle = 'rgba(43,43,51,0.3)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(30.5, HEAD - 28, out.width - 61, total - HEAD - FOOT + 56);
+    let y = HEAD;
+    valid.forEach((im, i) => {
+      ctx.drawImage(im, 60, y, PW, ph[i]);
+      ctx.fillStyle = '#8a8375';
+      ctx.font = '12px Georgia, serif';
+      ctx.fillText(`${i + 1} / ${valid.length}`, out.width / 2, y + ph[i] + 17);
+      y += ph[i] + GAP;
+    });
+    const a = document.createElement('a');
+    a.download = `ink-scroll-${Date.now()}.png`;
+    a.href = out.toDataURL('image/png');
+    a.click();
+  } catch (e) { /* 静默 */ }
+});
 function thumbNow() {
   const t = document.createElement('canvas');
   t.width = 256; t.height = Math.round(256 / (canvas.width / canvas.height));
@@ -1211,6 +1263,7 @@ function thumbNow() {
 async function buildAlbum() {
   document.getElementById('albumTitle').textContent = I18N[lang].albumTitle;
   document.getElementById('albumSave').textContent = I18N[lang].albumSave;
+  document.getElementById('albumScroll').textContent = I18N[lang].albumScroll;
   document.getElementById('albumClose').textContent = I18N[lang].albumClose;
   const box = document.getElementById('albumSlots');
   box.innerHTML = '';

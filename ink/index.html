@@ -27,53 +27,77 @@
   #gl { z-index: 1; }
   #overlay { z-index: 2; pointer-events: none; }
 
+  /* ---------- 笔刷预览光标 ---------- */
+  #brushCursor {
+    position: fixed; z-index: 3; border-radius: 50%;
+    border: 1.5px solid rgba(43,43,51,0.5);
+    box-shadow: 0 0 0 1px rgba(246,242,231,0.6);
+    pointer-events: none; display: none;
+    transform: translate(-50%, -50%);
+  }
+  #brushCursor.water { border-style: dashed; border-color: rgba(90,120,170,0.6); }
+
   /* ---------- 标题 ---------- */
   .masthead {
-    position: fixed; top: 28px; left: 34px; z-index: 5;
+    position: fixed; top: 26px; left: 32px; z-index: 5;
     pointer-events: none; line-height: 1.35;
   }
   .masthead h1 {
-    font-size: clamp(28px, 4vw, 44px);
+    font-size: clamp(26px, 3.6vw, 40px);
     font-weight: 600; letter-spacing: 0.12em;
     color: var(--ink);
   }
   .masthead h1 .en { font-family: Georgia, serif; font-weight: 400; font-style: italic; font-size: 0.62em; letter-spacing: 0.08em; color: var(--ink-light); margin-left: 0.4em; }
-  .masthead .sub {
-    font-size: 13px; color: var(--ink-light); letter-spacing: 0.35em; margin-top: 6px;
-  }
-  .masthead .rule {
-    width: 64px; height: 1px; background: var(--hairline); margin-top: 10px;
-  }
+  .masthead .sub { font-size: 12.5px; color: var(--ink-light); letter-spacing: 0.35em; margin-top: 5px; }
+  .masthead .rule { width: 64px; height: 1px; background: var(--hairline); margin-top: 9px; }
 
   /* ---------- 顶部右侧 ---------- */
-  .topright { position: fixed; top: 28px; right: 34px; z-index: 6; display: flex; gap: 10px; align-items: center; }
+  .topright { position: fixed; top: 26px; right: 32px; z-index: 6; display: flex; gap: 10px; align-items: center; }
   .btn-ghost {
     border: 1px solid var(--hairline); background: rgba(246,242,231,0.75);
     backdrop-filter: blur(6px); color: var(--ink);
     font-family: inherit; font-size: 13px; letter-spacing: 0.1em;
     padding: 7px 14px; border-radius: 999px; cursor: pointer;
-    transition: background .2s, color .2s;
+    transition: color .2s, background .2s, border-color .2s;
   }
   .btn-ghost:hover { background: var(--ink); color: var(--paper); }
   #langBtn { min-width: 58px; text-align: center; }
-  button:focus-visible, input:focus-visible {
-    outline: 2px solid var(--ink); outline-offset: 2px;
-  }
 
   /* ---------- 工具栏 ---------- */
   .toolbar {
-    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%);
-    z-index: 6; display: flex; align-items: center; gap: 20px;
-    padding: 13px 22px; border: 1px solid var(--hairline); border-radius: 14px;
-    background: rgba(246,242,231,0.82); backdrop-filter: blur(10px);
-    box-shadow: 0 8px 30px rgba(43,43,51,0.08);
-    max-width: min(94vw, 780px); flex-wrap: wrap; justify-content: center;
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+    z-index: 6; display: flex; flex-direction: column; gap: 10px;
+    padding: 13px 20px 12px; border: 1px solid var(--hairline); border-radius: 16px;
+    background: rgba(246,242,231,0.86); backdrop-filter: blur(12px);
+    box-shadow: 0 8px 30px rgba(43,43,51,0.10);
+    max-width: min(96vw, 900px);
   }
-  .ctrl { display: flex; align-items: center; gap: 9px; }
-  .ctrl label { font-size: 13px; letter-spacing: 0.15em; color: var(--ink-light); white-space: nowrap; }
+  .row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .grp { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .grp .lbl { font-size: 12px; letter-spacing: 0.2em; color: var(--ink-light); margin-right: 3px; }
+  .vsep { width: 1px; height: 24px; background: var(--hairline); align-self: center; }
+
+  .chip {
+    border: 1px solid var(--hairline); background: none; color: var(--ink-light);
+    font-family: inherit; font-size: 12.5px; letter-spacing: 0.1em;
+    padding: 5px 12px; border-radius: 999px; cursor: pointer;
+    transition: color .2s, background .2s, border-color .2s, box-shadow .2s;
+  }
+  .chip:hover { color: var(--ink); }
+  .chip.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  .pig {
+    width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+    border: 2px solid rgba(246,242,231,0.9); outline: 1px solid var(--hairline);
+    padding: 0; transition: box-shadow .2s, transform .2s;
+  }
+  .pig.on { box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--ink); transform: scale(1.08); }
+
+  .ctrl { display: flex; align-items: center; gap: 8px; }
+  .ctrl label { font-size: 12px; letter-spacing: 0.2em; color: var(--ink-light); white-space: nowrap; }
   .ctrl input[type=range] {
     -webkit-appearance: none; appearance: none;
-    width: 96px; height: 2px; background: var(--hairline); border-radius: 2px; outline: none; cursor: pointer;
+    width: 104px; height: 2px; background: var(--hairline); border-radius: 2px; outline: none; cursor: pointer;
   }
   .ctrl input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none; appearance: none;
@@ -85,23 +109,24 @@
     width: 12px; height: 12px; border-radius: 50%;
     background: var(--ink); border: 2px solid var(--paper); cursor: grab;
   }
-  .divider { width: 1px; height: 26px; background: var(--hairline); }
+  .ctrl .val { font-size: 11px; color: var(--ink-light); min-width: 30px; text-align: right; font-family: Georgia, serif; }
+
   .btn {
     border: 1px solid transparent; background: none; color: var(--ink);
-    font-family: inherit; font-size: 13.5px; letter-spacing: 0.18em;
-    padding: 8px 15px; border-radius: 9px; cursor: pointer;
-    transition: background .2s, color .2s, border-color .2s;
+    font-family: inherit; font-size: 13px; letter-spacing: 0.18em;
+    padding: 7px 14px; border-radius: 9px; cursor: pointer;
+    transition: color .2s, background .2s, border-color .2s;
     white-space: nowrap;
   }
   .btn:hover { background: rgba(43,43,51,0.08); }
-  .btn.active { background: var(--ink); color: var(--paper); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
   .btn.seal-on { background: var(--seal); color: #fff; }
   #saveBtn { border-color: var(--hairline); }
 
   /* ---------- 提示 ---------- */
   .hint {
-    position: fixed; left: 50%; bottom: 108px; transform: translateX(-50%);
-    z-index: 5; font-size: 13.5px; letter-spacing: 0.32em; color: var(--ink-light);
+    position: fixed; left: 50%; bottom: 168px; transform: translateX(-50%);
+    z-index: 5; font-size: 13px; letter-spacing: 0.32em; color: var(--ink-light);
     pointer-events: none; opacity: 1; transition: opacity 1.6s ease;
     white-space: nowrap;
   }
@@ -109,27 +134,22 @@
 
   /* ---------- 帮助 ---------- */
   .help {
-    position: fixed; top: 84px; right: 34px; z-index: 7;
-    width: 264px; padding: 18px 20px;
+    position: fixed; top: 84px; right: 32px; z-index: 7;
+    width: 286px; padding: 18px 20px;
     border: 1px solid var(--hairline); border-radius: 12px;
-    background: rgba(246,242,231,0.94); backdrop-filter: blur(10px);
-    font-size: 12.5px; line-height: 2; color: var(--ink);
+    background: rgba(246,242,231,0.95); backdrop-filter: blur(10px);
+    font-size: 12.5px; line-height: 2.05; color: var(--ink);
     box-shadow: 0 10px 40px rgba(43,43,51,0.12);
     display: none;
   }
   .help.show { display: block; }
   .help h3 { font-size: 12px; letter-spacing: 0.3em; color: var(--ink-light); font-weight: 400; margin-bottom: 6px; }
-  .help .k { display: inline-block; min-width: 74px; color: var(--ink-light); }
+  .help .k { display: inline-block; min-width: 88px; color: var(--ink-light); }
   .help b { font-weight: 600; }
+  .help .sec { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--hairline); }
 
-  /* ---------- 落款模式光标提示 ---------- */
   body.seal-mode #gl { cursor: crosshair; }
-
-  #fallback {
-    position: fixed; inset: 0; z-index: 20; display: none;
-    place-items: center; text-align: center; padding: 40px;
-    background: var(--paper); font-size: 15px; line-height: 2; letter-spacing: 0.1em;
-  }
+  body.seal-mode #brushCursor { display: none !important; }
 
   .home-link {
     position: fixed; left: 30px; bottom: 30px; z-index: 6;
@@ -140,13 +160,12 @@
   }
   .home-link:hover { color: var(--ink); border-color: var(--ink); transform: translateY(-3px); }
 
-  @media (max-width: 640px) {
-    .masthead { top: 18px; left: 18px; }
-    .topright { top: 18px; right: 18px; }
-    .toolbar { gap: 12px; padding: 10px 14px; bottom: 16px; }
-    .ctrl input[type=range] { width: 72px; }
-    .hint { bottom: 132px; font-size: 12px; letter-spacing: 0.2em; }
+  #fallback {
+    position: fixed; inset: 0; z-index: 20; display: none;
+    place-items: center; text-align: center; padding: 40px;
+    background: var(--paper); font-size: 15px; line-height: 2; letter-spacing: 0.1em;
   }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -155,11 +174,20 @@
       transition-duration: 0.01ms !important;
     }
   }
+  @media (max-width: 640px) {
+    .masthead { top: 16px; left: 16px; }
+    .topright { top: 16px; right: 16px; }
+    .toolbar { padding: 10px 12px 9px; gap: 8px; bottom: 14px; }
+    .ctrl input[type=range] { width: 84px; }
+    .hint { bottom: 200px; font-size: 11.5px; letter-spacing: 0.2em; }
+    .help { width: min(86vw, 286px); right: 16px; }
+  }
 </style>
 </head>
 <body>
 <canvas id="gl"></canvas>
 <canvas id="overlay"></canvas>
+<div id="brushCursor"></div>
 
 <header class="masthead">
   <h1>墨<span class="en">INK</span></h1>
@@ -176,24 +204,42 @@
   <h3 data-i18n="helpTitle"></h3>
   <div><span class="k" data-i18n="hDrawK"></span><span data-i18n="hDraw"></span></div>
   <div><span class="k" data-i18n="hSpeedK"></span><span data-i18n="hSpeed"></span></div>
+  <div><span class="k" data-i18n="hBrushK"></span><span data-i18n="hBrush"></span></div>
+  <div><span class="k" data-i18n="hWaterK"></span><span data-i18n="hWater"></span></div>
   <div><span class="k" data-i18n="hSealK"></span><span data-i18n="hSeal"></span></div>
-  <div><span class="k">W</span><span data-i18n="hWash"></span></div>
-  <div><span class="k">S</span><span data-i18n="hSave"></span></div>
+  <div class="sec">
+    <div><span class="k">[ ]</span><span data-i18n="hSize"></span></div>
+    <div><span class="k">1 – 4</span><span data-i18n="hBrushKeys"></span></div>
+    <div><span class="k">Z / Ctrl+Z</span><span data-i18n="hUndo"></span></div>
+    <div><span class="k">C</span><span data-i18n="hColor"></span></div>
+    <div><span class="k">W / S</span><span data-i18n="hWash"></span></div>
+  </div>
 </div>
 
 <div class="toolbar">
-  <div class="ctrl">
-    <label for="brushSize" data-i18n="brush"></label>
-    <input type="range" id="brushSize" min="0.15" max="0.9" step="0.01" value="0.42">
+  <div class="row">
+    <div class="grp" id="brushGrp"><span class="lbl" data-i18n="brushLbl"></span></div>
+    <div class="vsep"></div>
+    <div class="grp" id="pigGrp"><span class="lbl" data-i18n="inkLbl"></span></div>
+    <div class="vsep"></div>
+    <div class="grp" id="paperGrp"><span class="lbl" data-i18n="paperLbl"></span></div>
   </div>
-  <div class="ctrl">
-    <label for="inkDensity" data-i18n="density"></label>
-    <input type="range" id="inkDensity" min="0.2" max="1.6" step="0.05" value="0.9">
+  <div class="row">
+    <div class="ctrl">
+      <label for="brushSize" data-i18n="brush"></label>
+      <input type="range" id="brushSize" min="0.1" max="1.4" step="0.02" value="0.5">
+      <span class="val" id="brushSizeVal"></span>
+    </div>
+    <div class="ctrl">
+      <label for="inkDensity" data-i18n="density"></label>
+      <input type="range" id="inkDensity" min="0.2" max="1.6" step="0.05" value="0.9">
+    </div>
+    <div class="vsep"></div>
+    <button class="btn" id="undoBtn" data-i18n="undo"></button>
+    <button class="btn" id="washBtn" data-i18n="wash"></button>
+    <button class="btn" id="sealBtn" data-i18n="seal"></button>
+    <button class="btn" id="saveBtn" data-i18n="save"></button>
   </div>
-  <div class="divider"></div>
-  <button class="btn" id="washBtn" data-i18n="wash"></button>
-  <button class="btn" id="sealBtn" data-i18n="seal"></button>
-  <button class="btn" id="saveBtn" data-i18n="save"></button>
 </div>
 
 <div class="hint" id="hint" data-i18n="hint"></div>
@@ -207,9 +253,10 @@ window.addEventListener('error', e => {
   const f = document.getElementById('fallback');
   if (f) { f.style.display = 'grid'; f.textContent = 'ERR: ' + e.message + ' @' + (e.lineno || '?'); }
 });
+
 /* ================================================================
-   墨 · INK — 水墨流体画室
-   WebGL2 Stable Fluids 求解器 + 水墨美学渲染，零依赖单文件
+   墨 · INK 2.0 — 水墨流体画室
+   WebGL2 Stable Fluids + 四笔刷 / 四色墨 / 三纸质 / 撤销栈
    ================================================================ */
 
 /* ---------------- i18n ---------------- */
@@ -219,24 +266,38 @@ const I18N = {
     help: '助', helpTitle: '指 南 · GUIDE',
     hDrawK: '运笔', hDraw: '按住拖动，落笔成墨',
     hSpeedK: '笔速', hSpeed: '缓行则浓，疾书则淡（飞白）',
+    hBrushK: '笔刷', hBrush: '圆笔晕染 · 硬笔勾勒 · 泼墨洒点 · 水笔洗墨',
+    hWaterK: '水笔', hWater: '蘸水行笔可洗开墨迹（破墨法）',
     hSealK: '印章', hSeal: '印章模式下点画布落款',
-    hWash: '洗纸（清空画幅）', hSave: '保存 PNG 作品',
+    hSize: '笔宽增减', hBrushKeys: '切换笔刷', hUndo: '撤销一笔',
+    hColor: '循环墨色', hWash: '洗纸 / 保存作品',
     brush: '笔宽', density: '墨浓',
-    wash: '洗纸', seal: '印章', save: '保存',
+    undo: '撤销', wash: '洗纸', seal: '印章', save: '保存',
     hint: '落 笔 成 墨 · 缓 行 则 浓',
-    fallback: '此浏览器不支持 WebGL2，无法展卷。请换用新版 Chrome / Edge / Firefox。'
+    fallback: '此浏览器不支持 WebGL2，无法展卷。请换用新版 Chrome / Edge / Firefox。',
+    brushLbl: '笔', inkLbl: '墨', paperLbl: '纸',
+    brushes: ['圆笔', '硬笔', '泼墨', '水笔'],
+    inkNames: ['玄墨', '靛青', '赭石', '朱砂'],
+    papers: ['生宣', '熟宣', '绢本']
   },
   en: {
     subtitle: 'Ink Flow Studio',
     help: '?', helpTitle: 'GUIDE',
     hDrawK: 'Draw', hDraw: 'Press and drag to lay ink',
     hSpeedK: 'Speed', hSpeed: 'Slow strokes run heavy, fast ones dry',
+    hBrushK: 'Brushes', hBrush: 'Round washes, Hard lines, Splash drops, Water erases',
+    hWaterK: 'Water', hWater: 'The water brush washes ink away',
     hSealK: 'Seal', hSeal: 'In seal mode, click to stamp',
-    hWash: 'Wash the paper (clear)', hSave: 'Save artwork as PNG',
+    hSize: 'brush size –/+', hBrushKeys: 'switch brush', hUndo: 'undo a stroke',
+    hColor: 'cycle ink color', hWash: 'wash paper / save artwork',
     brush: 'Brush', density: 'Ink',
-    wash: 'Wash', seal: 'Seal', save: 'Save',
+    undo: 'Undo', wash: 'Wash', seal: 'Seal', save: 'Save',
     hint: 'EACH STROKE BECOMES INK',
-    fallback: 'WebGL2 is unavailable in this browser. Please try a recent Chrome / Edge / Firefox.'
+    fallback: 'WebGL2 is unavailable in this browser. Please try a recent Chrome / Edge / Firefox.',
+    brushLbl: 'BRUSH', inkLbl: 'INK', paperLbl: 'PAPER',
+    brushes: ['Round', 'Hard', 'Splash', 'Water'],
+    inkNames: ['Black', 'Indigo', 'Ochre', 'Cinnabar'],
+    papers: ['Raw Xuan', 'Sized Xuan', 'Silk']
   }
 };
 let lang = localStorage.getItem('ink-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
@@ -248,6 +309,7 @@ function applyI18n() {
   });
   document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
   document.title = lang === 'zh' ? '墨 · INK — 水墨流体画室' : 'INK — Ink Flow Studio';
+  buildChips();
 }
 
 /* ---------------- 工具 ---------------- */
@@ -268,9 +330,7 @@ if (!gl) {
   document.getElementById('fallback').style.display = 'grid';
   throw new Error('no webgl2');
 }
-const extCBF = gl.getExtension('EXT_color_buffer_float');
-if (!extCBF) {
-  // 无浮点渲染目标时降级提示（几乎不会发生）
+if (!gl.getExtension('EXT_color_buffer_float')) {
   document.getElementById('fallback').style.display = 'grid';
   throw new Error('no EXT_color_buffer_float');
 }
@@ -342,7 +402,7 @@ precision highp float;
 in vec2 vUv; in vec2 vL; in vec2 vR; in vec2 vT; in vec2 vB; out vec4 fragColor;
 uniform sampler2D uVelocity;
 uniform sampler2D uSource;
-uniform vec2 texelSize;      // velocity texel
+uniform vec2 texelSize;
 uniform vec2 sourceTexelSize;
 uniform float dt;
 uniform float dissipation;
@@ -359,7 +419,7 @@ void main(){
   vec2 coord = vUv - dt * bilerp(uVelocity, vUv, texelSize).xy * texelSize;
   vec4 result = bilerp(uSource, coord, sourceTexelSize);
   float decay = 1.0 + dissipation * dt;
-  fragColor = result / decay;
+  fragColor = max(result, vec4(0.0)) / decay;
 }`;
 
 const FRAG_CURL = `#version 300 es
@@ -445,38 +505,47 @@ void main(){
   fragColor = vec4(vel, 0.0, 1.0);
 }`;
 
-/* 水墨显示着色器：密度→墨分五色传递函数 + 边缘沉积 + 纸纹合成 */
+/* 水墨显示：R=墨密度，G=密度×色相坐标 → 四色颜料渐变 */
 const FRAG_DISPLAY = `#version 300 es
 precision highp float;
 in vec2 vUv; in vec2 vL; in vec2 vR; in vec2 vT; in vec2 vB; out vec4 fragColor;
 uniform sampler2D uDye;
 uniform sampler2D uPaper;
 uniform vec2 texelSize;
-uniform float flatPaper;   // 1.0 = 纯白纸（导出合成用）
-void main(){
-  float d  = texture(uDye, vUv).x;
-  float dL = texture(uDye, vL).x;
-  float dR = texture(uDye, vR).x;
-  float dT = texture(uDye, vT).x;
-  float dB = texture(uDye, vB).x;
+uniform float flatPaper;
+uniform vec3 paperTint;
 
-  // 边缘沉积：梯度大处墨色更深，模拟墨在晕染边缘聚集
-  float grad = abs(dL - dR) + abs(dT - dB);
+vec3 pigment(float t){
+  vec3 black = vec3(0.44, 0.46, 0.53);   /* 玄墨 */
+  vec3 indigo = vec3(0.30, 0.40, 0.58);  /* 靛青 */
+  vec3 ochre  = vec3(0.50, 0.36, 0.24);  /* 赭石 */
+  vec3 cinna  = vec3(0.64, 0.21, 0.15);  /* 朱砂 */
+  vec3 c = mix(black, indigo, smoothstep(0.0, 0.33, t));
+  c = mix(c, ochre, smoothstep(0.33, 0.66, t));
+  c = mix(c, cinna, smoothstep(0.66, 1.0, t));
+  return c;
+}
+void main(){
+  vec4 s  = texture(uDye, vUv);
+  vec4 sL = texture(uDye, vL);
+  vec4 sR = texture(uDye, vR);
+  vec4 sT = texture(uDye, vT);
+  vec4 sB = texture(uDye, vB);
+
+  float d = s.x;
+  float grad = abs(sL.x - sR.x) + abs(sT.x - sB.x);
   d *= 1.0 + smoothstep(0.0, 0.6, grad) * 0.55;
 
-  // 墨分五色：淡墨带青，浓墨近焦
-  vec3 lightInk = vec3(0.52, 0.55, 0.63);   // 淡墨 · 青灰
-  vec3 midInk   = vec3(0.26, 0.27, 0.33);   // 重墨
-  vec3 heavyInk = vec3(0.05, 0.05, 0.085);  // 焦墨
-  vec3 inkTone = mix(lightInk, midInk, smoothstep(0.10, 0.55, d));
-  inkTone = mix(inkTone, heavyInk, smoothstep(0.55, 1.15, d));
+  float t = clamp(s.y / (s.x + 1e-5), 0.0, 1.0);
+  vec3 hue = pigment(t);
 
-  // 覆盖度：极淡处成雾状留白
+  vec3 wash = mix(hue + vec3(0.34), hue, 0.35);
+  vec3 heavy = hue * 0.24;
+  vec3 inkTone = mix(wash, hue * 0.62, smoothstep(0.10, 0.55, d));
+  inkTone = mix(inkTone, heavy, smoothstep(0.55, 1.2, d));
+
   float coverage = smoothstep(0.015, 0.42, d);
-
-  vec3 paper = flatPaper > 0.5 ? vec3(1.0) : texture(uPaper, vUv).rgb;
-
-  // 纸的颗粒让墨有沉淀感
+  vec3 paper = flatPaper > 0.5 ? vec3(1.0) : texture(uPaper, vUv).rgb * paperTint;
   float grain = 0.88 + 0.24 * paper.g;
   inkTone *= mix(1.0, grain, coverage * (1.0 - flatPaper));
 
@@ -484,7 +553,7 @@ void main(){
   fragColor = vec4(col, 1.0);
 }`;
 
-/* ---------------- 几何 ---------------- */
+/* ---------------- 几何 / FBO ---------------- */
 const quadVAO = gl.createVertexArray();
 gl.bindVertexArray(quadVAO);
 const quadBuf = gl.createBuffer();
@@ -501,7 +570,6 @@ function blit(target) {
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
 
-/* ---------------- FBO ---------------- */
 function createFBO(w, h) {
   const tex = gl.createTexture();
   gl.activeTexture(gl.TEXTURE0);
@@ -532,7 +600,6 @@ function createDoubleFBO(w, h) {
   };
 }
 
-/* 尺寸：dye 高清、velocity 低清，均按画幅比例 */
 let aspect = 1;
 function simDims(base) {
   aspect = canvas.width / canvas.height;
@@ -541,7 +608,7 @@ function simDims(base) {
 }
 const DYE_RES = 1024, SIM_RES = 144, PRESSURE_ITERS = 24;
 let dye, velocity, divergence, curl, pressure;
-function initSim() {
+{
   const [dw, dh] = simDims(DYE_RES);
   const [sw, sh] = simDims(SIM_RES);
   dye = createDoubleFBO(dw, dh);
@@ -550,7 +617,6 @@ function initSim() {
   curl = createFBO(sw, sh);
   pressure = createDoubleFBO(sw, sh);
 }
-initSim();
 
 /* ---------------- 程序 ---------------- */
 const progClear      = program(VERT, FRAG_CLEAR);
@@ -563,32 +629,36 @@ const progPressure   = program(VERT, FRAG_PRESSURE);
 const progGradient   = program(VERT, FRAG_GRADIENT);
 const progDisplay    = program(VERT, FRAG_DISPLAY);
 
-/* ---------------- 宣纸纹理（程序化生成） ---------------- */
-function makePaper(size, seed) {
+/* ---------------- 宣纸纹理 ---------------- */
+const _noiseCache = new Map();
+function vnoise(x, y, seed) {
+  let g = _noiseCache.get(seed);
+  if (!g) { g = []; const r = mulberry32(seed); for (let i = 0; i < 64 * 64; i++) g.push(r()); _noiseCache.set(seed, g); }
+  const xi = Math.floor(x), yi = Math.floor(y);
+  const xf = x - xi, yf = y - yi;
+  const h = (a, b) => g[((b & 63) * 64 + (a & 63))];
+  const sx = xf * xf * (3 - 2 * xf), sy = yf * yf * (3 - 2 * yf);
+  const a = h(xi, yi), b = h(xi + 1, yi), c = h(xi, yi + 1), d = h(xi + 1, yi + 1);
+  return (a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy) * 2 - 1;
+}
+function makePaper(size, seed, fiberStrength) {
   const c = document.createElement('canvas');
   c.width = c.height = size;
   const ctx = c.getContext('2d');
   const rnd = mulberry32(seed);
-  // 暖白底
   ctx.fillStyle = '#f6f2e7';
   ctx.fillRect(0, 0, size, size);
-  // 云斑：大尺度明度起伏
   const img = ctx.getImageData(0, 0, size, size);
   const data = img.data;
-  const per = size / 4; // 噪声周期
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const i = (y * size + x) * 4;
-      // 两层 value noise（近似：正弦扰动网格采样）
-      const n = vnoise(x / 96, y / 96, rndSeedProxy(seed)) * 6
-              + vnoise(x / 23, y / 23, rndSeedProxy(seed + 7)) * 4;
-      const v = n; // ±10 灰度
-      data[i] += v * 0.6; data[i + 1] += v; data[i + 2] += v * 0.8;
+      const n = vnoise(x / 96, y / 96, seed) * 6 + vnoise(x / 23, y / 23, seed + 7) * 4 * fiberStrength;
+      data[i] += n * 0.6; data[i + 1] += n; data[i + 2] += n * 0.8;
     }
   }
   ctx.putImageData(img, 0, 0);
-  // 纤维：细短线
-  for (let i = 0; i < size * 3; i++) {
+  for (let i = 0; i < size * 3 * fiberStrength; i++) {
     const x = rnd() * size, y = rnd() * size;
     const a = rnd() * Math.PI, len = 4 + rnd() * 14;
     const light = rnd() > 0.5;
@@ -599,7 +669,6 @@ function makePaper(size, seed) {
     ctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len);
     ctx.stroke();
   }
-  // 云斑渍
   for (let i = 0; i < 26; i++) {
     const x = rnd() * size, y = rnd() * size, r = 60 + rnd() * 220;
     const g = ctx.createRadialGradient(x, y, 0, x, y, r);
@@ -610,75 +679,141 @@ function makePaper(size, seed) {
   }
   return c;
 }
-/* 轻量 value noise（网格随机数 + 双线性插值 + 两个八度） */
-function rndSeedProxy(s) { return s; }
-const _noiseCache = new Map();
-function vnoise(x, y, seed) {
-  const key = seed;
-  let g = _noiseCache.get(key);
-  if (!g) { g = []; const r = mulberry32(key); for (let i = 0; i < 64 * 64; i++) g.push(r()); _noiseCache.set(key, g); }
-  const xi = Math.floor(x), yi = Math.floor(y);
-  const xf = x - xi, yf = y - yi;
-  const h = (a, b) => g[((b & 63) * 64 + (a & 63))];
-  const sx = xf * xf * (3 - 2 * xf), sy = yf * yf * (3 - 2 * yf);
-  const a = h(xi, yi), b = h(xi + 1, yi), c = h(xi, yi + 1), d = h(xi + 1, yi + 1);
-  return (a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy) * 2 - 1;
-}
-const paperCanvas = makePaper(1024, 20260821);
+
+/* 纸质档案：影响流体手感与纹理 */
+const PAPERS = [
+  { seed: 20260821, fiber: 1.0,  curl: 30, force: 1.0,  dyeDiss: 0.0008, splatMul: 1.15, tint: [1, 1, 1] },
+  { seed: 7301,     fiber: 0.45, curl: 15, force: 0.55, dyeDiss: 0.0004, splatMul: 0.85, tint: [1, 1, 1] },
+  { seed: 4413,     fiber: 0.7,  curl: 22, force: 0.8,  dyeDiss: 0.0006, splatMul: 1.0,  tint: [1.015, 0.985, 0.915] }
+];
+let paperIdx = 0;
 const paperTex = gl.createTexture();
-gl.activeTexture(gl.TEXTURE0);
-gl.bindTexture(gl.TEXTURE_2D, paperTex);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, paperCanvas);
+function uploadPaper(idx) {
+  const pc = makePaper(1024, PAPERS[idx].seed, PAPERS[idx].fiber);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, paperTex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, pc);
+}
+uploadPaper(0);
+
+/* ---------------- 墨色 ---------------- */
+const INKS = [
+  { tint: 0.0 },
+  { tint: 0.33 },
+  { tint: 0.66 },
+  { tint: 1.0 }
+];
+const INK_CSS = ['#3a3d44', '#4d6794', '#7f5c3d', '#a33626'];
+let inkIdx = 0;
 
 /* ---------------- 模拟参数 ---------------- */
 const config = {
-  DENSITY_DISSIPATION: 0.0015,   // 墨几乎不褪，作品留存
-  VELOCITY_DISSIPATION: 0.12,    // 动量缓缓平息
+  VELOCITY_DISSIPATION: 0.12,
   PRESSURE: 0.8,
-  CURL: 26,                      // 涡度约束，让墨丝旋舞
   SPLAT_FORCE: 6200,
   idleDrop: true
 };
+let brushSize = 0.5, inkDensity = 0.9;
+let brushType = 0; // 0圆 1硬 2泼 3水
+const BRUSHES = [
+  { force: 1.0,  radiusMul: 1.0,  dyeMul: 1.0 },
+  { force: 0.45, radiusMul: 0.42, dyeMul: 1.35 },
+  { force: 0.7,  radiusMul: 1.25, dyeMul: 0.8 },
+  { force: 0.85, radiusMul: 1.05, dyeMul: 1.0 }
+];
+const brushRadius = () => (0.004 + Math.pow(brushSize, 1.55) * 0.055) * BRUSHES[brushType].radiusMul;
 
-/* ---------------- 笔触 ---------------- */
-let brushSize = 0.42, inkDensity = 0.9;
-const brushSizeEl = document.getElementById('brushSize');
-const inkDensityEl = document.getElementById('inkDensity');
-brushSizeEl.addEventListener('input', () => brushSize = +brushSizeEl.value);
-inkDensityEl.addEventListener('input', () => inkDensity = +inkDensityEl.value);
+/* ---------------- 撤销栈 ---------------- */
+const undoStack = [];
+function snapshotDye() {
+  const t = createFBO(dye.width, dye.height);
+  gl.bindFramebuffer(gl.READ_FRAMEBUFFER, dye.read.fbo);
+  gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, t.fbo);
+  gl.blitFramebuffer(0, 0, dye.width, dye.height, 0, 0, dye.width, dye.height,
+                     gl.COLOR_BUFFER_BIT, gl.NEAREST);
+  undoStack.push(t);
+  if (undoStack.length > 8) {
+    const old = undoStack.shift();
+    gl.deleteTexture(old.texture); gl.deleteFramebuffer(old.fbo);
+  }
+  updateUndoBtn();
+}
+function undo() {
+  if (!undoStack.length) return;
+  const t = undoStack.pop();
+  gl.bindFramebuffer(gl.READ_FRAMEBUFFER, t.fbo);
+  gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, dye.read.fbo);
+  gl.blitFramebuffer(0, 0, dye.width, dye.height, 0, 0, dye.width, dye.height,
+                     gl.COLOR_BUFFER_BIT, gl.NEAREST);
+  gl.deleteTexture(t.texture); gl.deleteFramebuffer(t.fbo);
+  updateUndoBtn();
+}
+function updateUndoBtn() {
+  document.getElementById('undoBtn').disabled = undoStack.length === 0;
+}
 
-function splat(x, y, dx, dy, dyeAmt, radiusScale) {
-  // x,y: 0..1（y 向上）；dx,dy: 速度增量
-  const radius = (0.006 + brushSize * 0.022) * (radiusScale || 1);
+/* ---------------- Splat ---------------- */
+function splat(x, y, dx, dy, dyeAmt, radiusScale, tint) {
+  const r = brushRadius() * (radiusScale || 1);
+  const tt = tint === undefined ? INKS[inkIdx].tint : tint;
+  const amt = dyeAmt * BRUSHES[brushType].dyeMul;
+  const P = PAPERS[paperIdx];
   gl.useProgram(progSplat.p);
   gl.uniform2f(progSplat.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);
   gl.uniform1i(progSplat.uni.uTarget, velocity.read.attach(0));
   gl.uniform1f(progSplat.uni.aspectRatio, aspect);
   gl.uniform2f(progSplat.uni.point, x, y);
-  gl.uniform3f(progSplat.uni.color, dx, dy, 0);
-  gl.uniform1f(progSplat.uni.radius, radius * 0.6);
+  gl.uniform3f(progSplat.uni.color, dx * BRUSHES[brushType].force, dy * BRUSHES[brushType].force, 0);
+  gl.uniform1f(progSplat.uni.radius, r * 0.6);
   blit(velocity.write); velocity.swap();
 
   gl.uniform2f(progSplat.uni.texelSize, dye.texelSizeX, dye.texelSizeY);
   gl.uniform1i(progSplat.uni.uTarget, dye.read.attach(0));
-  gl.uniform3f(progSplat.uni.color, dyeAmt, dyeAmt, dyeAmt);
-  gl.uniform1f(progSplat.uni.radius, radius);
+  gl.uniform3f(progSplat.uni.color, amt * P.splatMul, amt * P.splatMul * tt, 0);
+  gl.uniform1f(progSplat.uni.radius, r);
   blit(dye.write); dye.swap();
 }
 
-/* pointer 输入 → 插值成连续笔触 */
-let pointerDown = false, lastX = 0, lastY = 0, lastT = 0, lastMoveT = 0;
+/* ---------------- 笔触 ---------------- */
+let pointerDown = false, lastX = 0, lastY = 0, lastT = 0;
 let lastInteract = performance.now();
 const hintEl = document.getElementById('hint');
+const cursorEl = document.getElementById('brushCursor');
 
 function evtPos(e) {
   const r = canvas.getBoundingClientRect();
   return [(e.clientX - r.left) / r.width, 1 - (e.clientY - r.top) / r.height];
 }
+function pressureOf(e) {
+  return (e.pressure && e.pressure > 0) ? e.pressure : 0.5;
+}
+/* 泼墨：一簇随机墨点 */
+function splashBurst(x, y, scale) {
+  const n = 9 + Math.floor(Math.random() * 7);
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const rr = Math.random() * brushRadius() * 3.2 + brushRadius() * 0.4;
+    const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr;
+    const amt = inkDensity * (0.25 + Math.random() * 0.6) * scale;
+    splat(px, py,
+      Math.cos(a) * (60 + Math.random() * 220) * 0.16,
+      Math.sin(a) * (60 + Math.random() * 220) * 0.16 + 30,
+      amt, 0.28 + Math.random() * 0.3);
+  }
+}
+function stats(nStrokes, nSaved) {
+  try {
+    const s = JSON.parse(localStorage.getItem('ink-stats') || '{"strokes":0,"saved":0}');
+    if (nStrokes) s.strokes += nStrokes;
+    if (nSaved) s.saved += nSaved;
+    localStorage.setItem('ink-stats', JSON.stringify(s));
+  } catch (e) { /* 忽略 */ }
+}
+
 canvas.addEventListener('pointerdown', e => {
   if (sealMode) { stampSeal(e.clientX, e.clientY); return; }
   pointerDown = true;
@@ -686,8 +821,15 @@ canvas.addEventListener('pointerdown', e => {
   lastX = x; lastY = y; lastT = performance.now();
   lastInteract = performance.now();
   hintEl.classList.add('gone');
-  // 起笔一顿：浓墨点
-  splat(x, y, 0, 0, inkDensity * 0.55, 0.8);
+  snapshotDye();
+  stats(1, 0);
+  const pr = pressureOf(e);
+  if (brushType === 2) {
+    splashBurst(x, y, 0.5 + pr * 0.8);
+  } else {
+    const mul = brushType === 3 ? -0.7 : (brushType === 1 ? 0.8 : 0.55);
+    splat(x, y, 0, 0, inkDensity * mul * (0.45 + pr * 1.1), 0.8);
+  }
   canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove', e => {
@@ -698,18 +840,24 @@ canvas.addEventListener('pointermove', e => {
   const dxUv = x - lastX, dyUv = y - lastY;
   const dist = Math.hypot(dxUv * aspect, dyUv);
   if (dist < 0.0015) return;
-  const speed = dist / dt;                 // uv/秒
+  const speed = dist / dt;
   const speedNorm = Math.min(speed / 1.4, 1);
-  // 缓行浓、疾行淡（飞白）
-  const amt = inkDensity * (1.25 - speedNorm * 1.05);
-  // 步进插值，笔触连续
-  const steps = Math.max(1, Math.ceil(dist / (0.006 + brushSize * 0.012)));
+  const pr = pressureOf(e);
+  const amt = inkDensity * (1.25 - speedNorm * 1.05) * (0.45 + pr * 1.1);
+  const steps = Math.max(1, Math.ceil(dist / (brushRadius() * 0.55)));
   for (let i = 1; i <= steps; i++) {
     const t = i / steps;
+    const m = brushType === 3 ? -0.85 : 1;
     splat(lastX + dxUv * t, lastY + dyUv * t,
           dxUv * config.SPLAT_FORCE * dt / steps,
           dyUv * config.SPLAT_FORCE * dt / steps,
-          amt / steps, 1);
+          amt * m / steps, 1);
+    if (brushType === 2 && Math.random() < 0.22) {
+      splat(lastX + dxUv * t + (Math.random() - 0.5) * brushRadius() * 2.4,
+            lastY + dyUv * t + (Math.random() - 0.5) * brushRadius() * 2.4,
+            (Math.random() - 0.5) * 40, 40 + Math.random() * 60,
+            amt * 0.5, 0.3 + Math.random() * 0.25);
+    }
   }
   lastX = x; lastY = y; lastT = now;
   lastInteract = now;
@@ -717,9 +865,22 @@ canvas.addEventListener('pointermove', e => {
 window.addEventListener('pointerup', () => pointerDown = false);
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 
+/* 笔刷预览光标：真实半径可视化 */
+window.addEventListener('pointermove', e => {
+  if (sealMode || e.target !== canvas) { cursorEl.style.display = 'none'; return; }
+  const rPx = 2.4 * Math.sqrt(brushRadius()) * canvas.clientHeight;
+  cursorEl.style.display = 'block';
+  cursorEl.style.width = cursorEl.style.height = Math.max(8, Math.round(rPx * 2)) + 'px';
+  cursorEl.style.left = e.clientX + 'px';
+  cursorEl.style.top = e.clientY + 'px';
+  cursorEl.classList.toggle('water', brushType === 3);
+});
+canvas.addEventListener('pointerleave', () => cursorEl.style.display = 'none');
+
 /* ---------------- 洗纸 ---------------- */
 let washFrames = 0;
 function wash() {
+  if (washFrames === 0) snapshotDye();
   washFrames = 48;
   overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
 }
@@ -738,27 +899,22 @@ sealBtn.addEventListener('click', () => {
 function stampSeal(cx, cy) {
   const size = 56 + Math.random() * 10;
   const rot = (Math.random() - 0.5) * 0.16;
-  const x = cx - size / 2, y = cy - size / 2;
   overlayCtx.save();
   overlayCtx.translate(cx, cy);
   overlayCtx.rotate(rot);
-  // 印底
-  overlayCtx.fillStyle = '#b03a2e';
+  overlayCtx.fillStyle = INKS[inkIdx].tint > 0.9 ? '#2f4a7d' : '#b03a2e';
   roundRect(overlayCtx, -size / 2, -size / 2, size, size, 5);
   overlayCtx.fill();
-  // 内框
   overlayCtx.strokeStyle = 'rgba(246,242,231,0.85)';
   overlayCtx.lineWidth = 1.4;
   roundRect(overlayCtx, -size / 2 + 4, -size / 2 + 4, size - 8, size - 8, 3);
   overlayCtx.stroke();
-  // 印文：拾遗（竖排）
   overlayCtx.fillStyle = '#f6f2e7';
   overlayCtx.textAlign = 'center';
   overlayCtx.textBaseline = 'middle';
   overlayCtx.font = `${Math.round(size * 0.42)}px "KaiTi", "STKaiti", "Songti SC", "SimSun", serif`;
   overlayCtx.fillText('拾', 0, -size * 0.21);
   overlayCtx.fillText('遗', 0, size * 0.21);
-  // 印泥斑驳
   overlayCtx.globalCompositeOperation = 'destination-out';
   for (let i = 0; i < 26; i++) {
     const a = Math.random() * Math.PI * 2, r = size * (0.2 + Math.random() * 0.32);
@@ -781,22 +937,28 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 /* ---------------- 导出 ---------------- */
+let flatPaperNext = false;
 async function saveArtwork() {
   const W = 2048;
   const H = Math.round(W / (canvas.width / canvas.height));
-  // 1) 纯白纸背景渲染一帧并捕获（供 multiply 合成）
   flatPaperNext = true;
   renderFrame(0.016, true);
   flatPaperNext = false;
   const inkURL = canvas.toDataURL('image/png');
   const inkImg = new Image();
   await new Promise(res => { inkImg.onload = res; inkImg.src = inkURL; });
-  // 2) 合成：高清纸 + 墨（multiply）+ 印章
   const out = document.createElement('canvas');
   out.width = W; out.height = H;
   const ctx = out.getContext('2d');
-  const paperHi = makePaper(2048, 20260821);
+  const P = PAPERS[paperIdx];
+  const paperHi = makePaper(2048, P.seed, P.fiber);
   ctx.drawImage(paperHi, 0, 0, W, H);
+  if (P.tint[0] !== 1) {
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = `rgb(${Math.round(P.tint[0]*255)},${Math.round(P.tint[1]*255)},${Math.round(P.tint[2]*255)})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over';
+  }
   ctx.globalCompositeOperation = 'multiply';
   ctx.drawImage(inkImg, 0, 0, W, H);
   ctx.globalCompositeOperation = 'source-over';
@@ -805,9 +967,9 @@ async function saveArtwork() {
   a.download = `ink-${Date.now()}.png`;
   a.href = out.toDataURL('image/png');
   a.click();
+  stats(0, 1);
 }
 document.getElementById('saveBtn').addEventListener('click', saveArtwork);
-let flatPaperNext = false;
 
 /* ---------------- 闲时落墨 ---------------- */
 const REDUCED_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -820,42 +982,38 @@ function idleDrop(now) {
   const x = 0.15 + Math.random() * 0.7;
   const y = 0.2 + Math.random() * 0.6;
   const amt = 0.12 + Math.random() * 0.25;
-  splat(x, y, (Math.random() - 0.5) * 240, -80 - Math.random() * 200, amt, 0.5 + Math.random() * 0.7);
+  splat(x, y, (Math.random() - 0.5) * 240, -80 - Math.random() * 200, amt, 0.5 + Math.random() * 0.7, 0);
 }
 
 /* ---------------- 步进 ---------------- */
 function step(dt) {
+  const P = PAPERS[paperIdx];
   gl.disable(gl.BLEND);
 
-  // curl
   gl.useProgram(progCurl.p);
   gl.uniform2f(progCurl.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);
   gl.uniform1i(progCurl.uni.uVelocity, velocity.read.attach(0));
   blit(curl);
 
-  // vorticity
   gl.useProgram(progVorticity.p);
   gl.uniform2f(progVorticity.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);
   gl.uniform1i(progVorticity.uni.uVelocity, velocity.read.attach(0));
   gl.uniform1i(progVorticity.uni.uCurl, curl.attach(1));
-  gl.uniform1f(progVorticity.uni.curl, config.CURL);
+  gl.uniform1f(progVorticity.uni.curl, P.curl);
   gl.uniform1f(progVorticity.uni.dt, dt);
   blit(velocity.write); velocity.swap();
 
-  // divergence
   gl.useProgram(progDivergence.p);
   gl.uniform2f(progDivergence.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);
   gl.uniform1i(progDivergence.uni.uVelocity, velocity.read.attach(0));
   blit(divergence);
 
-  // 压力衰减清零
   gl.useProgram(progClear.p);
   gl.uniform2f(progClear.uni.texelSize, pressure.texelSizeX, pressure.texelSizeY);
   gl.uniform1i(progClear.uni.uTexture, pressure.read.attach(0));
   gl.uniform1f(progClear.uni.value, config.PRESSURE);
   blit(pressure.write); pressure.swap();
 
-  // Jacobi 迭代
   gl.useProgram(progPressure.p);
   gl.uniform2f(progPressure.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);
   gl.uniform1i(progPressure.uni.uDivergence, divergence.attach(1));
@@ -864,17 +1022,14 @@ function step(dt) {
     blit(pressure.write); pressure.swap();
   }
 
-  // 减压力梯度
   gl.useProgram(progGradient.p);
   gl.uniform2f(progGradient.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);
   gl.uniform1i(progGradient.uni.uPressure, pressure.read.attach(0));
   gl.uniform1i(progGradient.uni.uVelocity, velocity.read.attach(1));
   blit(velocity.write); velocity.swap();
 
-  // 平流速度
   gl.useProgram(progAdvect.p);
   gl.uniform2f(progAdvect.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-  if (!progAdvect.uni.sourceTexelSize) progAdvect.uni.sourceTexelSize = progAdvect.uni.sourceTexelSize || null;
   gl.uniform2f(progAdvect.uni.sourceTexelSize, velocity.texelSizeX, velocity.texelSizeY);
   gl.uniform1i(progAdvect.uni.uVelocity, velocity.read.attach(0));
   gl.uniform1i(progAdvect.uni.uSource, velocity.read.attach(0));
@@ -882,8 +1037,7 @@ function step(dt) {
   gl.uniform1f(progAdvect.uni.dissipation, config.VELOCITY_DISSIPATION);
   blit(velocity.write); velocity.swap();
 
-  // 平流墨
-  const dyeDiss = washFrames > 0 ? 3.2 : config.DENSITY_DISSIPATION;
+  const dyeDiss = washFrames > 0 ? 3.2 : P.dyeDiss;
   gl.uniform2f(progAdvect.uni.sourceTexelSize, dye.texelSizeX, dye.texelSizeY);
   gl.uniform1i(progAdvect.uni.uVelocity, velocity.read.attach(0));
   gl.uniform1i(progAdvect.uni.uSource, dye.read.attach(1));
@@ -894,6 +1048,7 @@ function step(dt) {
 
 function renderFrame(dt, forceFlat) {
   step(dt);
+  const P = PAPERS[paperIdx];
   gl.useProgram(progDisplay.p);
   gl.uniform2f(progDisplay.uni.texelSize, dye.texelSizeX, dye.texelSizeY);
   gl.uniform1i(progDisplay.uni.uDye, dye.read.attach(0));
@@ -901,6 +1056,7 @@ function renderFrame(dt, forceFlat) {
   gl.bindTexture(gl.TEXTURE_2D, paperTex);
   gl.uniform1i(progDisplay.uni.uPaper, 1);
   gl.uniform1f(progDisplay.uni.flatPaper, forceFlat || flatPaperNext ? 1.0 : 0.0);
+  gl.uniform3f(progDisplay.uni.paperTint, P.tint[0], P.tint[1], P.tint[2]);
   blit(null);
 }
 
@@ -922,12 +1078,70 @@ function resize() {
   if (canvas.width !== w || canvas.height !== h) {
     canvas.width = w; canvas.height = h;
     overlay.width = w; overlay.height = h;
-    // FBO 保持初始尺寸：窗口变化时画作保留（显示时等比映射）
   }
 }
 window.addEventListener('resize', resize);
 
-/* ---------------- 语言 / 帮助 / 快捷键 ---------------- */
+/* ---------------- UI：chips / 快捷键 ---------------- */
+function buildChips() {
+  const bg = document.getElementById('brushGrp');
+  bg.querySelectorAll('.chip').forEach(x => x.remove());
+  I18N[lang].brushes.forEach((name, i) => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (i === brushType ? ' on' : '');
+    b.textContent = name;
+    b.addEventListener('click', () => { brushType = i; buildChips(); });
+    bg.appendChild(b);
+  });
+  const pg = document.getElementById('pigGrp');
+  pg.querySelectorAll('.pig').forEach(x => x.remove());
+  INKS.forEach((ink, i) => {
+    const b = document.createElement('button');
+    b.className = 'pig' + (i === inkIdx ? ' on' : '');
+    b.style.background = INK_CSS[i];
+    b.setAttribute('aria-label', I18N[lang].inkNames[i]);
+    b.title = I18N[lang].inkNames[i];
+    b.addEventListener('click', () => { inkIdx = i; buildChips(); });
+    pg.appendChild(b);
+  });
+  const rg = document.getElementById('paperGrp');
+  rg.querySelectorAll('.chip').forEach(x => x.remove());
+  I18N[lang].papers.forEach((name, i) => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (i === paperIdx ? ' on' : '');
+    b.textContent = name;
+    b.addEventListener('click', () => {
+      paperIdx = i;
+      uploadPaper(i);
+      buildChips();
+    });
+    rg.appendChild(b);
+  });
+}
+
+const brushSizeEl = document.getElementById('brushSize');
+const inkDensityEl = document.getElementById('inkDensity');
+const brushSizeVal = document.getElementById('brushSizeVal');
+function updSizeVal() {
+  brushSizeVal.textContent = Math.round(brushSize * 100 / 1.4);
+}
+brushSizeEl.addEventListener('input', () => { brushSize = +brushSizeEl.value; updSizeVal(); });
+inkDensityEl.addEventListener('input', () => inkDensity = +inkDensityEl.value);
+
+document.getElementById('undoBtn').addEventListener('click', undo);
+window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  const k = e.key.toLowerCase();
+  if (k === '[') { brushSize = Math.max(0.1, brushSize - 0.08); brushSizeEl.value = brushSize; updSizeVal(); }
+  else if (k === ']') { brushSize = Math.min(1.4, brushSize + 0.08); brushSizeEl.value = brushSize; updSizeVal(); }
+  else if (k === '1' || k === '2' || k === '3' || k === '4') { brushType = +k - 1; buildChips(); }
+  else if (k === 'z') { undo(); }
+  else if (k === 'c') { inkIdx = (inkIdx + 1) % INKS.length; buildChips(); }
+  else if (k === 'w') wash();
+  else if (k === 's') saveArtwork();
+});
+
+/* ---------------- 语言 / 帮助 ---------------- */
 const langBtn = document.getElementById('langBtn');
 langBtn.addEventListener('click', () => {
   lang = lang === 'zh' ? 'en' : 'zh';
@@ -936,18 +1150,15 @@ langBtn.addEventListener('click', () => {
 });
 const helpPanel = document.getElementById('helpPanel');
 document.getElementById('helpBtn').addEventListener('click', () => helpPanel.classList.toggle('show'));
-window.addEventListener('keydown', e => {
-  if (e.key === 'w' || e.key === 'W') wash();
-  if (e.key === 's' || e.key === 'S') saveArtwork();
-});
 
 /* ---------------- 启动 ---------------- */
 applyI18n();
+updSizeVal();
+updateUndoBtn();
 resize();
-// 开卷即有一墨：静态展示也含生命
-splat(0.62, 0.68, -160, -320, 0.8, 1.0);
-splat(0.58, 0.62, -90, -220, 0.5, 0.6);
-splat(0.66, 0.74, -220, -140, 0.35, 0.45);
+splat(0.62, 0.68, -160, -320, 0.8, 1.0, 0);
+splat(0.58, 0.62, -90, -220, 0.5, 0.6, 0);
+splat(0.66, 0.74, -220, -140, 0.35, 0.45, 0);
 requestAnimationFrame(frame);
 </script>
 </body>

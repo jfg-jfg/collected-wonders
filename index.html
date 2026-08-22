@@ -77,6 +77,11 @@
   .c-title .en { font-size: 13px; font-style: italic; letter-spacing: 0.12em; color: var(--ac); }
   .c-tag { font-size: 11px; letter-spacing: 0.3em; color: var(--dim); margin-top: 8px; }
   .c-desc { font-size: 13.5px; line-height: 2; letter-spacing: 0.06em; color: rgba(236,229,211,0.72); margin-top: 12px; flex: 1; }
+  .c-stat {
+    margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line);
+    font-size: 11.5px; letter-spacing: 0.14em; color: var(--ac);
+    font-family: Georgia, "Songti SC", serif; opacity: 0.85; min-height: 1.2em;
+  }
   .c-go {
     margin-top: 18px; font-size: 12px; letter-spacing: 0.34em; color: var(--ac);
     opacity: 0; transform: translateX(-8px); transition: color .4s, background .4s, border-color .4s, box-shadow .4s, transform .4s, opacity .4s;
@@ -279,9 +284,44 @@ function applyI18n() {
       <div class="c-title"><span class="zh">${w.zh}</span><span class="en">${w.en}</span></div>
       <div class="c-tag">${w.tag}</div>
       <div class="c-desc">${w.desc}</div>
+      <div class="c-stat">${workStat(w.en)}</div>
       <div class="c-go">${lang === 'zh' ? '进 入 →' : 'ENTER →'}</div>`;
     grid.appendChild(a);
   }
+}
+function workStat(en) {
+  try {
+    switch (en) {
+      case 'INK': {
+        const s = JSON.parse(localStorage.getItem('ink-stats') || '{}');
+        return lang === 'zh'
+          ? `落笔 ${s.strokes || 0} 次 · 存画 ${s.saved || 0} 幅`
+          : `${s.strokes || 0} strokes · ${s.saved || 0} saved`;
+      }
+      case 'ECHO': {
+        const s = JSON.parse(localStorage.getItem('echo-save') || '{}');
+        const c = (s.statsExt && s.statsExt.clears) || 0;
+        const a = s.ach ? Object.keys(s.ach).length : 0;
+        return lang === 'zh' ? `通关 ${c} 次 · 灯 ${a}/8` : `${c} clears · ${a}/8 lamps`;
+      }
+      case 'SCAPE': {
+        const s = JSON.parse(localStorage.getItem('scape-stats') || '{}');
+        return lang === 'zh' ? `聆听 ${s.minutes || 0} 分钟` : `${s.minutes || 0} min listened`;
+      }
+      case 'LETTERS': {
+        const s = JSON.parse(localStorage.getItem('letters-save') || '{}');
+        const e = (s.endings || []).length, r = Math.min(s.readEver || 0, 13);
+        return lang === 'zh' ? `读过 ${r}/13 封 · 结局 ${e}/4` : `${r}/13 read · ${e}/4 endings`;
+      }
+      case 'FOLD': {
+        const s = JSON.parse(localStorage.getItem('fold-stats') || '{}');
+        const m = s.maxMag || 0;
+        const ms = m >= 1e8 ? (m / 1e8).toFixed(1) + '×10⁸' : m >= 1e4 ? (m / 1e4).toFixed(1) + '×10⁴' : (m || 0).toFixed(0);
+        return lang === 'zh' ? `最深入 ${ms}` : `deepest ${ms}`;
+      }
+    }
+  } catch (e) { /* 统计缺失时静默 */ }
+  return '';
 }
 document.getElementById('langBtn').addEventListener('click', () => {
   lang = lang === 'zh' ? 'en' : 'zh';

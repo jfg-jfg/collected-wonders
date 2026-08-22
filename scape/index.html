@@ -1042,6 +1042,7 @@ setInterval(() => { if (document.hidden) audioTick(performance.now(), 0.25); }, 
 
 /* ================= 主循环 ================= */
 let prev = performance.now();
+let listenMs = 0, listenFlush = 0;
 function frame(now) {
   const dt = Math.min((now - prev) / 1000, 0.05);
   prev = now;
@@ -1049,6 +1050,19 @@ function frame(now) {
   audioTick(now, dt);
   timerTick(now);
   sleepTick(now);
+  // 跨站统计：聆听时长（有声且未暂停时累计）
+  if (AC && !audioPaused && !sleepFading) {
+    listenMs += dt * 1000;
+    if (now - listenFlush > 10000) {
+      listenFlush = now;
+      try {
+        const s = JSON.parse(localStorage.getItem('scape-stats') || '{"minutes":0}');
+        s.minutes = Math.round((s.minutes * 60000 + listenMs) / 60000);
+        localStorage.setItem('scape-stats', JSON.stringify(s));
+        listenMs = 0;
+      } catch (e) { listenMs = 0; }
+    }
+  }
   requestAnimationFrame(frame);
 }
 

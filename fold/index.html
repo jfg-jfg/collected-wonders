@@ -367,6 +367,13 @@ let lastIter = 0;
 const coordsEl = document.getElementById('coords');
 function updateCoords() {
   const mag = 1.4 / view.s;
+  try {
+    const fs = JSON.parse(localStorage.getItem('fold-stats') || '{"maxMag":0}');
+    if (mag > (fs.maxMag || 0)) {
+      fs.maxMag = mag;
+      localStorage.setItem('fold-stats', JSON.stringify(fs));
+    }
+  } catch (e) { /* 忽略 */ }
   const magStr = mag >= 1e8 ? (mag / 1e8).toFixed(1) + '×10⁸'
     : mag >= 1e4 ? (mag / 1e4).toFixed(1) + '×10⁴'
     : mag >= 100 ? mag.toFixed(0)

@@ -865,6 +865,10 @@ function levelClear() {
   state = 'clear';
   elapsed = performance.now() - startTime;
   sndWin();
+  // 跨站统计
+  save.statsExt = Object.assign({ clears: 0, dailyClears: 0 }, save.statsExt);
+  save.statsExt.clears++;
+  if (isDaily) save.statsExt.dailyClears++;
   if (!isDaily) {
     if (li + 1 > save.unlocked) save.unlocked = li + 1;
   } else {

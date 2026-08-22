@@ -705,7 +705,9 @@ function simDims(base) {
   const min = base, max = Math.round(base * Math.max(aspect, 1 / aspect));
   return aspect >= 1 ? [max, min] : [min, max];
 }
-const DYE_RES = 1024, SIM_RES = 144, PRESSURE_ITERS = 24;
+/* 自适应染料分辨率：小屏（手机）降载，大屏保持 1024 */
+const DYE_RES = Math.min(1024, Math.max(640, Math.round(Math.min(screen.width, screen.height) * 1.6)));
+const SIM_RES = 144, PRESSURE_ITERS = 24;
 let dye, velocity, divergence, curl, pressure;
 {
   const [dw, dh] = simDims(DYE_RES);

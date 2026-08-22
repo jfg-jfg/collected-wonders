@@ -246,6 +246,7 @@
 </head>
 <body>
 <canvas id="cv"></canvas>
+<canvas id="minimap" width="140" height="100" style="position:fixed;right:16px;bottom:16px;z-index:4;opacity:0.82;pointer-events:none;border-radius:6px"></canvas>
 
 <div class="hud" id="hud" style="display:none">
   <span id="hudLevel"></span><span class="sep">·</span>
@@ -1586,6 +1587,38 @@ function render(dt) {
 
   ctx.fillStyle = vg;
   ctx.fillRect(0, 0, W, H);
+
+  // 微型小地图：仅显示已照亮区域
+  {
+    const mm = document.getElementById('minimap');
+    const mctx2 = mm.getContext('2d');
+    const th = lvTheme();
+    mctx2.fillStyle = `rgba(${th.vig[0]},${th.vig[1]},${th.vig[2]},0.85)`;
+    mctx2.fillRect(0, 0, mm.width, mm.height);
+    const ms = Math.min(mm.width / cols, mm.height / rows);
+    const mox = (mm.width - cols * ms) / 2, moy = (mm.height - rows * ms) / 2;
+    mctx2.fillStyle = `rgba(${th.wall[0]},${th.wall[1]},${th.wall[2]},0.65)`;
+    for (const key of litWalls) {
+      const [wx, wy] = key.split(',').map(Number);
+      mctx2.fillRect(mox + wx * ms, moy + wy * ms, ms, ms);
+    }
+    // 出口（如被照亮过）
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      if (grid[y][x] === 'G' && (litWalls.has(x + ',' + y) || goalPulse > 0.1)) {
+        mctx2.fillStyle = '#e8c07a';
+        mctx2.fillRect(mox + x * ms - 1, moy + y * ms - 1, ms + 2, ms + 2);
+      }
+    }
+    // 玩家
+    mctx2.fillStyle = '#f6d696';
+    mctx2.beginPath();
+    mctx2.arc(mox + (px + 0.5) * ms, moy + (py + 0.5) * ms, Math.max(1.5, ms * 0.5), 0, Math.PI * 2);
+    mctx2.fill();
+    // 边框
+    mctx2.strokeStyle = 'rgba(157,176,201,0.2)';
+    mctx2.lineWidth = 1;
+    mctx2.strokeRect(0.5, 0.5, mm.width - 1, mm.height - 1);
+  }
 
   // 迷离红闪
   if (ghostFlash > 0) {

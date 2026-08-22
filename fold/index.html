@@ -99,6 +99,7 @@
   <button class="btn-ghost" id="juliaBtn"></button>
   <button class="btn-ghost" id="shotBtn"></button>
   <button class="btn-ghost" id="shareBtn"></button>
+  <button class="btn-ghost" id="tourBtn"></button>
   <button class="btn-ghost" id="resetBtn"></button>
   <button class="btn-ghost" id="langBtn">EN</button>
 </div>
@@ -122,6 +123,7 @@ const I18N = {
     hint: '滚轮缩放 · 拖拽巡游 · 双击俯冲',
     share: '分享坐标', copied: '已复制链接', copyFail: '链接已写入地址栏，请手动复制',
     reset: '回母港', zoom: '倍率', palette: '色',
+    tour: '▶ 巡航', tourStop: '■ 停', tourTip: '自动巡航各地名，每处停留 6 秒',
     addSpot: '存此地', delSpot: '长按删除',
     juliaOn: '儒', juliaOff: '曼', shipName: '舰',
     juliaTipOn: '切换到儒利亚集合（以当前中心为 c）', juliaTipOff: '回到曼德博集合',
@@ -141,6 +143,7 @@ const I18N = {
     hint: 'SCROLL TO ZOOM · DRAG TO DRIFT · DOUBLE-CLICK TO DIVE',
     share: 'SHARE SPOT', copied: 'link copied', copyFail: 'link is in the address bar — copy manually',
     reset: 'HOME PORT', zoom: 'mag', palette: 'PAL',
+    tour: '▶ TOUR', tourStop: '■ STOP', tourTip: 'auto-cruise named spots, 6s each',
     addSpot: 'MARK SPOT', delSpot: 'long-press to delete',
     juliaOn: 'JULIA', juliaOff: 'MSET', shipName: 'SHIP',
     juliaTipOn: 'switch to the Julia set (c = current center)', juliaTipOff: 'back to the Mandelbrot set',
@@ -570,6 +573,37 @@ function flashTitle(btn, txt) {
   setTimeout(() => btn.textContent = old, 1800);
 }
 document.getElementById('resetBtn').addEventListener('click', () => flyTo(T().places[0]));
+/* 自动巡航 */
+let tourOn = false, tourIdx = 0, tourTimer = null;
+const tourBtn = document.getElementById('tourBtn');
+function updTourBtn() {
+  tourBtn.textContent = tourOn ? T().tourStop : T().tour;
+  tourBtn.title = T().tourTip;
+  tourBtn.classList.toggle('on', tourOn);
+}
+tourBtn.addEventListener('click', () => {
+  tourOn = !tourOn;
+  updTourBtn();
+  if (tourOn) {
+    tourIdx = 0;
+    tourNext();
+  } else {
+    clearTimeout(tourTimer);
+  }
+});
+function tourNext() {
+  if (!tourOn) return;
+  const places = T().places;
+  if (tourIdx >= places.length) tourIdx = 0;
+  flyTo(places[tourIdx]);
+  tourIdx++;
+  tourTimer = setTimeout(tourNext, 6000);
+}
+['pointerdown', 'wheel', 'keydown'].forEach(ev =>
+  window.addEventListener(ev, () => {
+    if (tourOn) { tourOn = false; clearTimeout(tourTimer); updTourBtn(); }
+  }, { passive: true, capture: true }));
+
 /* Julia / 调色板 / 截图 */
 const juliaBtn = document.getElementById('juliaBtn');
 juliaBtn.addEventListener('click', () => {
@@ -646,6 +680,7 @@ function applyI18n() {
   document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
   document.getElementById('shareBtn').textContent = T().share;
   document.getElementById('resetBtn').textContent = T().reset;
+  updTourBtn();
   document.getElementById('shotBtn').textContent = T().shot;
   palBtn.textContent = T().palette + ' ' + PAL_NAMES[lang][palIdx];
   palBtn.title = T().palTip;

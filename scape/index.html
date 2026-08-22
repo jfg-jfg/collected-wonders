@@ -37,6 +37,7 @@
     padding: 7px 14px; border-radius: 999px; cursor: pointer; transition: color .2s, background .2s, border-color .2s, box-shadow .2s, transform .2s, opacity .2s;
   }
   .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-ghost.on { border-color: var(--gold); color: var(--gold); }
   .timer-badge { position: relative; }
   .timer-badge .ring { width: 18px; height: 18px; vertical-align: -4px; margin-right: 7px; }
   .timer-badge.on { border-color: var(--gold); color: var(--gold); }
@@ -140,6 +141,7 @@
   <button class="btn-ghost timer-badge" id="timerBtn">
     <svg class="ring" viewBox="0 0 20 20"><circle id="ringBg" cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2"/><circle id="ringFg" cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="50.3" stroke-dashoffset="50.3" transform="rotate(-90 10 10)"/></svg><span id="timerTxt">25:00</span>
   </button>
+  <button class="btn-ghost" id="sleepBtn" title="">☾ ∞</button>
   <button class="btn-ghost" id="langBtn">EN</button>
 </div>
 
@@ -164,22 +166,30 @@ window.addEventListener('error', e => {
 const I18N = {
   zh: {
     sub: '程序化声景 · 声音与画面皆由数学生成',
-    channels: { rain: '雨', wind: '风', fire: '篝火', stream: '溪流', cricket: '夜虫', thunder: '雷' },
+    channels: { rain: '雨', wind: '风', fire: '篝火', stream: '溪流', cricket: '夜虫', thunder: '雷', birds: '鸟鸣', bell: '远钟' },
     time: '时刻', presets: {
       rainy: '雨夜读书', morning: '山涧清晨', fireside: '炉边听风', valley: '午后山谷'
     },
     hint: '拨动天气与时刻 · 声画同源',
+    random: '随 机', savePreset: '存 为 境',
+    customName: i => `境·${'一二三四五六'[i]}`,
+    delTip: '长按删除此境',
+    sleepTip: '睡眠渐弱', paused: '已暂停 · 空格继续',
     timer: ['专注 25 分', '专注 45 分', '专注 60 分', '取消计时'],
     timeNames: ['夜', '晨', '昼', '暮'],
     sndTip: '点任意滑杆开启声音'
   },
   en: {
     sub: 'Procedural soundscape — sound and scene, both born of math',
-    channels: { rain: 'RAIN', wind: 'WIND', fire: 'FIRE', stream: 'STREAM', cricket: 'CRICKETS', thunder: 'THUNDER' },
+    channels: { rain: 'RAIN', wind: 'WIND', fire: 'FIRE', stream: 'STREAM', cricket: 'CRICKETS', thunder: 'THUNDER', birds: 'BIRDS', bell: 'BELL' },
     time: 'HOUR', presets: {
       rainy: 'Rainy Night', morning: 'Mountain Dawn', fireside: 'Fireside', valley: 'Valley Noon'
     },
     hint: 'DIAL WEATHER & HOUR — SOUND AND SCENE ARE ONE',
+    random: 'RANDOM', savePreset: 'SAVE SCENE',
+    customName: i => 'Scene ' + (i + 1),
+    delTip: 'long-press to delete',
+    sleepTip: 'sleep fade', paused: 'PAUSED · SPACE TO RESUME',
     timer: ['FOCUS 25', 'FOCUS 45', 'FOCUS 60', 'CANCEL'],
     timeNames: ['NIGHT', 'DAWN', 'DAY', 'DUSK'],
     sndTip: 'touch any dial to start sound'
@@ -191,9 +201,10 @@ const T = () => I18N[lang];
 /* ================= 状态 ================= */
 const S = {
   rain: 0, wind: 0.15, fire: 0, stream: 0.3, cricket: 0, thunder: 0,
+  birds: 0, bell: 0,
   time: 14, master: 0.8
 };
-const CH_ORDER = ['rain', 'wind', 'fire', 'stream', 'cricket', 'thunder'];
+const CH_ORDER = ['rain', 'wind', 'fire', 'stream', 'cricket', 'thunder', 'birds', 'bell'];
 
 /* ================= 音频引擎（全合成） ================= */
 let AC = null, master = null, nodes = {};
@@ -320,6 +331,42 @@ function cricketChirp() { // 虫鸣：4 连拍
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
     o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.05);
   }
+}
+function birdCall() { // 鸟鸣：2-4 声 FM 滑音，随机声像
+  const t0 = AC.currentTime;
+  const pan = AC.createStereoPanner ? AC.createStereoPanner() : null;
+  if (pan) { pan.pan.value = Math.random() * 1.4 - 0.7; pan.connect(master); }
+  const out = pan || master;
+  const calls = 2 + Math.floor(Math.random() * 3);
+  const base = 1900 + Math.random() * 1400;
+  for (let i = 0; i < calls; i++) {
+    const o = AC.createOscillator(), m = AC.createOscillator(), mg = AC.createGain(), g = AC.createGain();
+    o.type = 'sine';
+    m.type = 'sine'; m.frequency.value = 55 + Math.random() * 40;
+    mg.gain.value = 120 + Math.random() * 160;
+    m.connect(mg); mg.connect(o.frequency);
+    const t = t0 + i * (0.16 + Math.random() * 0.1);
+    o.frequency.setValueAtTime(base * (0.9 + Math.random() * 0.2), t);
+    o.frequency.exponentialRampToValueAtTime(base * (1.15 + Math.random() * 0.25), t + 0.09);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.028 * (0.5 + S.birds * 0.8), t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+    o.connect(g); g.connect(out);
+    o.start(t); o.stop(t + 0.16);
+    m.start(t); m.stop(t + 0.16);
+  }
+}
+function distantBell() { // 远钟：低频双分音长衰减
+  const t = AC.currentTime;
+  const vol = 0.05 + S.bell * 0.07;
+  [164.8, 246.9, 392.0].forEach((fq, i) => {
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = 'sine'; o.frequency.value = fq * (1 + (Math.random() - 0.5) * 0.002);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol / (i + 1.6), t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 5.5);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + 5.6);
+  });
 }
 function thunderRumble() { // 雷声 + 闪电
   const t = AC.currentTime;
@@ -637,6 +684,38 @@ function scene(dt) {
     }
   }
 
+  // 飞鸟（日间 + 鸟鸣声道开启）
+  if (S.birds > 0.05 && L > 0.25) {
+    for (let i = 0; i < 4; i++) {
+      const ph = time * (0.06 + i * 0.013) + i * 2.6;
+      const bx = ((ph % 1.4) / 1.4) * (W + 160) - 80;
+      const by = H * (0.16 + 0.09 * (i % 3)) + Math.sin(time * 1.1 + i * 2) * 12;
+      const flap = Math.sin(time * 7 + i * 1.7) * 4.2;
+      const sc = 0.7 + (i % 3) * 0.25;
+      ctx.strokeStyle = `rgba(20,26,34,${(0.35 * S.birds + 0.12).toFixed(3)})`;
+      ctx.lineWidth = 1.6 * sc;
+      ctx.beginPath();
+      ctx.moveTo(bx - 7 * sc, by - flap * sc * 0.5);
+      ctx.quadraticCurveTo(bx, by + 2 * sc, bx + 0.1, by);
+      ctx.quadraticCurveTo(bx, by + 2 * sc, bx + 7 * sc, by - flap * sc * 0.5);
+      ctx.stroke();
+    }
+  }
+
+  // 雨后彩虹（雨≥0.35 且日光充足时的彩蛋）
+  if (S.rain > 0.3 && sky.L > 0.55) {
+    const ra = Math.min(0.34, (S.rain - 0.3) * 1.6) * Math.min(1, (sky.L - 0.55) * 4);
+    const cx0 = W * 0.5, cy0 = H * 0.98, R = H * 0.62;
+    const hues = ['rgba(148,112,196,', 'rgba(96,132,208,', 'rgba(112,178,190,', 'rgba(140,196,140,', 'rgba(224,190,110,', 'rgba(222,150,100,', 'rgba(206,110,96,'];
+    for (let i = 0; i < 7; i++) {
+      ctx.strokeStyle = hues[i] + (ra * 0.5 * (1 - i * 0.06)).toFixed(3) + ')';
+      ctx.lineWidth = 7;
+      ctx.beginPath();
+      ctx.arc(cx0, cy0, R + i * 8, Math.PI * 1.05, Math.PI * 1.95);
+      ctx.stroke();
+    }
+  }
+
   // 闪电
   if (flash > 0) {
     flash -= dt * 2.4;
@@ -656,7 +735,8 @@ function cricketActive() {
 }
 
 /* ================= 音频调度（帧循环内） ================= */
-let plinkT = 0, crackleT = 0, cricketT = 0;
+let plinkT = 0, crackleT = 0, cricketT = 0, birdT = 0, bellT = 0;
+function birdsActive() { return S.time > 6 && S.time < 19.2; }
 function audioTick(now, dt) {
   if (!AC) return;
   // 雨滴
@@ -673,6 +753,16 @@ function audioTick(now, dt) {
   if (cricketActive() && S.cricket > 0.05 && now > cricketT) {
     cricketChirp();
     cricketT = now + (300 + Math.random() * 1600 / S.cricket);
+  }
+  // 鸟鸣（仅日间，雨天更稀）
+  if (birdsActive() && S.birds > 0.05 && now > birdT) {
+    birdCall();
+    birdT = now + (900 + Math.random() * 4200 / S.birds) * (1 + S.rain * 1.2);
+  }
+  // 远钟
+  if (S.bell > 0.05 && now > bellT) {
+    distantBell();
+    bellT = now + (16000 + Math.random() * 42000) / (0.3 + S.bell);
   }
   // 风：截止游走
   const wn = nodes.wind;
@@ -728,7 +818,9 @@ const ICONS = {
   fire: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-4 5-4 9a4 4 0 0 0 8 .5C16 9 12 8 12 3z"/><path d="M7.5 13a5.5 5.5 0 1 0 11-.5c0-2-1-3.5-2-4.5"/></svg>',
   stream: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 8h5l2-2 3 2h8M3 13h6l2 2 3-2h7M3 18h5l2-2"/></svg>',
   cricket: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 19c0-6 3-9 7-10M9 19c0-4 2-6 5-7M12 9l4-4M14 11l5-3M13 7l3-5"/><circle cx="16" cy="16" r="1" fill="currentColor" stroke="none"/></svg>',
-  thunder: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14a5 5 0 0 1 .3-9.97A6 6 0 0 1 18 7.5 3.5 3.5 0 0 1 17.5 14z"/><path d="M12 12l-2.5 4.5H13L10.5 21"/></svg>'
+  thunder: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14a5 5 0 0 1 .3-9.97A6 6 0 0 1 18 7.5 3.5 3.5 0 0 1 17.5 14z"/><path d="M12 12l-2.5 4.5H13L10.5 21"/></svg>',
+  birds: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 12c2-2.5 4-2.5 6 0M9 12c2-2.5 4-2.5 6 0M15 9c1.6-2 3.2-2 4.8 0"/><path d="M6 17c2-2.5 4-2.5 6 0M14 16c1.6-2 3.2-2 4.8 0" opacity=".55"/></svg>',
+  bell: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a5.5 5.5 0 0 0-5.5 5.5c0 4-2 5-2 5h15s-2-1-2-5A5.5 5.5 0 0 0 12 4z"/><path d="M10.5 18a1.8 1.8 0 0 0 3 0"/><path d="M12 2v1" opacity=".5"/></svg>'
 };
 function buildBoard() {
   const board = document.getElementById('board');
@@ -768,23 +860,50 @@ function buildBoard() {
   board.appendChild(tc);
 }
 const PRESETS = {
-  rainy:   () => ({ rain: 0.65, wind: 0.18, fire: 0, stream: 0, cricket: 0, thunder: 0.35, time: 22 }),
-  morning: () => ({ rain: 0, wind: 0.12, fire: 0, stream: 0.6, cricket: 0.35, thunder: 0, time: 6.2 }),
-  fireside:() => ({ rain: 0.3, wind: 0.28, fire: 0.75, stream: 0, cricket: 0.2, thunder: 0, time: 20.5 }),
-  valley:  () => ({ rain: 0, wind: 0.38, fire: 0, stream: 0.32, cricket: 0, thunder: 0, time: 14 })
+  rainy:   () => ({ rain: 0.65, wind: 0.18, fire: 0, stream: 0, cricket: 0, thunder: 0.35, birds: 0, bell: 0, time: 22 }),
+  morning: () => ({ rain: 0, wind: 0.12, fire: 0, stream: 0.6, cricket: 0.35, thunder: 0, birds: 0.4, bell: 0, time: 6.2 }),
+  fireside:() => ({ rain: 0.3, wind: 0.28, fire: 0.75, stream: 0, cricket: 0.2, thunder: 0, birds: 0, bell: 0.15, time: 20.5 }),
+  valley:  () => ({ rain: 0, wind: 0.38, fire: 0, stream: 0.32, cricket: 0, thunder: 0, birds: 0.5, bell: 0, time: 14 })
 };
+function loadCustoms() {
+  try { return JSON.parse(localStorage.getItem('scape-customs') || '[]'); } catch (e) { return []; }
+}
+function saveCustoms(a) { localStorage.setItem('scape-customs', JSON.stringify(a)); }
+function randomize() {
+  const chans = ['rain', 'wind', 'fire', 'stream', 'cricket', 'birds', 'thunder', 'bell'];
+  const zero = {};
+  chans.forEach(c => zero[c] = 0);
+  const picks = 1 + Math.floor(Math.random() * 2);
+  const pool = [...chans];
+  for (let i = 0; i < picks; i++) {
+    const c = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+    if (c === 'cricket' || c === 'bell') zero[c] = 0.25 + Math.random() * 0.45;
+    else if (c === 'thunder') zero[c] = 0.15 + Math.random() * 0.4;
+    else zero[c] = 0.25 + Math.random() * 0.6;
+  }
+  const hour = Math.random() * 24;
+  Object.assign(S, zero, { time: hour });
+  if (S.thunder > 0.05 && S.rain < 0.3) S.rain = 0.35 + Math.random() * 0.3; // 雷随雨来
+  initAudio(); updateAudio(1.2);
+  buildBoard(); updateClock();
+  applyPresetActive(null);
+  if (S.thunder > 0.03) nextThunder = performance.now() + 4000 + Math.random() * 9000;
+  else nextThunder = Infinity;
+  document.getElementById('hint').classList.add('gone');
+}
 function applyPresetActive(name) {
   document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.p === name));
 }
 function buildPresets() {
   const box = document.getElementById('presets');
   box.innerHTML = '';
-  for (const [key, fn] of Object.entries(PRESETS)) {
+  const keys = Object.keys(PRESETS);
+  keys.forEach((key, idx) => {
     const b = document.createElement('button');
     b.className = 'chip'; b.dataset.p = key;
     b.textContent = T().presets[key];
     b.addEventListener('click', () => {
-      Object.assign(S, fn());
+      Object.assign(S, PRESETS[key]());
       initAudio(); updateAudio(1.2);
       buildBoard(); updateClock();
       applyPresetActive(key);
@@ -793,7 +912,58 @@ function buildPresets() {
       document.getElementById('hint').classList.add('gone');
     });
     box.appendChild(b);
-  }
+  });
+  // 随机
+  const rb = document.createElement('button');
+  rb.className = 'chip'; rb.dataset.p = '__rand';
+  rb.textContent = T().random;
+  rb.addEventListener('click', randomize);
+  box.appendChild(rb);
+  // 自定义境
+  const customs = loadCustoms();
+  customs.forEach((c, i) => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.dataset.p = 'custom' + i;
+    b.textContent = T().customName(i);
+    b.title = T().delTip;
+    b.addEventListener('click', () => {
+      Object.assign(S, JSON.parse(JSON.stringify(c)));
+      initAudio(); updateAudio(1.2);
+      buildBoard(); updateClock();
+      applyPresetActive('custom' + i);
+      if (S.thunder > 0.03) nextThunder = performance.now() + 4000 + Math.random() * 9000;
+      else nextThunder = Infinity;
+      document.getElementById('hint').classList.add('gone');
+    });
+    let lp = null;
+    b.addEventListener('pointerdown', () => {
+      lp = setTimeout(() => {
+        const arr = loadCustoms(); arr.splice(i, 1); saveCustoms(arr);
+        buildPresets(); applyPresetActive(null);
+        lp = null;
+      }, 700);
+    });
+    const cancelLp = () => { if (lp) { clearTimeout(lp); lp = null; } };
+    b.addEventListener('pointerup', cancelLp);
+    b.addEventListener('pointerleave', cancelLp);
+    box.appendChild(b);
+  });
+  // 存为境
+  const sb = document.createElement('button');
+  sb.className = 'chip'; sb.dataset.p = '__save';
+  sb.textContent = T().savePreset;
+  sb.addEventListener('click', () => {
+    const arr = loadCustoms();
+    const snap = {};
+    CH_ORDER.forEach(c => snap[c] = S[c]);
+    snap.time = S.time;
+    arr.push(snap);
+    while (arr.length > 6) arr.shift();
+    saveCustoms(arr);
+    buildPresets();
+    applyPresetActive('custom' + (arr.length - 1));
+  });
+  box.appendChild(sb);
 }
 function updateClock() {
   const h = Math.floor(S.time) % 24, m = Math.floor((S.time % 1) * 60);
@@ -813,6 +983,63 @@ document.getElementById('langBtn').addEventListener('click', () => {
   applyI18n();
 });
 
+/* ================= 睡眠定时 / 暂停 / 后台 ================= */
+let sleepIdx = 0, sleepDeadline = 0, sleepFading = false;
+const SLEEP_MINS = [0, 15, 30, 60];
+const sleepBtn = document.getElementById('sleepBtn');
+function updSleepBtn() {
+  sleepBtn.textContent = sleepIdx === 0 ? '☾ ∞' : '☾ ' + SLEEP_MINS[sleepIdx] + 'm';
+  sleepBtn.title = T().sleepTip;
+  sleepBtn.classList.toggle('on', sleepIdx > 0 || sleepFading);
+}
+sleepBtn.addEventListener('click', () => {
+  initAudio();
+  sleepIdx = (sleepIdx + 1) % SLEEP_MINS.length;
+  sleepFading = false;
+  sleepDeadline = sleepIdx === 0 ? 0 : performance.now() + SLEEP_MINS[sleepIdx] * 60000;
+  updSleepBtn();
+});
+function sleepTick(now) {
+  if (sleepDeadline && now >= sleepDeadline && !sleepFading && AC && master) {
+    sleepFading = true;
+    const t = AC.currentTime;
+    master.gain.cancelScheduledValues(t);
+    master.gain.setValueAtTime(master.gain.value, t);
+    master.gain.linearRampToValueAtTime(0.0001, t + 45);
+  }
+}
+function wake() {
+  if (sleepFading && AC && master) {
+    sleepFading = false; sleepDeadline = 0; sleepIdx = 0;
+    const t = AC.currentTime;
+    master.gain.cancelScheduledValues(t);
+    master.gain.setTargetAtTime(S.master, t, 0.5);
+    updSleepBtn();
+  }
+}
+window.addEventListener('pointerdown', wake);
+
+/* 空格暂停 / 数字键预设 */
+let audioPaused = false;
+window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === ' ') {
+    e.preventDefault();
+    initAudio();
+    audioPaused = !audioPaused;
+    if (AC && master) master.gain.setTargetAtTime(audioPaused ? 0 : S.master, AC.currentTime, 0.3);
+    const h = document.getElementById('hint');
+    if (audioPaused) { h.textContent = T().paused; h.classList.remove('gone'); }
+    else h.classList.add('gone');
+  } else if (e.key >= '1' && e.key <= '4') {
+    const key = Object.keys(PRESETS)[+e.key - 1];
+    if (key) Object.assign(S, PRESETS[key]()), initAudio(), updateAudio(1.2), buildBoard(), updateClock(), applyPresetActive(key);
+  }
+});
+
+/* 后台保活：rAF 停摆时仍调度事件音 */
+setInterval(() => { if (document.hidden) audioTick(performance.now(), 0.25); }, 600);
+
 /* ================= 主循环 ================= */
 let prev = performance.now();
 function frame(now) {
@@ -821,6 +1048,7 @@ function frame(now) {
   scene(dt);
   audioTick(now, dt);
   timerTick(now);
+  sleepTick(now);
   requestAnimationFrame(frame);
 }
 

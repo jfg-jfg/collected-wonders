@@ -138,7 +138,7 @@ const STORY_TRAIN = {
   kicker: '一封迟到了三十年的调令', kickerEn: 'A TRANSFER THIRTY YEARS LATE',
   desc: '整理祖父遗物时，你发现一只上锁的铁路信箱，<br>钥匙在他生前从未离身的怀表链上。<br>箱子里是整个冬天也没能寄出的往返信。',
   descEn: 'In your grandfather\'s things, a locked railway mailbox —<br>its key on his watch chain.<br>Inside: a winter of letters that never left.',
-  order: ['t1','t2','t3','t4','t5','t6','t7','t8','E1','E2','E3'],
+  order: ['t1','t2','t3','t4','t5','t6','t7','t8','E1','E2','E3','E4'],
   style: {
     font: '"KaiTi","STKaiti","Songti SC","SimSun",serif',
     paper: '#e9eef3', paper2: '#dce5ec',
@@ -175,7 +175,8 @@ const STORY_TRAIN = {
       t8: { year: '一九八五 · 开春', title: '红绳', text: `顾站长：\n这封信你不会收到了。列车今夜不进山——调度说，雪线这个冬天之后停运，改走新隧。\n红绳是我从守车的闸杆上解下来的。六十年，它勒进铁里三毫米。\n我把这个冬天所有的信都留在你那里，开春替我寄出去——寄给我自己也好，寄给谁都好。\n老线认人。新线也会的。\n沈青梧 绝笔于末班车`, replies: [
         { label: '（信箱最底下，是一张没有寄出的讣告。）', flag: 'probe', to: 'E1' },
         { label: '（信箱最底下，是一张去新线的调令。）', flag: 'warm', to: 'E2' },
-        { label: '（信箱最底下，是一枚铁路纪念章。）', flag: 'keep', to: 'E3' }
+        { label: '（信箱最底下，是一枚铁路纪念章。）', flag: 'keep', to: 'E3' },
+        { label: '（你决定亲自去一趟白猿岭。）', flag: 'warm', to: 'E4' }
       ]}
     },
     en: {
@@ -207,7 +208,8 @@ const STORY_TRAIN = {
       t8: { year: '1985 · SPRING', title: 'Red String', text: `Stationmaster Gu —\nThis letter will not reach you. No run tonight — dispatch says the snow line closes after this winter; the new tunnel takes the trains.\nThe red string I took from the brake bar in the van. Sixty years; it has bitten three millimeters into the steel.\nI leave this whole winter of letters with you — post them in spring. To me, to anyone.\nOld lines know their people. New ones will learn.\nShen Qingwu, last train`, replies: [
         { label: '(At the bottom of the box: an obituary, never sent.)', flag: 'probe', to: 'E1' },
         { label: '(At the bottom of the box: a transfer to the new line.)', flag: 'warm', to: 'E2' },
-        { label: '(At the bottom of the box: a railway service medal.)', flag: 'keep', to: 'E3' }
+        { label: '(At the bottom of the box: a railway service medal.)', flag: 'keep', to: 'E3' },
+        { label: '(You decide to visit White Ape Ridge yourself.)', flag: 'warm', to: 'E4' }
       ]}
     }
   },
@@ -215,12 +217,14 @@ const STORY_TRAIN = {
     zh: {
       E1: { title: '雪停之页', text: `讣告只有三行：沈青梧，运转车长，值乘末班时于守车中安睡，无疾而终。\n你终于明白"绝笔"两个字不是修辞。\n\n开春，祖父替他把整个冬天的信一一寄出。\n收件人栏，他填的都是同一个名字：沈青梧 收——寄往那条已经停运的雪线。\n信会丢。但寄件人这一栏，祖父写的是：顾长风 等。` },
       E2: { title: '新隧道', text: `调令的日期，是末班车之后的第三天。\n原来沈青梧活着走下了那列车。原来祖父的怀表链上，从此多了第二把钥匙。\n\n新线通车那天，两个人并排站在隧道口。第一列电车通过时，风把他们的帽子都吹掉了。\n谁也没去捡。他们在笑。` },
-      E3: { title: '纪念章', text: `章是铜的，背面刻着：雪线 1958—1985。\n你把它别在了祖父中山装的领口——下葬那天，来送行的人里，有一位白发的老人在灵前放了一片冰花。\n没有人知道他是谁。\n只有你知道：老线认人。` }
+      E3: { title: '纪念章', text: `章是铜的，背面刻着：雪线 1958—1985。\n你把它别在了祖父中山装的领口——下葬那天，来送行的人里，有一位白发的老人在灵前放了一片冰花。\n没有人知道他是谁。\n只有你知道：老线认人。` },
+      E4: { title: '最后的站台', text: `你在铁轨拆完之前去了白猿岭。\n站台还在，信号灯的杆子歪了，但灯头的玻璃罩完好。你伸手擦了擦——\n玻璃下面，贴着一张塑封的便条：\n"灯亮着。—顾"\n日期是三年前。祖父走后，还有人在换这张条。\n你在便条旁边放了一片从守车窗上取的冰花，走进了雪里。` }
     },
     en: {
       E1: { title: 'The Page Where Snow Stops', text: `Three lines only: Shen Qingwu, conductor, fell asleep at his post in the van of the last train, and did not wake.\nNow you understand "last train" was not a figure of speech.\n\nIn spring, your grandfather posted that whole winter of letters, one by one.\nEvery address line bore the same name: For Shen Qingwu — care of the closed snow line.\nThe letters would be lost. But the sender's line read: Gu Changfeng, waiting.` },
       E2: { title: 'The New Tunnel', text: `The transfer is dated three days after the last run.\nShen Qingwu walked off that train alive. And from that winter on, a second key hung on your grandfather's watch chain.\n\nOn opening day of the new line, the two stood side by side at the tunnel mouth. When the first train passed, the wind took both their caps.\nNeither stooped for his. They were laughing.` },
-      E3: { title: 'The Medal', text: `Bronze, inscribed: SNOW LINE 1958—1985.\nYou pinned it to your grandfather's lapel at the funeral. Among the mourners, a white-haired man laid a single ice-flower by the coffin.\nNo one knew him.\nOnly you did: old lines know their people.` }
+      E3: { title: 'The Medal', text: `Bronze, inscribed: SNOW LINE 1958—1985.\nYou pinned it to your grandfather's lapel at the funeral. Among the mourners, a white-haired man laid a single ice-flower by the coffin.\nNo one knew him.\nOnly you did: old lines know their people.` },
+      E4: { title: 'The Last Platform', text: `You went to White Ape Ridge before they pulled the rails.\nThe platform still stood, signal mast tilted, but the lamp's glass cover intact. You wiped it —\nunderneath, a laminated note:\n"Lamp lit. —Gu"\nDated three years ago. After your grandfather's passing, someone has still been replacing this note.\nYou set an ice-flower from the van window beside it, and walked into the snow.` }
     }
   }
 };
@@ -232,7 +236,7 @@ const STORY_RADIO = {
   kicker: '不该存在的频段 4021 千赫', kickerEn: 'A FREQUENCY THAT SHOULD NOT EXIST · 4021 kHz',
   desc: '你是废弃监听站最后的值机员。<br>停机前最后一夜，4021 千赫传来了信号——<br>那是一片没有海的深海。',
   descEn: 'You are the last operator of a decommissioned listening post.\nOn the final night, 4021 kHz speaks —\na deep sea with no water.',
-  order: ['r1','r2','r3','r4','r5','r6','r7','r8','E1','E2','E3'],
+  order: ['r1','r2','r3','r4','r5','r6','r7','r8','E1','E2','E3','E4'],
   style: {
     font: '"FangSong","STFangsong","SimSun","Noto Serif SC",serif',
     paper: '#0e1d17', paper2: '#0a1611',
@@ -269,7 +273,8 @@ const STORY_RADIO = {
       r8: { year: '停机日 · 09:59', title: '最后一句', text: `还有一分钟。\n值机员，我不要你记得我。我只要你以后路过任何一台还亮着的机器时，替我看一眼它的灯。\n灯亮着，就是有人在发，有人在等。\n这是深站，4021千赫。三十年来第一次，也是最后一次——\n通信结束。祝你，海面之上，一生晴天。`, replies: [
         { label: '（你按下了发报键，回了一句。）', flag: 'warm', to: 'E1' },
         { label: '（你拔掉了总闸。）', flag: 'probe', to: 'E2' },
-        { label: '（你把频率表上4021那行，圈了出来。）', flag: 'keep', to: 'E3' }
+        { label: '（你把频率表上4021那行，圈了出来。）', flag: 'keep', to: 'E3' },
+        { label: '（你翻出磁带架，找到标着"4021备份"的那盘。）', flag: 'probe', to: 'E4' }
       ]}
     },
     en: {
@@ -301,7 +306,8 @@ const STORY_RADIO = {
       r8: { year: 'CLOSING DAY · 09:59', title: 'Last Line', text: `One minute left.\nOperator, I do not ask to be remembered. Only this: whenever you pass a machine whose lamp is lit, look at it for me.\nA lit lamp means someone is sending, and someone is waiting.\nThis is Deep Station, 4021 kHz. For the first and last time in thirty years —\nEnd of transmission. Fair skies, all your life, above the sea.`, replies: [
         { label: '(You press the key, and send one line back.)', flag: 'warm', to: 'E1' },
         { label: '(You pull the master switch.)', flag: 'probe', to: 'E2' },
-        { label: '(On the frequency chart, you circle 4021.)', flag: 'keep', to: 'E3' }
+        { label: '(On the frequency chart, you circle 4021.)', flag: 'keep', to: 'E3' },
+        { label: '(You find a tape reel labeled "4021 backup".)', flag: 'probe', to: 'E4' }
       ]}
     }
   },
@@ -309,12 +315,14 @@ const STORY_RADIO = {
     zh: {
       E1: { title: '回波', text: `你发的那句话是：静默不等于不存在。\n爆破准时开始。水泥落下的时候，所有仪表一起停了——只有你耳机里，最后响起一声极轻的"收到"。\n\n后来你在新站工作。每年冬天最静的那夜，4021千赫会有一秒钟的载波。\n一秒。刚好够一句"有人吗"。\n你每次都回。` },
       E2: { title: '断电', text: `总闸拉下的瞬间，耳机的余响像一口很长的气，慢慢吐完。\n你在日志末页写：信号终止，原因，值机员。\n\n爆破之后，你在废墟里捡到一枚烧坏的指示灯泡，灯丝完好。\n你把它带回家，接上一节电池。\n它亮。不为什么，就为亮着。` },
-      E3: { title: '4021', text: `爆破组进场时，你正把频率表抄进自己的笔记本。\n队长问你抄这个干什么，你说：留个纪念。\n\n十年后，业余无线电圈流传一个传说：4021千赫，雪夜，偶尔能抄到一句三十 年前的老电码。\n发报的人不知道是谁。\n但你认得那个手法——老旧，认真，像在替谁把话说完。` }
+      E3: { title: '4021', text: `爆破组进场时，你正把频率表抄进自己的笔记本。\n队长问你抄这个干什么，你说：留个纪念。\n\n十年后，业余无线电圈流传一个传说：4021千赫，雪夜，偶尔能抄到一句三十 年前的老电码。\n发报的人不知道是谁。\n但你认得那个手法——老旧，认真，像在替谁把话说完。` },
+      E4: { title: '备份磁带', text: `磁带标签褪色了，但字迹清楚：4021备份，勿消。\n你把它装进最后一台还能转的录音机，按下播放。\n\n滋滋声。然后是于滩的声音——年轻，清晰，像在隔壁房间：\n"深站，深站，这是海面。你能听到吗？"\n停顿。然后一个更轻的声音：\n"收到。你们那边的天气……真好啊。"\n\n原来它不是电台。是一段对话的录音，在空频道里循环了三十年。\n爆破的轰响里，你关掉录音机，把它放进了自己的口袋。` }
     },
     en: {
       E1: { title: 'Echo', text: `The line you sent was: SILENCE DOES NOT MEAN ABSENCE.\nThe blast began on schedule. As the concrete fell, every gauge stopped together — and in your headphones, one last, almost inaudible: acknowledged.\n\nYou work at the new station now. On the stillest night of every winter, 4021 kHz carries a single second of carrier wave.\nOne second. Exactly enough for "Anyone there."\nEvery time, you answer.` },
       E2: { title: 'Power Cut', text: `As the master switch fell, the headphones let out their last long breath.\nOn the final page of the log you wrote: signal ended. Cause: operator.\n\nAfter the demolition you picked a burnt indicator lamp from the rubble, its filament whole.\nYou took it home and wired it to a battery.\nIt glows. For no reason. Just to be lit.` },
-      E3: { title: '4021', text: `While the crew moved in, you were copying the frequency chart into your notebook.\nWhat for, the foreman asked. A keepsake, you said.\n\nTen years on, ham-radio circles tell a legend: 4021 kHz, on snowy nights, sometimes yields a line of thirty-year-old Morse.\nNo one knows the sender.\nBut you know that hand — obsolete, earnest, finishing someone's sentences.` }
+      E3: { title: '4021', text: `While the crew moved in, you were copying the frequency chart into your notebook.\nWhat for, the foreman asked. A keepsake, you said.\n\nTen years on, ham-radio circles tell a legend: 4021 kHz, on snowy nights, sometimes yields a line of thirty-year-old Morse.\nNo one knows the sender.\nBut you know that hand — obsolete, earnest, finishing someone's sentences.` },
+      E4: { title: 'The Backup Tape', text: `The label had faded, but the writing was clear: 4021 BACKUP, DO NOT ERASE.\nYou threaded it into the last working reel-to-reel and pressed play.\n\nStatic. Then Yu Tan's voice — young, close, as if from the next room:\n"Deep Station, Deep Station, this is the surface. Can you hear me?"\nA pause. Then a quieter voice:\n"Received. The weather on your side... sounds wonderful."\n\nIt was not a station. It was a recording of a conversation, looping on an empty frequency for thirty years.\nAmid the demolition's roar, you switched off the recorder and put the tape in your pocket.` }
     }
   }
 };

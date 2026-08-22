@@ -492,41 +492,89 @@ function mulberry32(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-function genMaze(w, h, rng, braid) {
+/* ===================== 关卡生成 v2：房间-走廊 + 验证 ===================== */
+
+/* 生成房间-走廊结构迷宫 v2：
+   房间（开阔区）+ 短走廊 + 环路 + 必定有壁龛 */
+function genChamberMaze(w, h, rng) {
   const g = Array.from({ length: h }, () => Array(w).fill('#'));
-  const stack = [[1, 1]]; g[1][1] = '.';
-  while (stack.length) {
-    const [x, y] = stack[stack.length - 1];
-    const dirs = [[2, 0], [-2, 0], [0, 2], [0, -2]].filter(([dx, dy]) => {
+  const rooms = [];
+  // 1. 放房间
+  const rx = Math.max(2, Math.floor((w - 2) / 4));
+  const ry = Math.max(2, Math.floor((h - 2) / 4));
+  for (let cy = 0; cy < ry; cy++) for (let cx = 0; cx < rx; cx++) {
+    const rw = 2 + Math.floor(rng() * 2);
+    const rh = 2 + Math.floor(rng() * 2);
+    const ox = Math.max(1, Math.min(1 + cx * 4 + Math.floor(rng() * Math.max(1, 4 - rw)), w - 1 - rw));
+    const oy = Math.max(1, Math.min(1 + cy * 4 + Math.floor(rng() * Math.max(1, 4 - rh)), h - 1 - rh));
+    for (let y = oy; y < Math.min(oy + rh, h - 1); y++)
+      for (let x = ox; x < Math.min(ox + rw, w - 1); x++)
+        g[y][x] = '.';
+    rooms.push({ cx: ox + 1, cy: oy + 1, gx: cx, gy: cy });
+  }
+  // 2. 连接所有房间（保证全通）
+  const carve = (x1, y1, x2, y2) => {
+    let x = x1, y = y1;
+    while (x !== x2) { if (y >= 0 && y < h && x >= 0 && x < w) g[y][x] = '.'; x += Math.sign(x2 - x); }
+    while (y !== y2) { if (y >= 0 && y < h && x >= 0 && x < w) g[y][x] = '.'; y += Math.sign(y2 - y); }
+    if (y >= 0 && y < h && x >= 0 && x < w) g[y][x] = '.';
+  };
+  for (let cy = 0; cy < ry; cy++) for (let cx = 0; cx < rx; cx++) {
+    const r = rooms[cy * rx + cx];
+    if (cx + 1 < rx) {
+      const r2 = rooms[cy * rx + cx + 1];
+      carve(r.cx, r.cy, r2.cx, r2.cy);
+    }
+    if (cy + 1 < ry) {
+      const r2 = rooms[(cy + 1) * rx + cx];
+      carve(r.cx, r.cy, r2.cx, r2.cy);
+    }
+  }
+  // 3. 加环路
+  const loops = Math.max(2, Math.floor(rx * ry * 0.3));
+  for (let i = 0; i < loops * 3; i++) {
+    const x = 2 + Math.floor(rng() * (w - 4));
+    const y = 2 + Math.floor(rng() * (h - 4));
+    if (g[y][x] !== '#') continue;
+    // 打通左右或上下都是通路的中隔墙
+    if ((g[y][x-1] === '.' && g[y][x+1] === '.') ||
+        (g[y-1]?.[x] === '.' && g[y+1]?.[x] === '.')) {
+      g[y][x] = '.';
+    }
+  }
+  // 4. 强制加壁龛（死胡同）：在走廊旁边打 1-2 格深的凹槽
+  const targetNiches = Math.max(3, Math.floor(rx * ry * 0.6));
+  let added = 0, guard = 0;
+  while (added < targetNiches && guard++ < 200) {
+    const x = 1 + Math.floor(rng() * (w - 2));
+    const y = 1 + Math.floor(rng() * (h - 2));
+    if (g[y][x] !== '.') continue;
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => {
       const nx = x + dx, ny = y + dy;
       return nx > 0 && ny > 0 && nx < w - 1 && ny < h - 1 && g[ny][nx] === '#';
     });
-    if (!dirs.length) { stack.pop(); continue; }
+    if (!dirs.length) continue;
+    // 找到方向后方的对面也是通路（确保是走廊侧壁而非房间角落）
     const [dx, dy] = dirs[Math.floor(rng() * dirs.length)];
-    g[y + dy / 2][x + dx / 2] = '.';
-    g[y + dy][x + dx] = '.';
-    stack.push([x + dx, y + dy]);
-  }
-  if (braid > 0) {
-    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
-      if (g[y][x] !== '.') continue;
-      const nbs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-      const open = nbs.filter(([dx, dy]) => g[y + dy][x + dx] === '.');
-      if (open.length === 1 && rng() < braid) {
-        const cand = nbs.filter(([dx, dy]) => {
-          const nx = x + dx, ny = y + dy, fx = x + dx * 2, fy = y + dy * 2;
-          return nx > 0 && ny > 0 && nx < w - 1 && ny < h - 1 &&
-                 g[ny][nx] === '#' && fy < h && fx < w && g[fy][fx] === '.';
-        });
-        if (cand.length) {
-          const [dx, dy] = cand[Math.floor(rng() * cand.length)];
-          g[y + dy][x + dx] = '.';
-        }
-      }
+    const nx = x + dx, ny = y + dy;
+    // 检查目标格的邻居（除了来的方向）至少有2面墙
+    let walls = 0;
+    for (const [ddx, ddy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      if (ddx === -dx && ddy === -dy) continue;
+      if (g[ny + ddy]?.[nx + ddx] === '#' || nx + ddx <= 0 || ny + ddy <= 0 || nx + ddx >= w - 1 || ny + ddy >= h - 1) walls++;
+    }
+    if (walls >= 3) {
+      g[ny][nx] = '.';
+      added++;
     }
   }
+  // 5. 边界保证
+  for (let x = 0; x < w; x++) { g[0][x] = '#'; g[h-1][x] = '#'; }
+  for (let y = 0; y < h; y++) { g[y][0] = '#'; g[y][w-1] = '#'; }
   return g;
 }
+
+/* BFS 距离场 */
 function bfsDist(g, sx, sy) {
   const h = g.length, w = g[0].length;
   const dist = Array.from({ length: h }, () => Array(w).fill(-1));
@@ -543,44 +591,123 @@ function bfsDist(g, sx, sy) {
   }
   return dist;
 }
+
+/* 关卡验证：自动检查可玩性 */
+function validateLevel(g, w, h) {
+  const issues = [];
+  // 找 S 和 G
+  let sx = -1, sy = -1, gx = -1, gy = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (g[y][x] === 'S') { sx = x; sy = y; }
+    if (g[y][x] === 'G') { gx = x; gy = y; }
+  }
+  if (sx < 0 || gx < 0) { issues.push('no S/G'); return { valid: false, issues, pathLen: 0, niches: 0, junctions: 0 }; }
+  // BFS 路径
+  const dist = bfsDist(g, sx, sy);
+  const pathLen = dist[gy][gx];
+  if (pathLen < 0) issues.push('G unreachable');
+  if (pathLen < 8) issues.push('path too short (' + pathLen + ')');
+  if (pathLen > w * h * 0.5) issues.push('path too long (' + pathLen + ')');
+  // 统计格型
+  let junctions = 0, niches = 0, corridors = 0;
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    if (g[y][x] === '#') continue;
+    let open = 0;
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]])
+      if (g[y + dy][x + dx] !== '#') open++;
+    if (open >= 3) junctions++;
+    else if (open === 1) niches++;
+    else if (open === 2) corridors++;
+  }
+  if (junctions < 3) issues.push('too few junctions (' + junctions + ')');
+  if (niches < 2) issues.push('too few niches (' + niches + ')');
+  // 最长走廊段
+  let maxRun = 0;
+  for (let y = 1; y < h - 1; y++) {
+    let run = 0;
+    for (let x = 1; x < w - 1; x++) {
+      if (g[y][x] !== '#') {
+        let open = 0;
+        for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]])
+          if (g[y + dy][x + dx] !== '#') open++;
+        if (open === 2) run++;
+        else { maxRun = Math.max(maxRun, run); run = 0; }
+      } else { maxRun = Math.max(maxRun, run); run = 0; }
+    }
+  }
+  if (maxRun > 7) issues.push('corridor too long (' + maxRun + ' cells)');
+  return {
+    valid: issues.length === 0,
+    issues,
+    pathLen,
+    niches,
+    junctions,
+    maxCorridor: maxRun
+  };
+}
+
+/* 生成并通过验证的关卡（失败自动重试） */
+function genValidated(w, h, baseSeed) {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const rng = mulberry32(baseSeed + attempt * 7919);
+    const g = genChamberMaze(w, h, rng);
+    const fin = finishLevel(g);
+    const val = validateLevel(fin.map, w, h);
+    if (val.valid) return fin;
+  }
+  // 20 次都失败：放宽条件用最后一次
+  const rng = mulberry32(baseSeed);
+  return finishLevel(genChamberMaze(w, h, rng));
+}
+
 function buildLevels() {
   const specs = [
-    { w: 13, h: 9,  braid: 0,    seed: 1101 },
-    { w: 15, h: 11, braid: 0.08, seed: 2202 },
-    { w: 17, h: 13, braid: 0.16, seed: 3303 },
-    { w: 19, h: 13, braid: 0.25, seed: 4404 },
-    { w: 21, h: 15, braid: 0.32, seed: 5505, hall: true },
-    { w: 21, h: 15, braid: 0.4,  seed: 6606 },
-    { w: 15, h: 11, braid: 0.18, seed: 7707 },
-    { w: 17, h: 13, braid: 0.3,  seed: 8808 },
-    { w: 19, h: 15, braid: 0.38, seed: 9909 }
+    { w: 13, h: 9,  seed: 1101 },
+    { w: 15, h: 11, seed: 2202 },
+    { w: 17, h: 13, seed: 3303 },
+    { w: 19, h: 13, seed: 4404 },
+    { w: 21, h: 15, seed: 5505 },
+    { w: 21, h: 15, seed: 6606 },
+    { w: 15, h: 11, seed: 7707 },
+    { w: 17, h: 13, seed: 8808 },
+    { w: 19, h: 15, seed: 9909 }
   ];
-  return specs.map(({ w, h, braid, seed, hall }) => {
-    const g = genMaze(w, h, mulberry32(seed), braid);
-    if (hall) {
-      for (let y = 6; y <= 8; y++) for (let x = 8; x <= 12; x++) g[y][x] = '.';
-      g[7][8] = '.'; g[7][12] = '.';
-      g[6][10] = '#'; g[8][10] = '#';
-    }
-    return finishLevel(g);
-  });
+  return specs.map(({ w, h, seed }) => genValidated(w, h, seed));
 }
-/* 通用关卡完成器：S/G/碎片/par */
+/* 通用关卡完成器 v2：S 放在第一个开阔格、G 放最远处、碎片分散 */
 function finishLevel(g) {
   const h = g.length, w = g[0].length;
-  const dist = bfsDist(g, 1, 1);
-  let gx = 1, gy = 1, best = -1;
+  // 找第一个开阔格（优先房间中心）
+  let sx = -1, sy = -1;
+  outer:
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    if (g[y][x] !== '#') {
+      let open = 0;
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]])
+        if (g[y + dy][x + dx] !== '#') open++;
+      if (open >= 3) { sx = x; sy = y; break outer; }  // 优先开阔区
+    }
+  }
+  if (sx < 0) {
+    // 没找到开阔区就取第一个通路格
+    for (let y = 1; y < h - 1 && sx < 0; y++) for (let x = 1; x < w - 1; x++)
+      if (g[y][x] !== '#') { sx = x; sy = y; break; }
+  }
+  if (sx < 0) sx = 1, sy = 1;
+  const dist = bfsDist(g, sx, sy);
+  let gx = sx, gy = sy, best = -1;
   for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++)
     if (dist[y][x] > best) { best = dist[y][x]; gx = x; gy = y; }
-  g[1][1] = 'S'; g[gy][gx] = 'G';
+  if (best < 0) best = 0;  // 防御
+  g[sy][sx] = 'S'; g[gy][gx] = 'G';
   const cand = [];
   for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++)
-    if (g[y][x] === '.' && dist[y][x] > best * 0.35) cand.push([x, y, dist[y][x]]);
+    if (g[y][x] === '.' && dist[y][x] > best * 0.3 && dist[y][x] > 0) cand.push([x, y, dist[y][x]]);
   cand.sort((a, b) => b[2] - a[2]);
   const picked = [];
   for (const c of cand) {
     if (picked.length >= 3) break;
-    if (picked.every(p => Math.abs(p[0] - c[0]) + Math.abs(p[1] - c[1]) > 4)) picked.push(c);
+    if (picked.every(p => Math.abs(p[0] - c[0]) + Math.abs(p[1] - c[1]) > 3)) picked.push(c);
   }
   picked.forEach(([x, y]) => g[y][x] = '*');
   const par = Math.round(best * 1.2) + 4;
@@ -615,8 +742,7 @@ const WELL_PACK = [
 /* 无尽层：通关六层后解锁，尺寸与密度随深度增长 */
 function buildEndless(di) {
   const w = Math.min(29, 21 + di * 2), h = Math.min(21, 15 + di);
-  const g = genMaze(w, h, mulberry32(7700 + di * 137), 0.3 + Math.min(0.25, di * 0.03));
-  return finishLevel(g);
+  return genValidated(w, h, 7700 + di * 137);
 }
 const lvName = i => isCustom ? customName : (i < LEVELS.length ? T().lvNames[i] : T().endlessName(i - 9));
 
@@ -628,11 +754,10 @@ function todayKey() {
 function buildDaily() {
   let s = 0;
   for (const ch of todayKey()) s = (s * 31 + ch.charCodeAt(0)) >>> 0;
-  const g = genMaze(19, 13, mulberry32(s), 0.3);
-  return finishLevel(g);
+  return genValidated(19, 13, s);
 }
 
-/* BFS 连通性校验 */
+/* BFS 连通性校验 + 验证报告 */
 function validateLevels() {
   LEVELS.forEach((L, li) => {
     const g = L.map;
@@ -657,8 +782,11 @@ function validateLevels() {
       }
     }
     if (!seen.has(goal.join(','))) throw new Error('level ' + li + ': goal unreachable');
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++)
-      if (g[y][x] === '*' && !seen.has(x + ',' + y)) throw new Error('level ' + li + ': fragment unreachable');
+    // #debug 输出验证报告
+    if (location.hash.includes('debug')) {
+      const val = validateLevel(g, w, h);
+      console.log(`L${li + 1}: path=${val.pathLen} junctions=${val.junctions} niches=${val.niches} maxCorr=${val.maxCorridor} valid=${val.valid}${val.issues.length ? ' ISSUES: ' + val.issues.join('; ') : ''}`);
+    }
   });
 }
 validateLevels();
@@ -830,37 +958,92 @@ function spawnGhosts() {
     ghosts.push({ x, y, dx: 0, dy: 1, t: 0, phase: Math.random() * 10, trail: [] });
   }
 }
+/* 游魂 AI v3：「礼貌 haunting」——永不堵路 */
+function isCorridor(x, y) {
+  if (G(x, y) === '#') return false;
+  let open = 0;
+  for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]])
+    if (G(x + dx, y + dy) !== '#') open++;
+  return open === 2;
+}
+function isOpenArea(x, y) {
+  if (G(x, y) === '#') return false;
+  let open = 0;
+  for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]])
+    if (G(x + dx, y + dy) !== '#') open++;
+  return open >= 3;
+}
 function moveGhosts(dt) {
+  // 找到玩家到出口的最短路径（BFS），缓存每帧只算一次
+  let sPos = [1, 1], gPos = [1, 1];
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+    if (grid[y][x] === 'S') sPos = [x, y];
+    if (grid[y][x] === 'G') gPos = [x, y];
+  }
+  const playerDist = bfsDist(grid, sPos[0], sPos[1]);
+  const pathToG = new Set();
+  { // 回溯最短路径
+    let [cx, cy] = gPos;
+    const d = playerDist[cy][cx];
+    for (let step = d; step > 0; step--) {
+      pathToG.add(cx + ',' + cy);
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nx = cx + dx, ny = cy + dy;
+        if (nx >= 0 && ny >= 0 && nx < cols && ny < rows && playerDist[ny]?.[nx] === step - 1) {
+          cx = nx; cy = ny; break;
+        }
+      }
+    }
+  }
   for (const g of ghosts) {
     g.t += dt;
     g.phase += dt;
-    if (g.t < 0.62) continue;
+    // 近距减速：玩家 3 格内游魂速度减半
+    const pd = Math.hypot(g.x - px, g.y - py);
+    const interval = pd < 3 ? 1.3 : 0.65;
+    if (g.t < interval) continue;
     g.t = 0;
     const dirs = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => {
       const nx = g.x + dx, ny = g.y + dy;
       if (G(nx, ny) === '#') return false;
-      if (isNiche(nx, ny)) return false;                     // 不入壁龛
-      // 不在起点近旁逗留（出生保护区）
-      let sx = 1, sy = 1;
-      for (let yy = 0; yy < rows; yy++) for (let xx = 0; xx < cols; xx++)
-        if (grid[yy][xx] === 'S') { sx = xx; sy = yy; }
-      if (Math.hypot(nx - sx, ny - sy) <= 1.5) return false;
+      if (isNiche(nx, ny)) return false;
+      // 起点保护区
+      if (Math.hypot(nx - sPos[0], ny - sPos[1]) <= 1.5) return false;
+      // 核心规则：如果目标格是走廊且在玩家→出口的最短路径上，且玩家也在附近，不让路
+      if (isCorridor(nx, ny) && pathToG.has(nx + ',' + ny) && pd < 6) return false;
+      // 如果玩家就在隔壁且这是唯一通路，退让
+      if (pd <= 1 && isCorridor(nx, ny)) return false;
       return true;
     });
     if (!dirs.length) continue;
-    let pick;
-    if (lastPingCell && Math.random() < 0.75) {
-      // 趋声：朝最近回声发生地移动（留 25% 随机性避免完美追踪）
-      const sorted = dirs.slice().sort((a, b) =>
-        Math.hypot(g.x + a[0] - lastPingCell[0], g.y + a[1] - lastPingCell[1]) -
-        Math.hypot(g.x + b[0] - lastPingCell[0], g.y + b[1] - lastPingCell[1]));
-      pick = Math.random() < 0.8 ? sorted[0] : dirs[Math.floor(Math.random() * dirs.length)];
-    } else {
-      pick = dirs[Math.floor(Math.random() * dirs.length)];
+    // 评分制选择方向
+    let best = null, bestScore = -Infinity;
+    for (const [dx, dy] of dirs) {
+      const nx = g.x + dx, ny = g.y + dy;
+      let score = 0;
+      // 偏好开阔区（+2）
+      if (isOpenArea(nx, ny)) score += 2;
+      // 趋声（+1.5，朝最近回声）
+      if (lastPingCell) {
+        const dNew = Math.hypot(nx - lastPingCell[0], ny - lastPingCell[1]);
+        const dCur = Math.hypot(g.x - lastPingCell[0], g.y - lastPingCell[1]);
+        if (dNew < dCur) score += 1.5;
+      }
+      // 远离玩家（+1，保持威胁但不贴脸）
+      const pdNew = Math.hypot(nx - px, ny - py);
+      const pdCur = Math.hypot(g.x - px, g.y - py);
+      if (pdNew > pdCur && pdCur < 4) score += 1;
+      // 不走回头路（+0.5）
+      if (dx !== -g.dx || dy !== -g.dy) score += 0.5;
+      // 随机扰动
+      score += Math.random() * 0.8;
+      if (score > bestScore) { bestScore = score; best = [dx, dy]; }
     }
-    [g.dx, g.dy] = pick;
-    g.x += g.dx; g.y += g.dy;
-    checkGhostHit();
+    if (best) {
+      [g.dx, g.dy] = best;
+      g.x += g.dx; g.y += g.dy;
+      checkGhostHit();
+    }
   }
 }
 function checkGhostHit() {

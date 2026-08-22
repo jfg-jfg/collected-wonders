@@ -852,9 +852,9 @@ function makePaper(size, seed, fiberStrength) {
 
 /* 纸质档案：影响流体手感与纹理 */
 const PAPERS = [
-  { seed: 20260821, fiber: 1.0,  curl: 30, force: 1.0,  dyeDiss: 0.0008, splatMul: 1.15, tint: [1, 1, 1] },
-  { seed: 7301,     fiber: 0.45, curl: 15, force: 0.55, dyeDiss: 0.0004, splatMul: 0.85, tint: [1, 1, 1] },
-  { seed: 4413,     fiber: 0.7,  curl: 22, force: 0.8,  dyeDiss: 0.0006, splatMul: 1.0,  tint: [1.015, 0.985, 0.915] }
+  { seed: 20260821, fiber: 1.0,  curl: 22, force: 0.75, dyeDiss: 0.0002, splatMul: 1.0, tint: [1, 1, 1] },
+  { seed: 7301,     fiber: 0.45, curl: 10, force: 0.4,  dyeDiss: 0.0001, splatMul: 0.8, tint: [1, 1, 1] },
+  { seed: 4413,     fiber: 0.7,  curl: 16, force: 0.6,  dyeDiss: 0.00015,splatMul: 0.9, tint: [1.015, 0.985, 0.915] }
 ];
 let paperIdx = 0;
 const paperTex = gl.createTexture();
@@ -886,9 +886,9 @@ let inkIdx = 0;
 
 /* ---------------- 模拟参数 ---------------- */
 const config = {
-  VELOCITY_DISSIPATION: 0.12,
+  VELOCITY_DISSIPATION: 0.045,  // 更慢：墨水扩散更渐进
   PRESSURE: 0.8,
-  SPLAT_FORCE: 6200,
+  SPLAT_FORCE: 4800,            // 降低推动力：减少飞溅
   idleDrop: true
 };
 let brushSize = 0.5, inkDensity = 0.9;

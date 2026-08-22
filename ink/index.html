@@ -671,6 +671,23 @@ void main(){
   inkTone *= mix(1.0, grain, coverage * (1.0 - flatPaper));
 
   vec3 col = mix(paper, inkTone, coverage * 0.94);
+
+  /* 纸面外：深色书桌纹理 */
+  if (!inside && flatPaper < 0.5) {
+    /* 桌面：暗木纹 + 微妙噪声 */
+    vec2 deskUv = vUv * vec2(uZoom * 3.0, uZoom * 20.0);  // 竖向木纹
+    float wood = sin(deskUv.x * 12.0 + deskUv.y * 0.5) * 0.5 + 0.5;
+    wood = wood * 0.6 + 0.4 * (sin(deskUv.x * 47.0) * 0.5 + 0.5);
+    float vign = 1.0 - 0.3 * length(vUv - vec2(0.5));
+    vec3 desk = vec3(0.085, 0.072, 0.062) * (0.7 + 0.3 * wood) * vign;
+    /* 纸边阴影：距纸面越近越暗 */
+    float dist = max(abs(uv.x - 0.5) - 0.5, abs(uv.y - 0.5) - 0.5);
+    float shadow = exp(-dist * 40.0) * 0.5;
+    desk -= vec3(shadow);
+    fragColor = vec4(max(desk, vec3(0.02)), 1.0);
+    return;
+  }
+
   fragColor = vec4(col, 1.0);
 }`;
 

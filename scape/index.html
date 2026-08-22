@@ -148,6 +148,7 @@
     <svg class="ring" viewBox="0 0 20 20"><circle id="ringBg" cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2"/><circle id="ringFg" cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="50.3" stroke-dashoffset="50.3" transform="rotate(-90 10 10)"/></svg><span id="timerTxt">25:00</span>
   </button>
   <button class="btn-ghost" id="sleepBtn" title="">☾ ∞</button>
+  <button class="btn-ghost" id="shareSceneBtn">⇗ 分享</button>
   <button class="btn-ghost" id="moodBtn">✦ 心境</button>
   <button class="btn-ghost" id="themeBtn">⛰ 山</button>
   <button class="btn-ghost" id="seasonBtn">🌸 樱</button>
@@ -191,6 +192,7 @@ const I18N = {
     flowOn: '⏳ 流转 · 开', flowOff: '⏳ 流转', flowTip: '时光流转：昼夜每 4 分钟一轮回',
     seasons: ['无花', '春樱', '秋枫'], seasonTip: '季节花瓣',
     themes: ['山', '海', '城'], themeTip: '场景主题',
+    shareScene: '⇗ 分享', shareOk: '✓ 链接已复制', shareTip: '复制当前场景链接给朋友',
     timer: ['专注 25 分', '专注 45 分', '专注 60 分', '取消计时'],
     timeNames: ['夜', '晨', '昼', '暮'],
     sndTip: '点任意滑杆开启声音'
@@ -210,6 +212,7 @@ const I18N = {
     flowOn: '⏳ FLOW ON', flowOff: '⏳ FLOW', flowTip: 'time flows — a full day every 4 minutes',
     seasons: ['NONE', 'SAKURA', 'MAPLE'], seasonTip: 'seasonal petals',
     themes: ['MTN', 'SEA', 'CITY'], themeTip: 'scene theme',
+    shareScene: '⇗ SHARE', shareOk: '✓ link copied', shareTip: 'copy current scene link for a friend',
     timer: ['FOCUS 25', 'FOCUS 45', 'FOCUS 60', 'CANCEL'],
     timeNames: ['NIGHT', 'DAWN', 'DAY', 'DUSK'],
     sndTip: 'touch any dial to start sound'
@@ -1247,6 +1250,8 @@ function applyI18n() {
   document.title = lang === 'zh' ? '造境 · SCAPE — 程序化声景' : 'SCAPE — procedural soundscape';
   document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
   if (!recorder) document.getElementById('recBtn').textContent = T().rec;
+  shareSceneBtn.textContent = T().shareScene;
+  shareSceneBtn.title = T().shareTip;
   updThemeBtn();
   updSeasonBtn();
   updFlowBtn();
@@ -1295,6 +1300,25 @@ function wake() {
   }
 }
 window.addEventListener('pointerdown', wake);
+
+/* 分享场景：编码当前配置为 URL hash */
+const shareSceneBtn = document.getElementById('shareSceneBtn');
+shareSceneBtn.addEventListener('click', async () => {
+  const parts = [];
+  CH_ORDER.forEach(c => { if (S[c] > 0.01) parts.push(`${c}=${S[c].toFixed(2)}`); });
+  parts.push(`time=${S.time.toFixed(1)}`);
+  if (theme > 0) parts.push(`theme=${theme}`);
+  if (season > 0) parts.push(`season=${season}`);
+  const url = location.origin + location.pathname + '#' + parts.join('&');
+  try {
+    await navigator.clipboard.writeText(url);
+    shareSceneBtn.textContent = T().shareOk;
+  } catch (e) {
+    history.replaceState(null, '', '#' + parts.join('&'));
+    shareSceneBtn.textContent = T().shareOk;
+  }
+  setTimeout(() => shareSceneBtn.textContent = T().shareScene, 1800);
+});
 
 /* 心境：一键生成情绪连贯的场景组合 */
 const MOODS = [
@@ -1465,6 +1489,9 @@ location.hash.slice(1).split('&').forEach(kv => {
     theme = Math.max(0, Math.min(2, +v));
     rebuildScenery();
     updThemeBtn();
+  } else if (k === 'season' && v !== undefined) {
+    season = Math.max(0, Math.min(2, +v));
+    updSeasonBtn();
   } else if (k && v !== undefined && (k === 'time' || CH_ORDER.includes(k))) {
     S[k] = +v;
   }

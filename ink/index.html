@@ -365,7 +365,7 @@ const I18N = {
     brushLbl: '笔', inkLbl: '墨', paperLbl: '纸',
     inscLbl: '题款', frame: '装裱', inscPh: '拾遗',
     brushes: ['圆笔', '硬笔', '泼墨', '水笔'],
-    inkNames: ['玄墨', '靛青', '赭石', '朱砂'],
+    inkNames: ['玄墨', '花青', '靛青', '石绿', '藤黄', '赭石', '紫檀', '朱砂'],
     papers: ['生宣', '熟宣', '绢本']
   },
   en: {
@@ -390,7 +390,7 @@ const I18N = {
     brushLbl: 'BRUSH', inkLbl: 'INK', paperLbl: 'PAPER',
     inscLbl: 'INSCR', frame: 'FRAME', inscPh: '拾遗',
     brushes: ['Round', 'Hard', 'Splash', 'Water'],
-    inkNames: ['Black', 'Indigo', 'Ochre', 'Cinnabar'],
+    inkNames: ['Black', 'Cyanine', 'Indigo', 'Malachite', 'Gamboge', 'Ochre', 'Sandalwood', 'Cinnabar'],
     papers: ['Raw Xuan', 'Sized Xuan', 'Silk']
   }
 };
@@ -623,13 +623,21 @@ uniform float uZoom;
 uniform vec2 uViewC;
 
 vec3 pigment(float t){
-  vec3 black = vec3(0.44, 0.46, 0.53);   /* 玄墨 */
+  vec3 black  = vec3(0.44, 0.46, 0.53);  /* 玄墨 */
+  vec3 cyanine= vec3(0.30, 0.50, 0.62);  /* 花青 */
   vec3 indigo = vec3(0.30, 0.40, 0.58);  /* 靛青 */
+  vec3 malach = vec3(0.32, 0.52, 0.38);  /* 石绿 */
+  vec3 gambo  = vec3(0.62, 0.52, 0.22);  /* 藤黄 */
   vec3 ochre  = vec3(0.50, 0.36, 0.24);  /* 赭石 */
+  vec3 sandal = vec3(0.44, 0.28, 0.48);  /* 紫檀 */
   vec3 cinna  = vec3(0.64, 0.21, 0.15);  /* 朱砂 */
-  vec3 c = mix(black, indigo, smoothstep(0.0, 0.33, t));
-  c = mix(c, ochre, smoothstep(0.33, 0.66, t));
-  c = mix(c, cinna, smoothstep(0.66, 1.0, t));
+  vec3 c = mix(black, cyanine, smoothstep(0.0, 0.145, t));
+  c = mix(c, indigo, smoothstep(0.145, 0.285, t));
+  c = mix(c, malach, smoothstep(0.285, 0.43, t));
+  c = mix(c, gambo, smoothstep(0.43, 0.57, t));
+  c = mix(c, ochre, smoothstep(0.57, 0.715, t));
+  c = mix(c, sandal, smoothstep(0.715, 0.855, t));
+  c = mix(c, cinna, smoothstep(0.855, 1.0, t));
   return c;
 }
 void main(){
@@ -817,12 +825,16 @@ uploadPaper(0);
 
 /* ---------------- 墨色 ---------------- */
 const INKS = [
-  { tint: 0.0 },
-  { tint: 0.33 },
-  { tint: 0.66 },
-  { tint: 1.0 }
+  { tint: 0.0 },      // 玄墨
+  { tint: 0.145 },    // 花青
+  { tint: 0.285 },    // 靛青
+  { tint: 0.43 },     // 石绿
+  { tint: 0.57 },     // 藤黄
+  { tint: 0.715 },    // 赭石
+  { tint: 0.855 },    // 紫檀
+  { tint: 1.0 }       // 朱砂
 ];
-const INK_CSS = ['#3a3d44', '#4d6794', '#7f5c3d', '#a33626'];
+const INK_CSS = ['#3a3d44', '#3d6a8a', '#4d6794', '#4a8a5a', '#a08a30', '#7f5c3d', '#6a4070', '#a33626'];
 let inkIdx = 0;
 
 /* ---------------- 模拟参数 ---------------- */

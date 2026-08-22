@@ -387,8 +387,13 @@ function distantBell() { // 远钟：低频双分音长衰减
     o.connect(g); g.connect(master); o.start(t); o.stop(t + 5.6);
   });
 }
-function thunderRumble() { // 雷声 + 闪电
-  const t = AC.currentTime;
+function thunderRumble() { // 闪电先行，雷声延迟（距离感）
+  // 闪电立即（视觉）
+  flash = 1;
+  nextThunder = performance.now() + (14 + Math.random() * 30) * 1000 / Math.max(S.thunder, 0.05);
+  // 雷声延迟 0.4~1.8 秒（模拟距离）
+  const delay = 0.4 + Math.random() * 1.4;
+  const t = AC.currentTime + delay;
   const len = 3.2, buf = AC.createBuffer(1, AC.sampleRate * len, AC.sampleRate);
   const d = buf.getChannelData(0);
   let last = 0;
@@ -401,10 +406,9 @@ function thunderRumble() { // 雷声 + 闪电
   const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 140;
   const g = AC.createGain();
   g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.55, t + 0.06);
+  g.gain.exponentialRampToValueAtTime(0.55 / (1 + delay * 0.4), t + 0.06);  // 远雷更弱
   g.gain.exponentialRampToValueAtTime(0.0001, t + 3.0);
   s.connect(f); f.connect(g); g.connect(master); s.start(t);
-  flash = 1; nextThunder = performance.now() + (14 + Math.random() * 30) * 1000 / Math.max(S.thunder, 0.05);
 }
 function bell() { // 计时结束钟声
   const t = AC.currentTime;

@@ -333,6 +333,7 @@
   <div id="progFill" style="height:100%;width:0%;background:var(--gold);box-shadow:0 0 8px rgba(217,181,124,0.7);transition:width .8s ease"></div>
 </div>
 <div class="corner">
+  <button class="btn-ghost" id="spdBtn"></button>
   <button class="btn-ghost" id="sndBtn"></button>
   <button class="btn-ghost" id="langBtn">EN</button>
 </div>
@@ -754,18 +755,31 @@ function showLetter(id, reread) {
   lt.appendChild(actions);
   stage.appendChild(lt);
   const ps = lt.querySelectorAll('p');
-  let delay = 200;
+  const speed = localStorage.getItem('letters-speed') || 'normal';
+  const spdMul = speed === 'slow' ? 2.4 : speed === 'fast' ? 0.5 : 1;
+  let delay = 200 * spdMul;
   ps.forEach((p, i) => {
-    revealTimers.push(setTimeout(() => {
-      p.classList.add('in');
-      if (i === ps.length - 1) {
-        revealTimers.push(setTimeout(() => {
-          actions.classList.add('in');
-          lt.scrollTop = lt.scrollHeight;
-        }, 1100));
-      }
-    }, delay));
-    delay += Math.min(1400, 500 + p.textContent.length * 22);
+    // 逐句显影：按句号/问号/叹号拆分
+    if (spdMul > 1 && p.textContent.length > 30) {
+      const parts = p.textContent.split(/(?<=[。！？；!?;])/);
+      p.innerHTML = parts.map(s => `<span class="sent" style="opacity:0;transition:opacity .8s ease">${s}</span>`).join('');
+      const sents = p.querySelectorAll('.sent');
+      sents.forEach((s2, si) => {
+        revealTimers.push(setTimeout(() => s2.style.opacity = '1', delay));
+        delay += Math.min(900, 200 + s2.textContent.length * 28);
+      });
+      p.classList.add('in');  // 容器先显示
+      delay += 300;
+    } else {
+      revealTimers.push(setTimeout(() => p.classList.add('in'), delay));
+      delay += Math.min(1400, (500 + p.textContent.length * 22) * spdMul);
+    }
+    if (i === ps.length - 1) {
+      revealTimers.push(setTimeout(() => {
+        actions.classList.add('in');
+        lt.scrollTop = lt.scrollHeight;
+      }, 1100 * spdMul));
+    }
   });
   lt.addEventListener('click', e => {
     if (e.target.closest('.reply')) return;
@@ -1255,6 +1269,17 @@ document.getElementById('sndBtn').addEventListener('click', () => {
   updSnd();
 });
 function updSnd() { document.getElementById('sndBtn').textContent = save && save.snd !== false ? T().sndOn : T().sndOff; }
+const spdBtn = document.getElementById('spdBtn');
+function updSpd() {
+  const s = localStorage.getItem('letters-speed') || 'normal';
+  spdBtn.textContent = s === 'slow' ? '◇ 慢' : s === 'fast' ? '◆ 快' : '◈ 常';
+}
+spdBtn.addEventListener('click', () => {
+  const cur = localStorage.getItem('letters-speed') || 'normal';
+  const next = cur === 'normal' ? 'slow' : cur === 'slow' ? 'fast' : 'normal';
+  localStorage.setItem('letters-speed', next);
+  updSpd();
+});
 document.getElementById('langBtn').addEventListener('click', () => {
   lang = lang === 'zh' ? 'en' : 'zh';
   localStorage.setItem('letters-lang', lang);
@@ -1288,6 +1313,7 @@ document.title = lang === 'zh' ? '纸间 · LETTERS — 互动书信' : 'LETTERS
   } else showSelect();
 }
 updSnd();
+updSpd();
 requestAnimationFrame(mframe);
 </script>
 </body>

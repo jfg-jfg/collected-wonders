@@ -980,10 +980,24 @@ canvas.addEventListener('pointermove', e => {
   for (let i = 1; i <= steps; i++) {
     const t = i / steps;
     const m = brushType === 3 ? -0.85 : 1;
+    // 飞白：快速运笔时墨量骤降，随机留白（纸底透出）
+    const flying = speedNorm > 0.45 && brushType !== 3;
+    const flyFactor = flying ? (1 - speedNorm * 0.75) * (Math.random() < 0.35 ? 0.1 : 1) : 1;
     splat(lastX + dxUv * t, lastY + dyUv * t,
           dxUv * config.SPLAT_FORCE * dt / steps,
           dyUv * config.SPLAT_FORCE * dt / steps,
-          amt * m / steps, 1);
+          amt * m * flyFactor / steps, 1);
+    // 飞白散点：速度极高时甩出细小墨丝
+    if (flying && speedNorm > 0.7 && Math.random() < 0.15) {
+      const perpX = -dyUv / (dist + 1e-6);
+      const perpY = dxUv / (dist + 1e-6);
+      const off = (Math.random() - 0.5) * brushRadius() * 2.8;
+      splat(lastX + dxUv * t + perpX * off,
+            lastY + dyUv * t + perpY * off,
+            perpX * 60 + (Math.random() - 0.5) * 30,
+            perpY * 60 + (Math.random() - 0.5) * 30,
+            amt * 0.18, 0.15 + Math.random() * 0.12);
+    }
     if (brushType === 2 && Math.random() < 0.22) {
       splat(lastX + dxUv * t + (Math.random() - 0.5) * brushRadius() * 2.4,
             lastY + dyUv * t + (Math.random() - 0.5) * brushRadius() * 2.4,

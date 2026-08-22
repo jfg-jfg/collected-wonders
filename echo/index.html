@@ -807,7 +807,7 @@ function spawnGhosts() {
     if (Math.hypot(x - px, y - py) < 6) continue;
     if (isNiche(x, y)) continue;
     if (ghosts.some(g => Math.hypot(g.x - x, g.y - y) < 5)) continue;
-    ghosts.push({ x, y, dx: 0, dy: 1, t: 0, phase: Math.random() * 10 });
+    ghosts.push({ x, y, dx: 0, dy: 1, t: 0, phase: Math.random() * 10, trail: [] });
   }
 }
 function moveGhosts(dt) {
@@ -861,6 +861,35 @@ function checkGhostHit() {
     }
   }
 }
+/* 近距低鸣：游魂在 2.5 格内时心跳般渐强 */
+let ghostHum = null, ghostHumG = null, lastHumCheck = 0;
+function updateGhostHum(now) {
+  if (!AC || !save.snd || state !== 'play' || !ghosts.length) {
+    if (ghostHumG) ghostHumG.gain.setTargetAtTime(0.0001, AC.currentTime, 0.3);
+    return;
+  }
+  if (now - lastHumCheck < 200) return;
+  lastHumCheck = now;
+  let minD = 99;
+  for (const g of ghosts) minD = Math.min(minD, Math.hypot(g.x - px, g.y - py));
+  const prox = Math.max(0, 1 - minD / 2.5);
+  if (!ghostHum && prox > 0.05) {
+    const o = AC.createOscillator(), o2 = AC.createOscillator(), g2 = AC.createGain();
+    const f = AC.createBiquadFilter();
+    o.type = 'sine'; o.frequency.value = 52;
+    o2.type = 'sine'; o2.frequency.value = 51.3;  // 微差拍频
+    f.type = 'lowpass'; f.frequency.value = 180;
+    g2.gain.value = 0.0001;
+    o.connect(f); o2.connect(f); f.connect(g2); g2.connect(AC.destination);
+    o.start(); o2.start();
+    ghostHum = [o, o2]; ghostHumG = g2;
+  }
+  if (ghostHumG) {
+    const vol = prox * 0.06 * (0.7 + 0.3 * Math.sin(now / 350));
+    ghostHumG.gain.setTargetAtTime(Math.max(0.0001, vol), AC.currentTime, 0.25);
+  }
+}
+
 function sndGhostHit() {
   const ac = audio(); if (!ac || !save.snd) return;
   const t = ac.currentTime;
@@ -1203,7 +1232,7 @@ function enterCustomPlay(map, parVal, name, ghostCount) {
     const y = 1 + Math.floor(Math.random() * (rows - 2));
     if (G(x, y) === '#' || G(x, y) === 'G' || G(x, y) === '*') continue;
     if (Math.hypot(x - px, y - py) < 6) continue;
-    ghosts.push({ x, y, dx: 0, dy: 1, t: 0, phase: Math.random() * 10 });
+    ghosts.push({ x, y, dx: 0, dy: 1, t: 0, phase: Math.random() * 10, trail: [] });
   }
   state = 'play';
   editor.on = false;
@@ -1391,12 +1420,28 @@ function render(dt) {
     }
   }
 
-  // 游魂：暗红微光，被涟漪照亮或靠近玩家时可见
+  // 游魂：暗红微光 + 尾迹粒子
   for (const g of ghosts) {
     const d = Math.hypot(g.x - px, g.y - py);
     const near = Math.max(0, 1 - d / 3.2);
     const lit = lights[g.y * cols + g.x] * 0.9;
     const a = Math.min(1, near * 0.85 + lit);
+    // 尾迹：记录路径并渲染渐隐
+    if (g.t === 0) {
+      g.trail.unshift([g.x, g.y]);
+      if (g.trail.length > 6) g.trail.pop();
+    }
+    // 尾迹粒子
+    for (let ti = g.trail.length - 1; ti >= 0; ti--) {
+      const [tx2, ty2] = g.trail[ti];
+      const fade = (1 - ti / g.trail.length) * a * 0.3;
+      if (fade < 0.01) continue;
+      const tcx = ox + (tx2 + 0.5) * cell, tcy = oy + (ty2 + 0.5) * cell;
+      ctx.fillStyle = `rgba(214,72,72,${fade.toFixed(3)})`;
+      ctx.beginPath();
+      ctx.arc(tcx + Math.sin(time * 4 + ti) * cell * 0.06, tcy, cell * 0.07 * (1 - ti / g.trail.length), 0, Math.PI * 2);
+      ctx.fill();
+    }
     if (a < 0.02) continue;
     const gcx = ox + (g.x + 0.5) * cell, gcy = oy + (g.y + 0.5) * cell;
     const wob = Math.sin(g.phase * 3.1) * cell * 0.08;
@@ -1848,6 +1893,7 @@ function frame(now) {
     elapsed = performance.now() - startTime;
     if (Math.floor(elapsed / 1000) % 2 === 0) updateHud();
     propagate(dt);
+    updateGhostHum(now);
     moveGhosts(dt);
     if (moveCooldown > 0) moveCooldown -= dt;
   }

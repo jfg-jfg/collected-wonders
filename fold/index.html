@@ -401,8 +401,29 @@ function updateCoords() {
     ? `<br>J c = ${juliaC.x.toFixed(8)}, ${juliaC.y.toFixed(8)}`
     : '';
   const pl = `<br>${T().palette} ${PAL_NAMES[lang][palIdx]} · ${lastIter || ''} iter`;
+  const zone = deepZoneName(mag, view.x, view.y);
   coordsEl.innerHTML =
-    `RE ${view.x.toFixed(12).slice(0, 12)}<br>IM ${view.y.toFixed(12).slice(0, 12)}<br>${T().zoom} ${magStr}${jl}${pl}`;
+    `RE ${view.x.toFixed(12).slice(0, 12)}<br>IM ${view.y.toFixed(12).slice(0, 12)}<br>${T().zoom} ${magStr}${jl}${pl}${zone}`;
+}
+/* 深度地名：按倍率阈值+坐标哈希生成玄名 */
+function deepZoneName(mag, x, y) {
+  if (mag < 100) return '';
+  const h = Math.abs(Math.sin(x * 1e7) * Math.cos(y * 1e7) * 1e5) | 0;
+  let pool;
+  if (mag < 1e4) pool = lang === 'zh'
+    ? ['浅海', '近岸', '潮间', '帆影', '鸟居']
+    : ['Shallows', 'Near Shore', 'Tideline', 'Sail Shadow', 'Torii'];
+  else if (mag < 1e7) pool = lang === 'zh'
+    ? ['螺旋臂', '尘埃带', '星轨', '珊瑚枝', '迷宫口']
+    : ['Spiral Arm', 'Dust Belt', 'Star Track', 'Coral Branch', 'Labyrinth Mouth'];
+  else if (mag < 1e10) pool = lang === 'zh'
+    ? ['微尘之眼', '无限回廊', '墨渊', '钟乳洞', '神经元']
+    : ['Eye of Dust', 'Infinite Corridor', 'Ink Abyss', 'Stalactite Cave', 'Neuron'];
+  else pool = lang === 'zh'
+    ? ['空', '元初', '寂', '归零', '彼岸']
+    : ['Void', 'Origin', 'Stillness', 'Zero Point', 'Far Shore'];
+  const name = pool[h % pool.length];
+  return `<br><span style="color:var(--gold);font-size:11px;letter-spacing:0.2em">◈ ${name}</span>`;
 }
 
 /* ============ 交互 ============ */

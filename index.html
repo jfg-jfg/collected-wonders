@@ -94,6 +94,13 @@
     opacity: 0; transform: translateX(-8px); transition: color .4s, background .4s, border-color .4s, box-shadow .4s, transform .4s, opacity .4s;
   }
   .card:hover .c-go { opacity: 1; transform: none; }
+  .global-stat {
+    margin-top: 18px; text-align: center; font-size: 12px; letter-spacing: 0.24em;
+    color: rgba(236,229,211,0.5); font-family: Georgia, "Songti SC", serif;
+  }
+  .global-stat b { color: var(--gold); font-weight: 600; }
+  .card { will-change: transform; }
+  .card:hover { box-shadow: 0 24px 60px rgba(0,0,0,0.45), 0 0 40px color-mix(in srgb, var(--ac) 18%, transparent); }
 
   /* ---------- 各作徽记动画 ---------- */
   /* 墨：漂浮墨滴 */
@@ -297,6 +304,38 @@ function applyI18n() {
       <div class="c-go">${lang === 'zh' ? '进 入 →' : 'ENTER →'}</div>`;
     grid.appendChild(a);
   }
+  // 全局统计行
+  const gs = document.createElement('div');
+  gs.className = 'global-stat';
+  let totalMin = 0, totalLetters = 0, totalClears = 0;
+  try {
+    const sc = JSON.parse(localStorage.getItem('scape-stats') || '{"minutes":0}');
+    totalMin = sc.minutes || 0;
+  } catch (e) {}
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k.startsWith('letters-save-')) {
+        try {
+          const s2 = JSON.parse(localStorage.getItem(k));
+          totalLetters += Math.min(s2.readEver || 0, 20);
+          totalClears += (s2.endings || []).length;
+        } catch (e) {}
+      }
+    }
+  } catch (e) {}
+  try {
+    const es = JSON.parse(localStorage.getItem('echo-save') || '{}');
+    totalClears += (es.statsExt && es.statsExt.clears) || 0;
+  } catch (e) {}
+  try {
+    const is2 = JSON.parse(localStorage.getItem('ink-stats') || '{}');
+    totalClears += is2.saved || 0;
+  } catch (e) {}
+  gs.innerHTML = lang === 'zh'
+    ? `此端共：聆听 <b>${totalMin}</b> 分钟 · 读信 <b>${totalLetters}</b> 封 · 通关/存画 <b>${totalClears}</b> 次`
+    : `this terminal: <b>${totalMin}</b> min listened · <b>${totalLetters}</b> letters read · <b>${totalClears}</b> clears/saves`;
+  grid.appendChild(gs);
 }
 function workStat(en) {
   try {

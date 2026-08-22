@@ -13,43 +13,31 @@
     --txt: #f4f7fa;
     --dim: rgba(244,247,250,0.75);
     --gold: #f0c886;
-    --cyan: #8fd8cf;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; overflow: hidden; }
   body {
-    font-family: "Songti SC", "STSong", "SimSun", "Noto Serif SC", Georgia, serif;
+    font-family: "Songti SC","STSong","SimSun","Noto Serif SC",Georgia,serif;
     background: #0a0e14; color: var(--txt);
     -webkit-user-select: none; user-select: none; touch-action: none;
   }
   #cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-
-  /* ---------- 标题 / 时间 ---------- */
   .masthead { position: fixed; top: 24px; left: 30px; z-index: 5; pointer-events: none; }
-  .masthead h1 { font-size: clamp(26px, 3.6vw, 40px); font-weight: 700; letter-spacing: 0.16em; text-shadow: 0 2px 18px rgba(0,0,0,0.6), 0 0 30px rgba(240,200,134,0.15); }
-  .masthead h1 .en { font-size: 0.55em; font-style: italic; letter-spacing: 0.1em; color: var(--gold); margin-left: 0.5em; }
-  .masthead .clock { margin-top: 4px; font-size: 15px; letter-spacing: 0.3em; color: var(--dim); text-shadow: 0 1px 10px rgba(0,0,0,0.6); }
-
-  .topright { position: fixed; top: 24px; right: 28px; z-index: 6; display: flex; gap: 10px; align-items: center; }
-  .btn-ghost {
+  .masthead h1 { font-size: clamp(26px,3.6vw,40px); font-weight: 700; letter-spacing: 0.16em; text-shadow: 0 2px 18px rgba(0,0,0,0.6); }
+  .masthead h1 .en { font-size: 0.55em; font-style: italic; color: var(--gold); margin-left: 0.5em; }
+  .masthead .clock { margin-top: 4px; font-size: 15px; letter-spacing: 0.3em; color: var(--dim); }
+  .topright { position: fixed; top: 24px; right: 28px; z-index: 6; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .btn {
     border: 1.5px solid var(--line); background: var(--dock); backdrop-filter: blur(10px);
-    color: var(--txt); font-family: inherit; font-size: 13.5px; letter-spacing: 0.1em;
-    padding: 9px 16px; border-radius: 999px; cursor: pointer; font-weight: 600;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.35); transition: color .2s, background .2s, border-color .2s, box-shadow .2s, transform .2s, opacity .2s;
+    color: var(--txt); font-family: inherit; font-size: 13px; letter-spacing: 0.1em;
+    padding: 8px 14px; border-radius: 999px; cursor: pointer; font-weight: 600;
+    transition: color .2s, border-color .2s;
   }
-  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 16px rgba(240,200,134,0.25); }
-  .btn-ghost.on { border-color: var(--gold); color: var(--gold); }
-  #recBtn.recording { border-color: #e88; color: #e88; animation: recPulse 1.6s ease-in-out infinite; }
-  @keyframes recPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(238,136,136,0.4); } 50% { box-shadow: 0 0 0 6px rgba(238,136,136,0); } }
-  @media (prefers-reduced-motion: reduce) { #recBtn.recording { animation: none; } }
-  .timer-badge { position: relative; }
-  .timer-badge .ring { width: 18px; height: 18px; vertical-align: -4px; margin-right: 7px; }
-  .timer-badge.on { border-color: var(--gold); color: var(--gold); }
-
-  /* ---------- 底部控制台 ---------- */
+  .btn:hover { color: var(--gold); border-color: var(--gold); }
+  .btn.on { background: var(--gold); color: #14100a; border-color: var(--gold); }
   .dock {
-    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
-    z-index: 6; display: flex; flex-direction: column; gap: 12px; align-items: center;
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+    z-index: 6; display: flex; flex-direction: column; gap: 10px; align-items: center;
     max-width: min(96vw, 900px);
   }
   .presets { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
@@ -57,380 +45,83 @@
     border: 1.5px solid var(--line); background: var(--dock); backdrop-filter: blur(10px);
     color: var(--txt); font-family: inherit; font-size: 13px; letter-spacing: 0.12em;
     padding: 8px 18px; border-radius: 999px; cursor: pointer; font-weight: 600;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3); transition: color .2s, background .2s, border-color .2s, box-shadow .2s, transform .2s, opacity .2s;
   }
-  .chip:hover { color: var(--gold); border-color: var(--gold); }
-  .chip.on { color: #14100a; background: var(--gold); border-color: var(--gold); box-shadow: 0 0 14px rgba(240,200,134,0.45); }
-
+  .chip:hover, .chip.on { color: #14100a; background: var(--gold); border-color: var(--gold); }
   .board {
     display: flex; gap: 6px; align-items: stretch; flex-wrap: wrap; justify-content: center;
     padding: 14px 16px 12px; border: 1.5px solid var(--line); border-radius: 16px;
     background: var(--dock); backdrop-filter: blur(14px);
-    box-shadow: 0 12px 44px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.3);
+    box-shadow: 0 12px 44px rgba(0,0,0,0.55);
   }
-  .ch { display: flex; flex-direction: column; align-items: center; gap: 7px; width: 86px; padding: 4px 2px; }
-  .ch .ic { width: 32px; height: 32px; opacity: 0.55; transition: opacity .25s, filter .25s; }
-  .ch.on .ic { opacity: 1; filter: drop-shadow(0 0 7px rgba(232,192,122,0.55)); }
-  .ch .nm { font-size: 12.5px; letter-spacing: 0.2em; color: var(--dim); white-space: nowrap; font-weight: 600; }
-  .ch.on .nm { color: var(--txt); }
+  .ch { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 82px; padding: 4px 2px; }
+  .ch .nm { font-size: 12px; letter-spacing: 0.18em; color: var(--dim); font-weight: 600; white-space: nowrap; }
   .ch input[type=range] {
-    -webkit-appearance: none; appearance: none; width: 74px; height: 2px;
-    background: var(--line); border-radius: 2px; outline: none; cursor: pointer;
+    -webkit-appearance: none; appearance: none; width: 70px; height: 3px;
+    background: rgba(255,255,255,0.2); border-radius: 2px; outline: none; cursor: pointer;
   }
   .ch input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%;
-    background: var(--txt); border: none; cursor: grab;
+    -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--gold); cursor: grab; border: 2px solid #0a0e14;
   }
-  .ch input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--txt); border: none; }
-  .vsep { width: 1px; background: var(--line); margin: 6px 4px; }
-  .timecol { display: flex; flex-direction: column; align-items: center; gap: 7px; width: 96px; }
-  .timecol .ic { width: 30px; height: 30px; }
-  .timecol .nm { font-size: 11.5px; letter-spacing: 0.2em; color: var(--dim); }
+  .timecol { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 96px; }
+  .timecol .nm { font-size: 12px; letter-spacing: 0.18em; color: var(--dim); font-weight: 600; }
   .timecol input[type=range] {
-    -webkit-appearance: none; appearance: none; width: 84px; height: 2px;
-    background: linear-gradient(90deg, #1a2340, #7fb0e8, #f5d9a0, #e88d5a, #2a2a55, #141a30);
+    -webkit-appearance: none; appearance: none; width: 84px; height: 3px;
+    background: linear-gradient(90deg,#1a2340,#7fb0e8,#f5d9a0,#e88d5a,#2a2a55,#141a30);
     border-radius: 2px; outline: none; cursor: pointer;
   }
   .timecol input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%;
     background: #fff; border: 2px solid var(--gold); cursor: grab;
   }
-  .timecol input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2px solid var(--gold); }
-
-  .hint {
-    position: fixed; left: 50%; bottom: 190px; transform: translateX(-50%);
-    z-index: 5; font-size: 12.5px; letter-spacing: 0.3em; color: var(--dim);
-    text-shadow: 0 1px 10px rgba(0,0,0,0.7); pointer-events: none;
-    transition: opacity 2s; white-space: nowrap;
-  }
-  .hint.gone { opacity: 0; }
-
-  button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-
   .home-link {
-    position: fixed; left: 28px; bottom: 28px; z-index: 7;
+    position: fixed; left: 26px; bottom: 26px; z-index: 7;
     width: 42px; height: 42px; border-radius: 50%;
-    border: 1px solid var(--line); background: var(--dock); backdrop-filter: blur(8px);
-    color: var(--txt); display: grid; place-items: center;
-    font-size: 16px; text-decoration: none; transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
+    border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4);
+    color: rgba(255,255,255,0.7); display: grid; place-items: center;
+    font-size: 16px; text-decoration: none; transition: color .2s, border-color .2s;
   }
-  .home-link:hover { color: var(--gold); border-color: var(--gold); transform: translateY(-3px); }
-
-  @media (max-width: 720px) {
-    .board { gap: 2px; padding: 10px 8px 8px; }
-    .ch { width: 74px; }
-    .ch input[type=range] { width: 60px; }
-    .timecol input[type=range] { width: 70px; }
-    .masthead { top: 14px; left: 16px; }
-    .topright { top: 14px; right: 14px; }
-    .hint { bottom: 230px; font-size: 11px; }
-  }
-
+  .home-link:hover { color: var(--gold); border-color: var(--gold); }
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+  @media (max-width: 720px) {
+    .board { gap: 2px; padding: 8px 6px 6px; }
+    .ch { width: 68px; }
+    .ch input[type=range] { width: 58px; }
+    .masthead { top: 12px; left: 14px; }
+    .topright { top: 12px; right: 12px; gap: 4px; }
+    .btn { font-size: 11px; padding: 6px 10px; }
   }
 </style>
 </head>
 <body>
 <canvas id="cv"></canvas>
-
 <header class="masthead">
   <h1>造境<span class="en">SCAPE</span></h1>
   <div class="clock" id="clock">14:00</div>
 </header>
-
 <div class="topright">
-  <button class="btn-ghost timer-badge" id="timerBtn">
-    <svg class="ring" viewBox="0 0 20 20"><circle id="ringBg" cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2"/><circle id="ringFg" cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="50.3" stroke-dashoffset="50.3" transform="rotate(-90 10 10)"/></svg><span id="timerTxt">25:00</span>
-  </button>
-  <button class="btn-ghost" id="sleepBtn" title="">☾ ∞</button>
-  <button class="btn-ghost" id="shareSceneBtn">⇗ 分享</button>
-  <button class="btn-ghost" id="moodBtn">✦ 心境</button>
-  <button class="btn-ghost" id="themeBtn">⛰ 山</button>
-  <button class="btn-ghost" id="seasonBtn">🌸 樱</button>
-  <button class="btn-ghost" id="flowBtn">⏳ 流转</button>
-  <button class="btn-ghost" id="recBtn">● 录</button>
-  <button class="btn-ghost" id="langBtn">EN</button>
+  <button class="btn" id="themeBtn">⛰ 山</button>
+  <button class="btn" id="moodBtn">✦ 心境</button>
+  <button class="btn" id="sndBtn">♪ 声</button>
+  <button class="btn" id="langBtn">EN</button>
 </div>
-
 <div class="dock">
   <div class="presets" id="presets"></div>
   <div class="board" id="board"></div>
 </div>
-
-<div class="hint" id="hint"></div>
 <a class="home-link" href="../index.html" title="拾遗 · 序">序</a>
-
 <script>
 'use strict';
-
-window.addEventListener('error', e => {
-  const b = document.createElement('div');
-  b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99;background:#401414;color:#ffb4b4;font-size:12px;padding:8px 12px';
-  b.textContent = 'ERR: ' + e.message;
-  document.body.appendChild(b);
-});
-
-/* ================= i18n ================= */
-const I18N = {
-  zh: {
-    sub: '程序化声景 · 声音与画面皆由数学生成',
-    channels: { rain: '雨', wind: '风', fire: '篝火', stream: '溪流', cricket: '夜虫', thunder: '雷', birds: '鸟鸣', bell: '远钟', snow: '雪' },
-    time: '时刻', presets: {
-      rainy: '雨夜读书', morning: '山涧清晨', fireside: '炉边听风', valley: '午后山谷', winter: '冬夜围炉'
-    },
-    hint: '拨动天气与时刻 · 声画同源',
-    random: '随 机', savePreset: '存 为 境',
-    customName: i => `境·${'一二三四五六'[i]}`,
-    delTip: '长按删除此境',
-    sleepTip: '睡眠渐弱', paused: '已暂停 · 空格继续',
-    rec: '● 录', recStop: '■ 停止', recDone: '✓ 录像已保存', recFail: '此浏览器不支持录制',
-    flowOn: '⏳ 流转 · 开', flowOff: '⏳ 流转', flowTip: '时光流转：昼夜每 4 分钟一轮回',
-    seasons: ['无花', '春樱', '秋枫'], seasonTip: '季节花瓣',
-    themes: ['山', '海', '城'], themeTip: '场景主题',
-    shareScene: '⇗ 分享', shareOk: '✓ 链接已复制', shareTip: '复制当前场景链接给朋友',
-    timer: ['专注 25 分', '专注 45 分', '专注 60 分', '取消计时'],
-    timeNames: ['夜', '晨', '昼', '暮'],
-    sndTip: '点任意滑杆开启声音'
-  },
-  en: {
-    sub: 'Procedural soundscape — sound and scene, both born of math',
-    channels: { rain: 'RAIN', wind: 'WIND', fire: 'FIRE', stream: 'STREAM', cricket: 'CRICKETS', thunder: 'THUNDER', birds: 'BIRDS', bell: 'BELL', snow: 'SNOW' },
-    time: 'HOUR', presets: {
-      rainy: 'Rainy Night', morning: 'Mountain Dawn', fireside: 'Fireside', valley: 'Valley Noon', winter: 'Winter Hearth'
-    },
-    hint: 'DIAL WEATHER & HOUR — SOUND AND SCENE ARE ONE',
-    random: 'RANDOM', savePreset: 'SAVE SCENE',
-    customName: i => 'Scene ' + (i + 1),
-    delTip: 'long-press to delete',
-    sleepTip: 'sleep fade', paused: 'PAUSED · SPACE TO RESUME',
-    rec: '● REC', recStop: '■ STOP', recDone: '✓ recording saved', recFail: 'recording unsupported here',
-    flowOn: '⏳ FLOW ON', flowOff: '⏳ FLOW', flowTip: 'time flows — a full day every 4 minutes',
-    seasons: ['NONE', 'SAKURA', 'MAPLE'], seasonTip: 'seasonal petals',
-    themes: ['MTN', 'SEA', 'CITY'], themeTip: 'scene theme',
-    shareScene: '⇗ SHARE', shareOk: '✓ link copied', shareTip: 'copy current scene link for a friend',
-    timer: ['FOCUS 25', 'FOCUS 45', 'FOCUS 60', 'CANCEL'],
-    timeNames: ['NIGHT', 'DAWN', 'DAY', 'DUSK'],
-    sndTip: 'touch any dial to start sound'
-  }
-};
-let lang = localStorage.getItem('scape-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
-const T = () => I18N[lang];
-
-/* ================= 状态 ================= */
-const S = {
-  rain: 0, wind: 0.15, fire: 0, stream: 0.3, cricket: 0, thunder: 0,
-  birds: 0, bell: 0, snow: 0,
-  time: 14, master: 0.8
-};
-const CH_ORDER = ['rain', 'wind', 'fire', 'stream', 'cricket', 'thunder', 'birds', 'bell', 'snow'];
-
-/* ================= 音频引擎（全合成） ================= */
-let AC = null, master = null, nodes = {};
-function noiseBuffer(kind) {
-  const len = AC.sampleRate * 2;
-  const buf = AC.createBuffer(1, len, AC.sampleRate);
-  const d = buf.getChannelData(0);
-  if (kind === 'white') {
-    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-  } else { // brown
-    let last = 0;
-    for (let i = 0; i < len; i++) {
-      const w = Math.random() * 2 - 1;
-      last = (last + 0.02 * w) / 1.02;
-      d[i] = last * 3.5;
-    }
-  }
-  return buf;
-}
-function loopSrc(buf) {
-  const s = AC.createBufferSource();
-  s.buffer = buf; s.loop = true; s.start();
-  return s;
-}
-function initAudio() {
-  if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
-  AC = new (window.AudioContext || window.webkitAudioContext)();
-  const comp = AC.createDynamicsCompressor();
-  comp.threshold.value = -18; comp.ratio.value = 6;
-  master = AC.createGain(); master.gain.value = S.master;
-  master.connect(comp); comp.connect(AC.destination);
-
-  const white = noiseBuffer('white'), brown = noiseBuffer('brown');
-
-  // 雨：白噪声低通
-  {
-    const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900;
-    const g = AC.createGain(); g.gain.value = 0;
-    loopSrc(white).connect(f); f.connect(g); g.connect(master);
-    nodes.rain = { f, g };
-  }
-  // 风：布朗噪声 + 截止游走
-  {
-    const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 300;
-    const g = AC.createGain(); g.gain.value = 0;
-    loopSrc(brown).connect(f); f.connect(g); g.connect(master);
-    // 啸鸣：窄带通
-    const wf = AC.createBiquadFilter(); wf.type = 'bandpass'; wf.frequency.value = 950; wf.Q.value = 9;
-    const wg = AC.createGain(); wg.gain.value = 0;
-    loopSrc(white).connect(wf); wf.connect(wg); wg.connect(master);
-    nodes.wind = { f, g, wf, wg, walk: 300 };
-  }
-  // 篝火：布朗垫底
-  {
-    const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 380;
-    const g = AC.createGain(); g.gain.value = 0;
-    loopSrc(brown).connect(f); f.connect(g); g.connect(master);
-    nodes.fire = { g };
-  }
-  // 溪流：带通
-  {
-    const f = AC.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 720; f.Q.value = 1.4;
-    const g = AC.createGain(); g.gain.value = 0;
-    const src = loopSrc(white);
-    const pre = AC.createBiquadFilter(); pre.type = 'lowpass'; pre.frequency.value = 2400;
-    src.connect(pre); pre.connect(f); f.connect(g); g.connect(master);
-    nodes.stream = { f, g };
-  }
-  updateAudio(0);
-}
-function chanGain(k) {
-  switch (k) {
-    case 'rain': return S.rain * 0.42;
-    case 'wind': return S.wind * 0.5;
-    case 'fire': return S.fire * 0.3;
-    case 'stream': return S.stream * 0.26;
-    default: return 0;
-  }
-}
-function updateAudio(smooth = 0.5) {
-  if (!AC) return;
-  const t = AC.currentTime;
-  const set = (p, v) => p.setTargetAtTime(v, t, smooth);
-  set(nodes.rain.g.gain, chanGain('rain'));
-  set(nodes.rain.f.frequency, 500 + S.rain * 2800);
-  set(nodes.wind.g.gain, chanGain('wind'));
-  set(nodes.wind.wg.gain, Math.max(0, S.wind - 0.55) * 0.1);
-  set(nodes.fire.g.gain, chanGain('fire'));
-  set(nodes.stream.g.gain, chanGain('stream'));
-  if (master) set(master.gain, S.master);
-}
-/* 一次性音效 */
-function plink() { // 雨滴
-  const t = AC.currentTime;
-  const o = AC.createOscillator(), g = AC.createGain();
-  o.type = 'sine'; o.frequency.value = 2400 + Math.random() * 3200;
-  g.gain.setValueAtTime(0.0012 + Math.random() * 0.004, t);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
-  o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.08);
-}
-function crackle() { // 火爆裂
-  const t = AC.currentTime;
-  const len = 0.05, buf = AC.createBuffer(1, AC.sampleRate * len, AC.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2.2);
-  const s = AC.createBufferSource(); s.buffer = buf;
-  const f = AC.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1400;
-  const g = AC.createGain(); g.gain.value = 0.02 + Math.random() * 0.05;
-  s.connect(f); f.connect(g); g.connect(master); s.start(t);
-}
-function cricketChirp() { // 虫鸣：4 连拍
-  const t0 = AC.currentTime;
-  const pan = AC.createStereoPanner ? AC.createStereoPanner() : null;
-  if (pan) pan.pan.value = Math.random() * 1.6 - 0.8;
-  const out = pan || master;
-  if (pan) pan.connect(master);
-  const base = 4100 + Math.random() * 500;
-  for (let i = 0; i < 4; i++) {
-    const o = AC.createOscillator(), g = AC.createGain();
-    o.type = 'sine'; o.frequency.value = base;
-    const t = t0 + i * 0.052;
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.022, t + 0.008);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
-    o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.05);
-  }
-}
-function birdCall() { // 鸟鸣：2-4 声 FM 滑音，随机声像
-  const t0 = AC.currentTime;
-  const pan = AC.createStereoPanner ? AC.createStereoPanner() : null;
-  if (pan) { pan.pan.value = Math.random() * 1.4 - 0.7; pan.connect(master); }
-  const out = pan || master;
-  const calls = 2 + Math.floor(Math.random() * 3);
-  const base = 1900 + Math.random() * 1400;
-  for (let i = 0; i < calls; i++) {
-    const o = AC.createOscillator(), m = AC.createOscillator(), mg = AC.createGain(), g = AC.createGain();
-    o.type = 'sine';
-    m.type = 'sine'; m.frequency.value = 55 + Math.random() * 40;
-    mg.gain.value = 120 + Math.random() * 160;
-    m.connect(mg); mg.connect(o.frequency);
-    const t = t0 + i * (0.16 + Math.random() * 0.1);
-    o.frequency.setValueAtTime(base * (0.9 + Math.random() * 0.2), t);
-    o.frequency.exponentialRampToValueAtTime(base * (1.15 + Math.random() * 0.25), t + 0.09);
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.028 * (0.5 + S.birds * 0.8), t + 0.015);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
-    o.connect(g); g.connect(out);
-    o.start(t); o.stop(t + 0.16);
-    m.start(t); m.stop(t + 0.16);
-  }
-}
-function distantBell() { // 远钟：低频双分音长衰减
-  const t = AC.currentTime;
-  const vol = 0.05 + S.bell * 0.07;
-  [164.8, 246.9, 392.0].forEach((fq, i) => {
-    const o = AC.createOscillator(), g = AC.createGain();
-    o.type = 'sine'; o.frequency.value = fq * (1 + (Math.random() - 0.5) * 0.002);
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol / (i + 1.6), t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 5.5);
-    o.connect(g); g.connect(master); o.start(t); o.stop(t + 5.6);
-  });
-}
-function thunderRumble() { // 闪电先行，雷声延迟（距离感）
-  // 闪电立即（视觉）
-  flash = 1;
-  nextThunder = performance.now() + (14 + Math.random() * 30) * 1000 / Math.max(S.thunder, 0.05);
-  // 雷声延迟 0.4~1.8 秒（模拟距离）
-  const delay = 0.4 + Math.random() * 1.4;
-  const t = AC.currentTime + delay;
-  const len = 3.2, buf = AC.createBuffer(1, AC.sampleRate * len, AC.sampleRate);
-  const d = buf.getChannelData(0);
-  let last = 0;
-  for (let i = 0; i < d.length; i++) {
-    const w = Math.random() * 2 - 1;
-    last = (last + 0.04 * w) / 1.04;
-    d[i] = last * 4 * Math.pow(1 - i / d.length, 1.4);
-  }
-  const s = AC.createBufferSource(); s.buffer = buf;
-  const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 140;
-  const g = AC.createGain();
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.55 / (1 + delay * 0.4), t + 0.06);  // 远雷更弱
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 3.0);
-  s.connect(f); f.connect(g); g.connect(master); s.start(t);
-}
-function bell() { // 计时结束钟声
-  const t = AC.currentTime;
-  [880, 1108.7, 1318.5].forEach((fq, i) => {
-    const o = AC.createOscillator(), g = AC.createGain();
-    o.type = 'sine'; o.frequency.value = fq;
-    const st = t + i * 0.5;
-    g.gain.setValueAtTime(0.0001, st);
-    g.gain.exponentialRampToValueAtTime(0.2, st + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, st + 2.4);
-    o.connect(g); g.connect(master); o.start(st); o.stop(st + 2.5);
-  });
-}
-
-/* ================= 场景生成 ================= */
+/* ================================================================
+   造境 · SCAPE v5 — 程序化声景（从 mini 架构重建）
+   ================================================================ */
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
-let W = 0, H = 0, dpr = 1;
+let W = 0, H = 0, dpr = 1, time = 14;
+
+/* ---------- 工具 ---------- */
 function mulberry32(seed) {
   let a = seed >>> 0;
   return function () {
@@ -441,379 +132,263 @@ function mulberry32(seed) {
   };
 }
 
-/* 天空调色关键帧：t, [top, mid, hor], 光照 */
-const SKY = [
-  { t: 0,  top: [8, 10, 24],    mid: [14, 18, 38],   hor: [24, 28, 52],   L: 0.04 },
-  { t: 4.5,top: [10, 12, 30],   mid: [22, 24, 52],   hor: [56, 42, 60],   L: 0.08 },
-  { t: 6,  top: [46, 58, 96],   mid: [176, 120, 108],hor: [244, 168, 110],L: 0.45 },
-  { t: 8,  top: [96, 148, 200], mid: [156, 196, 228],hor: [232, 214, 178],L: 0.9 },
-  { t: 12, top: [88, 142, 208], mid: [150, 194, 232],hor: [214, 226, 224],L: 1 },
-  { t: 16, top: [92, 138, 198], mid: [168, 186, 216],hor: [238, 208, 158],L: 0.92 },
-  { t: 18.4,top: [70, 82, 140], mid: [216, 130, 104],hor: [248, 158, 92], L: 0.55 },
-  { t: 20, top: [24, 26, 58],   mid: [66, 48, 84],   hor: [140, 84, 78],  L: 0.16 },
-  { t: 22, top: [10, 12, 28],   mid: [16, 20, 42],   hor: [28, 30, 54],   L: 0.05 },
-  { t: 24, top: [8, 10, 24],    mid: [14, 18, 38],   hor: [24, 28, 52],   L: 0.04 }
-];
-function lerpC(a, b, t) {
-  return [0, 1, 2].map(i => Math.round(a[i] + (b[i] - a[i]) * t));
-}
-function skyAt(time) {
-  let i = 0;
-  while (i < SKY.length - 1 && SKY[i + 1].t < time) i++;
-  const a = SKY[i], b = SKY[Math.min(i + 1, SKY.length - 1)];
-  const f = b.t === a.t ? 0 : (time - a.t) / (b.t - a.t);
-  return { top: lerpC(a.top, b.top, f), mid: lerpC(a.mid, b.mid, f), hor: lerpC(a.hor, b.hor, f), L: a.L + (b.L - a.L) * f };
-}
-const rgb = c => `rgb(${c[0]},${c[1]},${c[2]})`;
+/* ---------- 场景数据 ---------- */
+const S = { rain: 0, wind: 0.35, fire: 0, stream: 0.3, cricket: 0, thunder: 0, birds: 0.4, bell: 0, snow: 0 };
+const CH = ['rain','wind','fire','stream','cricket','thunder','birds','bell','snow'];
+const CH_ZH = { rain:'雨', wind:'风', fire:'篝火', stream:'溪流', cricket:'夜虫', thunder:'雷', birds:'鸟鸣', bell:'远钟', snow:'雪' };
+const CH_EN = { rain:'RAIN', wind:'WIND', fire:'FIRE', stream:'STREAM', cricket:'CRICKETS', thunder:'THUNDER', birds:'BIRDS', bell:'BELL', snow:'SNOW' };
+let lang = localStorage.getItem('scape-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+let theme = 0; // 0山 1海 2城
+let sndOn = true;
 
-/* 山脊（离屏） */
+/* ---------- 天空 ---------- */
+const SKY = [
+  { t: 0,  top: [8,10,24],   mid: [14,18,38],   hor: [24,28,52] },
+  { t: 4.5,top: [10,12,30],  mid: [22,24,52],   hor: [56,42,60] },
+  { t: 6,  top: [46,58,96],  mid: [176,120,108],hor: [244,168,110] },
+  { t: 8,  top: [96,148,200],mid: [156,196,228],hor: [232,214,178] },
+  { t: 12, top: [88,142,208],mid: [150,194,232],hor: [214,226,224] },
+  { t: 16, top: [92,138,198],mid: [168,186,216],hor: [238,208,158] },
+  { t: 18.4,top:[70,82,140], mid: [216,130,104],hor: [248,158,92] },
+  { t: 20, top: [24,26,58],  mid: [66,48,84],   hor: [140,84,78] },
+  { t: 22, top: [10,12,28],  mid: [16,20,42],   hor: [28,30,54] },
+  { t: 24, top: [8,10,24],   mid: [14,18,38],   hor: [24,28,52] }
+];
+function lerp(a, b, t) { return a + (b - a) * t; }
+function skyAt(t) {
+  let i = 0;
+  while (i < SKY.length - 1 && SKY[i + 1].t < t) i++;
+  const a = SKY[i], b = SKY[Math.min(i + 1, SKY.length - 1)];
+  const f = b.t === a.t ? 0 : (t - a.t) / (b.t - a.t);
+  return {
+    top: [0,1,2].map(j => Math.round(lerp(a.top[j], b.top[j], f))),
+    mid: [0,1,2].map(j => Math.round(lerp(a.mid[j], b.mid[j], f))),
+    hor: [0,1,2].map(j => Math.round(lerp(a.hor[j], b.hor[j], f))),
+    L: (a.L || 0.5) + ((b.L || 0.5) - (a.L || 0.5)) * f
+  };
+}
+
+/* ---------- 山脊 ---------- */
 let ridges = [];
 function makeRidge(w, h, seed, yBase, amp, color) {
   const c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  const g = c.getContext('2d');
+  c.width = Math.max(1, w); c.height = Math.max(1, h);
+  const g2 = c.getContext('2d');
   const rnd = mulberry32(seed);
-  g.fillStyle = color;
-  g.beginPath();
-  g.moveTo(0, h);
-  let y = yBase + (rnd() - 0.5) * amp * 0.4;
-  const pts = [[0, y]];
-  const n = 9;
-  for (let i = 1; i <= n; i++) {
-    y = yBase + (rnd() - 0.5) * amp;
-    pts.push([w * i / n, y]);
-  }
-  // Catmull-Rom 平滑
+  g2.fillStyle = color;
+  g2.beginPath();
+  g2.moveTo(0, h);
+  const pts = [];
+  for (let i = 0; i <= 8; i++) pts.push([w * i / 8, yBase + (rnd() - 0.5) * amp]);
   for (let i = 0; i < pts.length - 1; i++) {
     const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
-    g.moveTo(p1[0], p1[1]);
-    for (let s = 0; s <= 8; s++) {
-      const t = s / 8, t2 = t * t, t3 = t2 * t;
-      const x = 0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3);
-      const yy = 0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3);
-      g.lineTo(x, yy);
+    for (let s = 0; s <= 6; s++) {
+      const t2 = s / 6;
+      const x = 0.5 * ((2*p1[0]) + (-p0[0]+p2[0])*t2 + (2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2*t2 + (-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t2*t2*t2);
+      const y = 0.5 * ((2*p1[1]) + (-p0[1]+p2[1])*t2 + (2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2*t2 + (-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t2*t2*t2);
+      g2.lineTo(x, y);
     }
   }
-  g.lineTo(w, h); g.lineTo(0, h);
-  g.closePath(); g.fill();
+  g2.lineTo(w, h); g2.closePath(); g2.fill();
   return c;
 }
 function rebuildScenery() {
-  if (theme === 0) {
-    ridges = [
-      makeRidge(W, H, 71, H * 0.52, H * 0.09, 'rgba(0,0,0,0.24)'),
-      makeRidge(W, H, 72, H * 0.62, H * 0.10, 'rgba(0,0,0,0.42)'),
-      makeRidge(W, H, 73, H * 0.74, H * 0.08, 'rgba(0,0,0,0.66)')
-    ];
-  } else {
-    ridges = [];
-  }
-  if (theme === 2) {
-    // 城市天际线：两层楼群 + 窗位图
-    const rnd = mulberry32(5150);
-    cityData = [];
-    for (let layer = 0; layer < 2; layer++) {
-      const bs = [];
-      let x = -20;
-      while (x < W + 40) {
-        const bw = 34 + rnd() * 66;
-        const bh = H * (0.16 + rnd() * 0.2) * (layer ? 1.35 : 1);
-        const cols = Math.max(1, Math.floor(bw / 15));
-        const rowsN = Math.max(2, Math.floor(bh / 20));
-        const wins = [];
-        for (let c = 0; c < cols; c++) for (let r2 = 0; r2 < rowsN; r2++)
-          wins.push(rnd() < 0.34);
-        bs.push({ x, w: bw, h: bh, cols, rowsN, wins, hasTop: rnd() < 0.18 });
-        x += bw + 6 + rnd() * 26;
-      }
-      cityData.push(bs);
-    }
-  } else {
-    cityData = null;
-  }
-  stars = [];
+  ridges = [
+    makeRidge(W, H, 71, H * 0.52, H * 0.09, 'rgba(0,0,0,0.24)'),
+    makeRidge(W, H, 72, H * 0.62, H * 0.10, 'rgba(0,0,0,0.42)'),
+    makeRidge(W, H, 73, H * 0.74, H * 0.08, 'rgba(0,0,0,0.66)')
+  ];
+}
+function resize() {
+  W = innerWidth; H = innerHeight;
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  rebuildScenery();
+}
+resize();
+window.addEventListener('resize', resize);
+
+/* ---------- 粒子 ---------- */
+let stars = [], clouds = [], raindrops = [], snowflakes = [], petals = [], embers = [];
+function initParticles() {
   const rnd = mulberry32(99);
+  stars = [];
   for (let i = 0; i < 130; i++)
     stars.push({ x: rnd() * W, y: rnd() * H * 0.55, r: rnd() * 1.3 + 0.3, p: rnd() * Math.PI * 2 });
   clouds = [];
   for (let i = 0; i < 7; i++) {
     const puffs = [];
-    const pn = 4 + Math.floor(rnd() * 4);
-    for (let j = 0; j < pn; j++)
-      puffs.push({ dx: (rnd() - 0.5) * 160, dy: (rnd() - 0.5) * 34, r: 34 + rnd() * 46 });
-    clouds.push({ x: rnd() * W, y: H * (0.1 + rnd() * 0.26), s: 0.6 + rnd() * 0.8, v: 4 + rnd() * 9, puffs });
+    for (let j = 0; j < 5; j++) puffs.push({ dx: (rnd() - 0.5) * 160, dy: (rnd() - 0.5) * 34, r: 34 + rnd() * 46 });
+    clouds.push({ x: rnd() * W, y: H * (0.1 + rnd() * 0.26), v: 4 + rnd() * 9, puffs });
   }
   raindrops = [];
   for (let i = 0; i < 240; i++)
-    raindrops.push({ x: Math.random() * W * 1.2 - W * 0.1, y: Math.random() * H, v: 620 + Math.random() * 380, l: 9 + Math.random() * 13 });
+    raindrops.push({ x: rnd() * W * 1.2 - W * 0.1, y: rnd() * H, v: 620 + rnd() * 380 });
   snowflakes = [];
   for (let i = 0; i < 190; i++)
-    snowflakes.push({ x: Math.random() * W, y: Math.random() * H, v: 26 + Math.random() * 52, r: 1 + Math.random() * 2.4, p: Math.random() * Math.PI * 2 });
+    snowflakes.push({ x: rnd() * W, y: rnd() * H, v: 26 + rnd() * 52, r: 1 + rnd() * 2.4, p: rnd() * Math.PI * 2 });
   petals = [];
   for (let i = 0; i < 90; i++)
-    petals.push({ x: Math.random() * W, y: Math.random() * H, v: 18 + Math.random() * 30, s: 2.5 + Math.random() * 3, p: Math.random() * Math.PI * 2, spin: Math.random() * Math.PI * 2 });
+    petals.push({ x: rnd() * W, y: rnd() * H, v: 18 + rnd() * 30, s: 2.5 + rnd() * 3, p: rnd() * Math.PI * 2 });
   embers = [];
 }
-let stars = [], clouds = [], raindrops = [], embers = [], snowflakes = [], petals = [];
-let meteors = [];       // 夜间流星
-let nextMeteor = 0;
-let season = 0;         // 0 无 1 春樱 2 秋枫
-let petals = [];
-function resize() {
-  dpr = Math.min(window.devicePixelRatio || 1, 2);
-  W = innerWidth; H = innerHeight;
-  cv.width = W * dpr; cv.height = H * dpr;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  rebuildScenery();
-}
-window.addEventListener('resize', resize);
+initParticles();
 
-/* ================= 主渲染 ================= */
-let flash = 0, nextThunder = Infinity, time = 0;
-function scene(dt) {
-  time += dt;
-  const sky = skyAt(S.time);
-  const darken = 1 - S.rain * 0.38 - S.thunder * 0.12;
-  const L = Math.max(0.03, sky.L * Math.max(0.45, darken));
+/* ---------- 音频 ---------- */
+let AC = null, master = null;
+const audioNodes = {};
+function initAudio() {
+  if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
+  try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  const comp = AC.createDynamicsCompressor();
+  comp.threshold.value = -18; comp.ratio.value = 6;
+  master = AC.createGain(); master.gain.value = 0.6;
+  master.connect(comp); comp.connect(AC.destination);
+  // 生成噪声缓冲
+  const len = AC.sampleRate * 2;
+  const white = AC.createBuffer(1, len, AC.sampleRate);
+  const brown = AC.createBuffer(1, len, AC.sampleRate);
+  const wd = white.getChannelData(0), bd = brown.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < len; i++) {
+    wd[i] = Math.random() * 2 - 1;
+    last = (last + 0.02 * wd[i]) / 1.02;
+    bd[i] = last * 3.5;
+  }
+  // 各声道
+  function makeChannel(buf, filterType, freq, gain) {
+    const src = AC.createBufferSource(); src.buffer = buf; src.loop = true;
+    const f = AC.createBiquadFilter(); f.type = filterType; f.frequency.value = freq;
+    const g = AC.createGain(); g.gain.value = gain;
+    src.connect(f); f.connect(g); g.connect(master); src.start();
+    return { f, g };
+  }
+  audioNodes.rain = makeChannel(white, 'lowpass', 900, 0);
+  audioNodes.wind = makeChannel(brown, 'lowpass', 300, 0);
+  audioNodes.fire = makeChannel(brown, 'lowpass', 380, 0);
+  audioNodes.stream = makeChannel(white, 'bandpass', 720, 0);
+  updateAudio(0);
+}
+function updateAudio(smooth = 0.5) {
+  if (!AC || !master) return;
+  const t = AC.currentTime;
+  const set = (p, v) => p.setTargetAtTime(v, t, smooth);
+  if (audioNodes.rain) {
+    set(audioNodes.rain.g.gain, S.rain * 0.42);
+    set(audioNodes.rain.f.frequency, 500 + S.rain * 2800);
+  }
+  if (audioNodes.wind) set(audioNodes.wind.g.gain, S.wind * 0.5);
+  if (audioNodes.fire) set(audioNodes.fire.g.gain, S.fire * 0.3);
+  if (audioNodes.stream) set(audioNodes.stream.g.gain, S.stream * 0.26);
+}
+
+/* ---------- 绘制 ---------- */
+let frameTime = 0;
+function draw(dt) {
+  frameTime += dt;
+  const sky = skyAt(S.time || time);
+  const L = sky.L || 0.9;
 
   // 天空
   const g = ctx.createLinearGradient(0, 0, 0, H * 0.8);
-  g.addColorStop(0, rgb(sky.top.map(v => v * Math.max(0.5, darken))));
-  g.addColorStop(0.62, rgb(sky.mid.map(v => v * Math.max(0.5, darken))));
-  g.addColorStop(1, rgb(sky.hor.map(v => v * Math.max(0.55, darken))));
+  g.addColorStop(0, `rgb(${sky.top.join(',')})`);
+  g.addColorStop(0.62, `rgb(${sky.mid.join(',')})`);
+  g.addColorStop(1, `rgb(${sky.hor.join(',')})`);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
 
-  // 星
-  const starA = Math.max(0, 1 - sky.L * 1.8);
+  // 星（夜间）
+  const starA = Math.max(0, 1 - L * 1.8);
   if (starA > 0.01) {
     for (const st of stars) {
-      const tw = 0.4 + 0.6 * Math.abs(Math.sin(time * 1.4 + st.p));
-      const a = starA * tw * 0.85;
-      ctx.fillStyle = `rgba(240,244,255,${a.toFixed(3)})`;
+      const tw = 0.4 + 0.6 * Math.abs(Math.sin(frameTime * 1.4 + st.p));
+      ctx.fillStyle = `rgba(240,244,255,${(starA * tw * 0.85).toFixed(3)})`;
       ctx.fillRect(st.x, st.y, st.r, st.r);
-      // 亮星十字光芒
-      if (st.r > 1.15) {
-        const fl = a * 0.55 * (0.7 + 0.3 * Math.sin(time * 2 + st.p * 5));
-        ctx.strokeStyle = `rgba(240,244,255,${fl.toFixed(3)})`;
-        ctx.lineWidth = 0.8;
-        const L2 = st.r * 3.6;
-        const cx2 = st.x + st.r / 2, cy2 = st.y + st.r / 2;
-        ctx.beginPath();
-        ctx.moveTo(cx2 - L2, cy2); ctx.lineTo(cx2 + L2, cy2);
-        ctx.moveTo(cx2, cy2 - L2); ctx.lineTo(cx2, cy2 + L2);
-        ctx.stroke();
-      }
     }
-    // 流星：深夜更密，雨雪时无
-    if (S.rain < 0.1 && S.snow < 0.3 && time > nextMeteor) {
-      nextMeteor = time + 6 + Math.random() * 20;
-      const nightDeep = Math.max(0, 1 - sky.L * 6);
-      meteors.push({
-        x: W * (0.15 + Math.random() * 0.7), y: H * (0.04 + Math.random() * 0.2),
-        vx: (Math.random() > 0.5 ? 1 : -1) * (420 + Math.random() * 300),
-        vy: 150 + Math.random() * 110,
-        life: 1
-      });
-      if (Math.random() < 0.4 * nightDeep) meteors.push({ // 偶发双流星
-        x: W * (0.15 + Math.random() * 0.7), y: H * (0.04 + Math.random() * 0.2),
-        vx: (Math.random() > 0.5 ? 1 : -1) * (420 + Math.random() * 300),
-        vy: 150 + Math.random() * 110, life: 1, delay: 0.4 + Math.random() * 0.5
-      });
-    }
-  }
-  for (let i = meteors.length - 1; i >= 0; i--) {
-    const m = meteors[i];
-    if (m.delay > 0) { m.delay -= dt; continue; }
-    m.x += m.vx * dt; m.y += m.vy * dt;
-    m.life -= dt * 0.85;
-    if (m.life <= 0 || m.y > H * 0.7) { meteors.splice(i, 1); continue; }
-    const a = Math.min(1, m.life * 1.6);
-    const tailX = m.x - m.vx * 0.16, tailY = m.y - m.vy * 0.16;
-    const mg = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
-    mg.addColorStop(0, `rgba(255,252,240,${(a * 0.9).toFixed(3)})`);
-    mg.addColorStop(1, 'rgba(255,252,240,0)');
-    ctx.strokeStyle = mg;
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.moveTo(m.x, m.y);
-    ctx.lineTo(tailX, tailY);
-    ctx.stroke();
   }
 
-  // 日 / 月
-  const drawOrb = (tCenter, isSun) => {
-    const ang = (S.time - tCenter) / 12 * Math.PI;  // -π..π
-    const x = W / 2 + Math.sin(ang) * W * 0.42;
-    const y = H * 0.62 - Math.cos(ang) * H * 0.5;
-    if (y > H * 0.72) return;
-    const r = isSun ? 30 : 22;
-    // 外层柔光 bloom
-    const bloom = ctx.createRadialGradient(x, y, 0, x, y, r * 9);
-    bloom.addColorStop(0, isSun ? 'rgba(255,214,130,0.34)' : 'rgba(200,218,255,0.2)');
-    bloom.addColorStop(0.5, isSun ? 'rgba(255,214,130,0.1)' : 'rgba(200,218,255,0.07)');
-    bloom.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = bloom;
-    ctx.fillRect(x - r * 9, y - r * 9, r * 18, r * 18);
-    const glow = ctx.createRadialGradient(x, y, 0, x, y, r * 5);
-    glow.addColorStop(0, isSun ? 'rgba(255,232,170,0.75)' : 'rgba(225,236,255,0.45)');
-    glow.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = glow;
-    ctx.fillRect(x - r * 5, y - r * 5, r * 10, r * 10);
-    ctx.fillStyle = isSun ? '#fff3cf' : '#eef2fb';
-    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-    if (isSun) { // 日面纹理：微暖斑
-      ctx.fillStyle = 'rgba(255,236,180,0.6)';
-      ctx.beginPath(); ctx.arc(x - r * 0.25, y - r * 0.2, r * 0.55, 0, Math.PI * 2); ctx.fill();
-    } else { // 月牙 + 月海
-      ctx.fillStyle = `rgb(${sky.top.join(',')})`;
-      ctx.beginPath(); ctx.arc(x + 9, y - 6, r * 0.86, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = 'rgba(190,200,220,0.35)';
-      ctx.beginPath(); ctx.arc(x - r * 0.3, y + r * 0.25, r * 0.22, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(x + r * 0.1, y + r * 0.45, r * 0.14, 0, Math.PI * 2); ctx.fill();
-    }
-  };
-  drawOrb(12, true);   // 太阳正午最高
-  drawOrb(0, false);   // 月亮午夜最高
-  // 地平线霞雾带（日升日落尤甚）
+  // 日月
+  const isDay = S.time > 6 && S.time < 18;
   {
-    const sunAng = Math.abs(Math.sin((S.time - 6) / 12 * Math.PI));
-    const nearHorizon = Math.max(0, 1 - sunAng * 2.4);
-    if (nearHorizon > 0.02) {
-      const hg = ctx.createLinearGradient(0, H * 0.5, 0, H * 0.68);
-      hg.addColorStop(0, 'rgba(255,220,170,0)');
-      hg.addColorStop(0.6, `rgba(255,214,150,${(nearHorizon * 0.14).toFixed(3)})`);
-      hg.addColorStop(1, 'rgba(255,220,170,0)');
-      ctx.fillStyle = hg;
-      ctx.fillRect(0, H * 0.5, W, H * 0.18);
+    const ang = (S.time - (isDay ? 12 : 0)) / 12 * Math.PI;
+    const ox2 = W / 2 + Math.sin(ang) * W * 0.42;
+    const oy2 = H * 0.62 - Math.cos(ang) * H * 0.5;
+    if (oy2 < H * 0.72) {
+      const r = isDay ? 30 : 22;
+      const glow = ctx.createRadialGradient(ox2, oy2, 0, ox2, oy2, r * 5);
+      glow.addColorStop(0, isDay ? 'rgba(255,232,170,0.7)' : 'rgba(225,236,255,0.4)');
+      glow.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(ox2 - r * 5, oy2 - r * 5, r * 10, r * 10);
+      ctx.fillStyle = isDay ? '#fff3cf' : '#eef2fb';
+      ctx.beginPath(); ctx.arc(ox2, oy2, r, 0, Math.PI * 2); ctx.fill();
     }
   }
 
-  // 云（两层速度，雨大时更暗更密）
-  const cloudA = 0.3 + S.rain * 0.45 + S.thunder * 0.1;
-  const cloudLight = 0.35 + L * 0.65;
+  // 云
+  const cloudA = 0.3 + S.rain * 0.45;
   for (const cl of clouds) {
     cl.x += cl.v * (0.4 + S.wind * 2.4) * dt;
     if (cl.x - 260 > W) cl.x = -260;
-    ctx.save();
-    ctx.translate(cl.x, cl.y);
-    ctx.scale(cl.s, cl.s);
-    ctx.fillStyle = `rgba(${Math.round(200 * cloudLight)},${Math.round(204 * cloudLight)},${Math.round(214 * cloudLight)},${(cloudA * 0.5).toFixed(3)})`;
+    ctx.fillStyle = `rgba(200,204,214,${(cloudA * 0.5).toFixed(3)})`;
     for (const p of cl.puffs) {
-      ctx.beginPath(); ctx.arc(p.dx, p.dy, p.r, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cl.x + p.dx, cl.y + p.dy, p.r, 0, Math.PI * 2); ctx.fill();
     }
-    ctx.restore();
   }
 
-  if (theme === 0) {
-    // 山脊（远景先画，随光照调亮）
-    for (let i = 0; i < ridges.length; i++) {
-      ctx.save();
-      ctx.globalAlpha = 0.9;
-      ctx.drawImage(ridges[i], 0, 0);
-      ctx.restore();
-    }
-    ctx.fillStyle = `rgba(${sky.mid[0]},${sky.mid[1]},${sky.mid[2]},${(0.16 + (1 - L) * 0.3).toFixed(3)})`;
-    ctx.fillRect(0, H * 0.45, W, H * 0.55);
-  } else if (theme === 1) {
-    // 海：地平线 + 天色倒影 + 日月烁光带
+  // 山脊
+  for (const r of ridges) ctx.drawImage(r, 0, 0);
+
+  // 主题：海
+  if (theme === 1) {
     const hor = H * 0.56;
     const wg = ctx.createLinearGradient(0, hor, 0, H);
     wg.addColorStop(0, `rgb(${sky.hor.map(v => Math.round(v * 0.9)).join(',')})`);
-    wg.addColorStop(0.5, `rgb(${sky.mid.map(v => Math.round(v * 0.55)).join(',')})`);
     wg.addColorStop(1, `rgb(${sky.top.map(v => Math.round(v * 0.4)).join(',')})`);
     ctx.fillStyle = wg;
     ctx.fillRect(0, hor, W, H - hor);
-    ctx.strokeStyle = `rgba(255,255,255,${(0.12 + L * 0.1).toFixed(3)})`;
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(0, hor + 0.5); ctx.lineTo(W, hor + 0.5); ctx.stroke();
-    // 微波
-    ctx.strokeStyle = `rgba(255,255,255,${(0.05 + L * 0.05).toFixed(3)})`;
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
     for (let i = 0; i < 9; i++) {
       const y = hor + 8 + (i / 9) * (H - hor) * 0.85;
-      const x = ((time * (10 + i * 5)) % (W + 200)) - 100;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.quadraticCurveTo(x + 40, y - 2, x + 90, y);
-      ctx.stroke();
+      const x = ((frameTime * (10 + i * 5)) % (W + 200)) - 100;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 40, y - 2, x + 90, y); ctx.stroke();
     }
-    // 日/月烁光柱（与天体位置一致）
-    const tCenter = S.time > 6 && S.time < 18 ? 12 : 0;
-    const angS = (S.time - tCenter) / 12 * Math.PI;
-    const ox = W / 2 + Math.sin(angS) * W * 0.42;
-    for (let i = 0; i < 26; i++) {
-      const y = hor + 6 + Math.pow(i / 26, 1.6) * (H - hor) * 0.92;
-      const wdt = 8 + (i / 26) * 90;
-      const jit = Math.sin(time * 2.4 + i * 1.7) * (6 + i);
-      ctx.fillStyle = `rgba(255,244,214,${(0.22 * (1 - i / 30) * Math.max(0.15, L)).toFixed(3)})`;
-      ctx.fillRect(ox - wdt / 2 + jit, y, wdt, 2.2);
-    }
-  } else if (theme === 2 && cityData) {
-    // 城：两层天际线 + 夜窗灯火
+  }
+
+  // 主题：城
+  if (theme === 2) {
     const nightW = Math.max(0, 1 - L * 1.6);
-    cityData.forEach((bs, layer) => {
+    const rnd2 = mulberry32(5150);
+    for (let layer = 0; layer < 2; layer++) {
       const base = H * (layer ? 0.94 : 0.88);
       const shade = layer ? 'rgba(10,14,22,0.88)' : 'rgba(18,24,36,0.72)';
-      for (const b of bs) {
-        const top = base - b.h;
+      let x = -20;
+      while (x < W + 40) {
+        const bw = 34 + rnd2() * 66;
+        const bh = H * (0.16 + rnd2() * 0.2) * (layer ? 1.35 : 1);
+        const top = base - bh;
         ctx.fillStyle = shade;
-        ctx.fillRect(b.x, top, b.w, b.h + 40);
-        if (b.hasTop) {
-          ctx.fillRect(b.x + b.w / 2 - 1.2, top - 14, 2.4, 14);
-          if (nightW > 0.3) { // 航空障碍灯
-            const bl = 0.5 + 0.5 * Math.sin(time * 2 + b.x);
-            ctx.fillStyle = `rgba(255,80,70,${(nightW * bl * 0.8).toFixed(3)})`;
-            ctx.beginPath(); ctx.arc(b.x + b.w / 2, top - 16, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillRect(x, top, bw, bh + 40);
+        // 窗
+        const cols = Math.max(1, Math.floor(bw / 15));
+        const rowsN = Math.max(2, Math.floor(bh / 20));
+        const wa = 0.06 + nightW * 0.75;
+        for (let c = 0; c < cols; c++) for (let r2 = 0; r2 < rowsN; r2++) {
+          if (rnd2() < 0.34) {
+            ctx.fillStyle = `rgba(255,214,140,${(wa * (0.85 + 0.15 * Math.sin(frameTime * 0.7 + c + r2))).toFixed(3)})`;
+            ctx.fillRect(x + 5 + c * 15, top + 8 + r2 * 20, 6, 9);
           }
         }
-        // 窗
-        const wa = 0.06 + nightW * 0.75;
-        for (let c = 0; c < b.cols; c++) for (let r2 = 0; r2 < b.rowsN; r2++) {
-          if (!b.wins[r2 * b.cols + c]) continue;
-          const flick = 0.85 + 0.15 * Math.sin(time * 0.7 + c * 3.1 + r2 * 1.7 + b.x);
-          ctx.fillStyle = `rgba(255,214,140,${(wa * flick).toFixed(3)})`;
-          ctx.fillRect(b.x + 5 + c * 15, top + 8 + r2 * 20, 6, 9);
-        }
+        x += bw + 6 + rnd2() * 26;
       }
-    });
-  }
-
-  // 雾（风大时飘动的带）
-  if (S.wind > 0.05) {
-    const fa = Math.min(0.3, S.wind * 0.3);
-    for (let i = 0; i < 3; i++) {
-      const y = H * (0.62 + i * 0.09);
-      const off = (time * (12 + i * 9) * (0.3 + S.wind)) % (W + 400) - 200;
-      const fg = ctx.createLinearGradient(off, 0, off + 420, 0);
-      fg.addColorStop(0, 'rgba(220,226,232,0)');
-      fg.addColorStop(0.5, `rgba(220,226,232,${(fa * 0.5).toFixed(3)})`);
-      fg.addColorStop(1, 'rgba(220,226,232,0)');
-      ctx.fillStyle = fg;
-      ctx.fillRect(0, y, W, H * 0.07);
-    }
-  }
-
-  // 溪流（底部波光；海主题已有整片海面，跳过）
-  if (S.stream > 0.03 && theme !== 1) {
-    const sy = H * 0.86;
-    const sg = ctx.createLinearGradient(0, sy - 16, 0, H);
-    sg.addColorStop(0, `rgba(90,120,150,${(0.14 + S.stream * 0.2).toFixed(3)})`);
-    sg.addColorStop(1, 'rgba(30,45,64,0.55)');
-    ctx.fillStyle = sg;
-    ctx.fillRect(0, sy - 14, W, H - sy + 14);
-    ctx.strokeStyle = `rgba(230,240,252,${(0.1 + S.stream * 0.22).toFixed(3)})`;
-    ctx.lineWidth = 1.4;
-    for (let i = 0; i < 14; i++) {
-      const y = sy + (i / 14) * (H - sy) + Math.sin(time * 2 + i) * 2;
-      const x = (time * (60 + i * 14) + i * 173) % (W + 120) - 60;
-      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 34 + i * 3, y); ctx.stroke();
     }
   }
 
   // 雨
   if (S.rain > 0.02) {
     const count = Math.round(raindrops.length * S.rain);
-    const windX = S.wind * 260 + Math.sin(time * 0.8) * S.wind * 60;  // 风速脉动
+    const windX = S.wind * 260 + Math.sin(frameTime * 0.8) * S.wind * 60;
     ctx.strokeStyle = `rgba(200,214,230,${(0.14 + S.rain * 0.3).toFixed(3)})`;
     ctx.lineWidth = 1.1;
     ctx.beginPath();
@@ -823,178 +398,55 @@ function scene(dt) {
       d.x += windX * dt;
       if (d.y > H) { d.y = -20; d.x = Math.random() * W * 1.2 - W * 0.1; }
       if (d.x > W * 1.1) d.x -= W * 1.2;
-      const dx = (windX / d.v) * d.l;
       ctx.moveTo(d.x, d.y);
-      ctx.lineTo(d.x - dx, d.y - d.l);
+      ctx.lineTo(d.x - (windX / d.v) * 12, d.y - 12);
     }
     ctx.stroke();
   }
 
-  // 雪：摆动飘落 + 风漂移 + 地面微积
+  // 雪
   if (S.snow > 0.02) {
     const count = Math.round(snowflakes.length * S.snow);
     ctx.fillStyle = 'rgba(240,246,255,0.85)';
     for (let i = 0; i < count; i++) {
       const f = snowflakes[i];
       f.y += f.v * dt * (0.5 + S.snow * 0.7);
-      f.x += Math.sin(time * 0.9 + f.p) * 16 * dt + S.wind * 90 * dt;
+      f.x += Math.sin(frameTime * 0.9 + f.p) * 16 * dt + S.wind * 90 * dt;
       if (f.y > H + 4) { f.y = -6; f.x = Math.random() * W; }
       if (f.x > W + 6) f.x -= W + 12;
-      if (f.x < -6) f.x += W + 12;
-      ctx.globalAlpha = 0.35 + 0.55 * S.snow;
-      ctx.beginPath();
-      ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-    // 地面积雪微光
-    const sgA = 0.05 + S.snow * 0.12;
-    const sgr = ctx.createLinearGradient(0, H * 0.9, 0, H);
-    sgr.addColorStop(0, `rgba(235,242,252,0)`);
-    sgr.addColorStop(1, `rgba(235,242,252,${sgA.toFixed(3)})`);
-    ctx.fillStyle = sgr;
-    ctx.fillRect(0, H * 0.9, W, H * 0.1);
-  }
-
-  // 季节花瓣：春樱（粉）或秋枫（橙），随风旋落
-  if (season > 0) {
-    const col = season === 1 ? '255,183,197' : '226,138,72';
-    for (const pt of petals) {
-      pt.y += pt.v * dt;
-      pt.x += Math.sin(time * 1.1 + pt.p) * 22 * dt + S.wind * 70 * dt;
-      pt.spin += dt * 2.2;
-      if (pt.y > H + 8) { pt.y = -8; pt.x = Math.random() * W; }
-      if (pt.x > W + 8) pt.x -= W + 16;
-      if (pt.x < -8) pt.x += W + 16;
-      ctx.save();
-      ctx.translate(pt.x, pt.y);
-      ctx.rotate(pt.spin + Math.sin(time + pt.p));
-      ctx.fillStyle = `rgba(${col},${(0.5 + 0.3 * Math.sin(pt.p + time)).toFixed(3)})`;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, pt.s, pt.s * 0.55, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
     }
   }
 
-  // 篝火（右下角）
+  // 篝火
   if (S.fire > 0.03) {
     const fx = W * 0.82, fy = H * 0.9;
-    const flick = 0.75 + 0.25 * Math.sin(time * 9.3) * Math.sin(time * 4.1);
+    const flick = 0.75 + 0.25 * Math.sin(frameTime * 9.3) * Math.sin(frameTime * 4.1);
     const fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, 150 * S.fire * flick + 40);
     fg.addColorStop(0, `rgba(255,168,84,${(0.4 * S.fire * flick).toFixed(3)})`);
-    fg.addColorStop(0.5, `rgba(255,120,50,${(0.16 * S.fire).toFixed(3)})`);
     fg.addColorStop(1, 'rgba(255,100,40,0)');
     ctx.fillStyle = fg;
     ctx.fillRect(fx - 260, fy - 260, 520, 520);
-    // 火堆
     ctx.fillStyle = '#2a1c14';
     ctx.beginPath(); ctx.ellipse(fx, fy + 8, 34, 10, 0, 0, Math.PI * 2); ctx.fill();
     for (let i = 0; i < 3; i++) {
-      const fl = (0.8 + 0.2 * Math.sin(time * 8 + i * 2.4)) * S.fire;
+      const fl = (0.8 + 0.2 * Math.sin(frameTime * 8 + i * 2.4)) * S.fire;
       const h = 34 * fl + 14;
-      const hue = 28 - i * 8;
-      ctx.fillStyle = `hsl(${hue},95%,${58 - i * 8}%)`;
+      ctx.fillStyle = `hsl(${28 - i * 8},95%,${58 - i * 8}%)`;
       ctx.beginPath();
       ctx.moveTo(fx - (16 - i * 4), fy);
-      ctx.quadraticCurveTo(fx - 6 + Math.sin(time * 7 + i) * 5, fy - h * 0.6, fx + Math.sin(time * 5.5 + i * 2) * 4, fy - h);
+      ctx.quadraticCurveTo(fx - 6 + Math.sin(frameTime * 7 + i) * 5, fy - h * 0.6, fx + Math.sin(frameTime * 5.5 + i * 2) * 4, fy - h);
       ctx.quadraticCurveTo(fx + 8, fy - h * 0.5, fx + (16 - i * 4), fy);
       ctx.closePath(); ctx.fill();
     }
-    // 火星
     if (Math.random() < 0.3 + S.fire * 0.5) embers.push({ x: fx + (Math.random() - 0.5) * 22, y: fy - 24, vy: -40 - Math.random() * 60, vx: (Math.random() - 0.5) * 26, life: 1 });
     ctx.fillStyle = 'rgba(255,190,110,0.9)';
     for (const em of embers) {
-      em.life -= dt * 0.7; em.y += em.vy * dt; em.x += em.vx * dt + Math.sin(time * 6 + em.y * 0.05) * 0.6;
+      em.life -= dt * 0.7; em.y += em.vy * dt; em.x += em.vx * dt;
       if (em.life > 0) { ctx.globalAlpha = em.life; ctx.fillRect(em.x, em.y, 2, 2); }
     }
     ctx.globalAlpha = 1;
     embers = embers.filter(e => e.life > 0).slice(-90);
-  }
-
-  // 夜虫（夜里有萤光点缀）
-  const nightCricket = cricketActive();
-  if (nightCricket && S.cricket > 0.03) {
-    for (let i = 0; i < 5; i++) {
-      const ph = time * 0.7 + i * 2.2;
-      const x = (Math.sin(ph * 0.35 + i) * 0.5 + 0.5) * W * 0.8 + W * 0.1;
-      const y = H * (0.78 + 0.1 * Math.sin(ph + i * 1.7));
-      const a = Math.max(0, Math.sin(time * 2 + i * 1.3)) * 0.7 * S.cricket;
-      if (a > 0.03) {
-        ctx.fillStyle = `rgba(190,255,140,${a.toFixed(3)})`;
-        ctx.shadowColor = 'rgba(190,255,140,0.9)';
-        ctx.shadowBlur = 8;
-        ctx.beginPath(); ctx.arc(x, y, 1.8, 0, Math.PI * 2); ctx.fill();
-        ctx.shadowBlur = 0;
-      }
-    }
-  }
-
-  // 极光：大雪深夜（雪>0.5 且 21-4 点）的罕见帷幕
-  const auroraOk = S.snow > 0.5 && (S.time >= 21 || S.time <= 4);
-  if (auroraOk) {
-    const aa = Math.min(0.5, (S.snow - 0.5) * 1.6) * (1 - sky.L * 4);
-    if (aa > 0.02) {
-      for (let band = 0; band < 3; band++) {
-        ctx.beginPath();
-        const baseY = H * (0.16 + band * 0.07);
-        ctx.moveTo(-40, baseY);
-        for (let x = -40; x <= W + 40; x += 24) {
-          const y = baseY + Math.sin(x * 0.004 + time * 0.24 + band * 1.7) * H * 0.05
-                  + Math.sin(x * 0.011 - time * 0.13 + band) * H * 0.02;
-          ctx.lineTo(x, y);
-        }
-        ctx.lineTo(W + 40, baseY - H * 0.3);
-        ctx.lineTo(-40, baseY - H * 0.3);
-        ctx.closePath();
-        const hue = 140 + band * 26;
-        const ag = ctx.createLinearGradient(0, baseY - H * 0.28, 0, baseY + 8);
-        ag.addColorStop(0, `hsla(${hue},72%,58%,0)`);
-        ag.addColorStop(0.75, `hsla(${hue},72%,58%,${(aa * 0.5).toFixed(3)})`);
-        ag.addColorStop(1, `hsla(${hue + 30},80%,70%,${(aa * 0.14).toFixed(3)})`);
-        ctx.fillStyle = ag;
-        ctx.fill();
-      }
-    }
-  }
-
-  // 飞鸟（日间 + 鸟鸣声道开启）
-  if (S.birds > 0.05 && L > 0.25) {
-    for (let i = 0; i < 4; i++) {
-      const ph = time * (0.06 + i * 0.013) + i * 2.6;
-      const bx = ((ph % 1.4) / 1.4) * (W + 160) - 80;
-      const by = H * (0.16 + 0.09 * (i % 3)) + Math.sin(time * 1.1 + i * 2) * 12;
-      const flap = Math.sin(time * 7 + i * 1.7) * 4.2;
-      const sc = 0.7 + (i % 3) * 0.25;
-      ctx.strokeStyle = `rgba(20,26,34,${(0.35 * S.birds + 0.12).toFixed(3)})`;
-      ctx.lineWidth = 1.6 * sc;
-      ctx.beginPath();
-      ctx.moveTo(bx - 7 * sc, by - flap * sc * 0.5);
-      ctx.quadraticCurveTo(bx, by + 2 * sc, bx + 0.1, by);
-      ctx.quadraticCurveTo(bx, by + 2 * sc, bx + 7 * sc, by - flap * sc * 0.5);
-      ctx.stroke();
-    }
-  }
-
-  // 雨后彩虹（雨≥0.35 且日光充足时的彩蛋）
-  if (S.rain > 0.3 && sky.L > 0.55) {
-    const ra = Math.min(0.34, (S.rain - 0.3) * 1.6) * Math.min(1, (sky.L - 0.55) * 4);
-    const cx0 = W * 0.5, cy0 = H * 0.98, R = H * 0.62;
-    const hues = ['rgba(148,112,196,', 'rgba(96,132,208,', 'rgba(112,178,190,', 'rgba(140,196,140,', 'rgba(224,190,110,', 'rgba(222,150,100,', 'rgba(206,110,96,'];
-    for (let i = 0; i < 7; i++) {
-      ctx.strokeStyle = hues[i] + (ra * 0.5 * (1 - i * 0.06)).toFixed(3) + ')';
-      ctx.lineWidth = 7;
-      ctx.beginPath();
-      ctx.arc(cx0, cy0, R + i * 8, Math.PI * 1.05, Math.PI * 1.95);
-      ctx.stroke();
-    }
-  }
-
-  // 闪电
-  if (flash > 0) {
-    flash -= dt * 2.4;
-    ctx.fillStyle = `rgba(255,255,255,${(Math.max(0, flash) * 0.55).toFixed(3)})`;
-    ctx.fillRect(0, 0, W, H);
   }
 
   // 暗角
@@ -1004,517 +456,128 @@ function scene(dt) {
   ctx.fillStyle = vg;
   ctx.fillRect(0, 0, W, H);
 }
-function cricketActive() {
-  return S.time >= 19.5 || S.time <= 5.2;
-}
 
-/* ================= 音频调度（帧循环内） ================= */
-let plinkT = 0, crackleT = 0, cricketT = 0, birdT = 0, bellT = 0;
-function birdsActive() { return S.time > 6 && S.time < 19.2; }
-function audioTick(now, dt) {
-  if (!AC) return;
-  // 雨滴
-  if (S.rain > 0.06 && now > plinkT) {
-    plink();
-    plinkT = now + (40 + Math.random() * 320 / S.rain);
-  }
-  // 爆裂
-  if (S.fire > 0.08 && now > crackleT) {
-    crackle();
-    crackleT = now + (60 + Math.random() * 700 / S.fire);
-  }
-  // 虫鸣（仅夜间）
-  if (cricketActive() && S.cricket > 0.05 && now > cricketT) {
-    cricketChirp();
-    cricketT = now + (300 + Math.random() * 1600 / S.cricket);
-  }
-  // 鸟鸣（仅日间，雨天更稀）
-  if (birdsActive() && S.birds > 0.05 && now > birdT) {
-    birdCall();
-    birdT = now + (900 + Math.random() * 4200 / S.birds) * (1 + S.rain * 1.2);
-  }
-  // 远钟
-  if (S.bell > 0.05 && now > bellT) {
-    distantBell();
-    bellT = now + (16000 + Math.random() * 42000) / (0.3 + S.bell);
-  }
-  // 风：截止游走
-  const wn = nodes.wind;
-  if (wn) {
-    wn.walk += (Math.random() - 0.5) * 60 * dt * 3;
-    wn.walk = Math.max(140, Math.min(900, wn.walk));
-    wn.f.frequency.setTargetAtTime(wn.walk * (0.4 + S.wind), AC.currentTime, 0.3);
-  }
-  // 雷
-  if (S.thunder > 0.03 && now > nextThunder) thunderRumble();
-  if (S.thunder <= 0.03) nextThunder = Infinity;
-}
-
-/* ================= 计时器 ================= */
-let timerMode = 0, timerEnd = 0, timerLen = 25 * 60;
-const timerBtn = document.getElementById('timerBtn'), timerTxt = document.getElementById('timerTxt'), ringFg = document.getElementById('ringFg');
-timerBtn.addEventListener('click', () => {
-  initAudio();
-  timerMode = (timerMode + 1) % 4;
-  if (timerMode < 3) {
-    timerLen = [25, 45, 60][timerMode] * 60;
-    timerEnd = performance.now() + timerLen * 1000;
-    timerBtn.classList.add('on');
-  } else {
-    timerMode = 3; timerBtn.classList.remove('on');
-  }
-  updTimerUI();
-});
-function updTimerUI() {
-  if (timerMode === 3 || timerMode === 0 && timerEnd === 0) {
-    timerTxt.textContent = T().timer[Math.min(timerMode, 3)];
-    if (timerMode === 3) { ringFg.style.strokeDashoffset = 50.3; }
-  }
-}
-function timerTick(now) {
-  if (timerMode > 2 || timerEnd === 0) return;
-  const rem = Math.max(0, (timerEnd - now) / 1000);
-  const mm = Math.floor(rem / 60), ss = Math.floor(rem % 60);
-  timerTxt.textContent = `${mm}:${ss.toString().padStart(2, '0')}`;
-  const frac = 1 - rem / timerLen;
-  ringFg.style.strokeDashoffset = (50.3 * (1 - frac)).toFixed(1);
-  if (rem <= 0) {
-    timerEnd = 0; timerMode = 3; timerBtn.classList.remove('on');
-    if (AC) bell();
-    timerTxt.textContent = T().timer[3];
-  }
-}
-
-/* ================= UI 构建 ================= */
-const ICONS = {
-  rain: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 12a5 5 0 0 1 .5-9.97A6 6 0 0 1 18 5.5 4 4 0 0 1 18 12z" transform="translate(0,-1)"/><path d="M8 15l-1.5 3M12 15l-1.5 3M16 15l-1.5 3"/></svg>',
-  wind: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 8h9a2.5 2.5 0 1 0-2.4-3.2M3 12h14a2.5 2.5 0 1 1-2.4 3.2M3 16h7a2 2 0 1 1-1.9 2.6"/></svg>',
-  fire: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-4 5-4 9a4 4 0 0 0 8 .5C16 9 12 8 12 3z"/><path d="M7.5 13a5.5 5.5 0 1 0 11-.5c0-2-1-3.5-2-4.5"/></svg>',
-  stream: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 8h5l2-2 3 2h8M3 13h6l2 2 3-2h7M3 18h5l2-2"/></svg>',
-  cricket: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 19c0-6 3-9 7-10M9 19c0-4 2-6 5-7M12 9l4-4M14 11l5-3M13 7l3-5"/><circle cx="16" cy="16" r="1" fill="currentColor" stroke="none"/></svg>',
-  thunder: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14a5 5 0 0 1 .3-9.97A6 6 0 0 1 18 7.5 3.5 3.5 0 0 1 17.5 14z"/><path d="M12 12l-2.5 4.5H13L10.5 21"/></svg>',
-  birds: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 12c2-2.5 4-2.5 6 0M9 12c2-2.5 4-2.5 6 0M15 9c1.6-2 3.2-2 4.8 0"/><path d="M6 17c2-2.5 4-2.5 6 0M14 16c1.6-2 3.2-2 4.8 0" opacity=".55"/></svg>',
-  bell: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a5.5 5.5 0 0 0-5.5 5.5c0 4-2 5-2 5h15s-2-1-2-5A5.5 5.5 0 0 0 12 4z"/><path d="M10.5 18a1.8 1.8 0 0 0 3 0"/><path d="M12 2v1" opacity=".5"/></svg>',
-  snow: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/><path d="M12 3l-2 2.2M12 3l2 2.2M12 21l-2-2.2M12 21l2-2.2" opacity=".8"/><path d="M4.2 7.5l2.9.4M4.2 7.5l-.4-2.9M19.8 16.5l-2.9-.4M19.8 16.5l.4 2.9" opacity=".8"/><path d="M19.8 7.5l-2.9.4M19.8 7.5l.4-2.9M4.2 16.5l2.9-.4M4.2 16.5l-.4 2.9" opacity=".8"/></svg>'
+/* ---------- UI ---------- */
+const PRESETS = {
+  rainy:   { rain: 0.65, wind: 0.18, fire: 0, stream: 0, cricket: 0, thunder: 0.35, birds: 0, bell: 0, snow: 0, time: 22 },
+  morning: { rain: 0, wind: 0.12, fire: 0, stream: 0.6, cricket: 0.35, thunder: 0, birds: 0.4, bell: 0, snow: 0, time: 6.2 },
+  fireside:{ rain: 0.3, wind: 0.28, fire: 0.75, stream: 0, cricket: 0.2, thunder: 0, birds: 0, bell: 0.15, snow: 0, time: 20.5 },
+  valley:  { rain: 0, wind: 0.38, fire: 0, stream: 0.32, cricket: 0, thunder: 0, birds: 0.5, bell: 0, snow: 0, time: 14 },
+  winter:  { rain: 0, wind: 0.22, fire: 0.55, stream: 0, cricket: 0, thunder: 0, birds: 0, bell: 0.3, snow: 0.85, time: 21.5 }
 };
-function buildBoard() {
-  const board = document.getElementById('board');
-  board.innerHTML = '';
-  for (const k of CH_ORDER) {
-    const div = document.createElement('div');
-    div.className = 'ch' + (S[k] > 0.02 ? ' on' : '');
-    div.innerHTML = `${ICONS[k]}<div class="nm">${T().channels[k]}</div>
-      <input type="range" min="0" max="1" step="0.01" value="${S[k]}" aria-label="${T().channels[k]}">`;
-    const input = div.querySelector('input');
-    input.addEventListener('input', () => {
-      S[k] = +input.value;
-      div.classList.toggle('on', S[k] > 0.02);
-      initAudio(); updateAudio();
-      applyPresetActive(null);
-      if (k === 'thunder' && S.thunder > 0.03 && nextThunder === Infinity)
-        nextThunder = performance.now() + 3000 + Math.random() * 8000;
-      document.getElementById('hint').classList.add('gone');
+const PRESET_ZH = { rainy: '雨夜读书', morning: '山涧清晨', fireside: '炉边听风', valley: '午后山谷', winter: '冬夜围炉' };
+const PRESET_EN = { rainy: 'Rainy Night', morning: 'Dawn', fireside: 'Fireside', valley: 'Valley', winter: 'Winter' };
+
+function buildUI() {
+  // 预设
+  const pr = document.getElementById('presets');
+  pr.innerHTML = '';
+  Object.keys(PRESETS).forEach(key => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (key === 'valley' ? ' on' : '');
+    b.textContent = lang === 'zh' ? PRESET_ZH[key] : PRESET_EN[key];
+    b.addEventListener('click', () => {
+      Object.assign(S, PRESETS[key]);
+      time = S[key] !== undefined ? S[key].time || S.time : S.time;
+      time = PRESETS[key].time;
+      initAudio(); updateAudio(1.2); buildBoard(); updateClock();
+      pr.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+      b.classList.add('on');
     });
-    board.appendChild(div);
+    pr.appendChild(b);
+  });
+  // 声道滑杆
+  const bd = document.getElementById('board');
+  bd.innerHTML = '';
+  for (const k of CH) {
+    const d = document.createElement('div');
+    d.className = 'ch';
+    d.innerHTML = `<div class="nm">${lang === 'zh' ? CH_ZH[k] : CH_EN[k]}</div>
+      <input type="range" min="0" max="1" step="0.01" value="${S[k]}" aria-label="${k}">`;
+    const inp = d.querySelector('input');
+    inp.addEventListener('input', () => {
+      S[k] = +inp.value;
+      initAudio(); updateAudio();
+    });
+    bd.appendChild(d);
   }
-  // 分隔 + 时刻
-  const sep = document.createElement('div');
-  sep.className = 'vsep'; board.appendChild(sep);
+  // 时间滑杆
   const tc = document.createElement('div');
   tc.className = 'timecol';
-  tc.innerHTML = `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3.5 2" stroke-linecap="round"/></svg>
-    <div class="nm">${T().time}</div>
-    <input type="range" id="timeR" min="0" max="24" step="0.1" value="${S.time}" aria-label="${T().time}">`;
-  const tinput = tc.querySelector('input');
-  tinput.addEventListener('input', () => {
-    S.time = +tinput.value;
-    initAudio(); updateAudio();
-    applyPresetActive(null);
+  tc.innerHTML = `<div class="nm">${lang === 'zh' ? '时刻' : 'HOUR'}</div>
+    <input type="range" id="timeR" min="0" max="24" step="0.1" value="${time}">`;
+  tc.querySelector('input').addEventListener('input', function() {
+    time = +this.value;
     updateClock();
   });
-  board.appendChild(tc);
+  bd.appendChild(tc);
 }
-const PRESETS = {
-  rainy:   () => ({ rain: 0.65, wind: 0.18, fire: 0, stream: 0, cricket: 0, thunder: 0.35, birds: 0, bell: 0, snow: 0, time: 22 }),
-  morning: () => ({ rain: 0, wind: 0.12, fire: 0, stream: 0.6, cricket: 0.35, thunder: 0, birds: 0.4, bell: 0, snow: 0, time: 6.2 }),
-  fireside:() => ({ rain: 0.3, wind: 0.28, fire: 0.75, stream: 0, cricket: 0.2, thunder: 0, birds: 0, bell: 0.15, snow: 0, time: 20.5 }),
-  valley:  () => ({ rain: 0, wind: 0.38, fire: 0, stream: 0.32, cricket: 0, thunder: 0, birds: 0.5, bell: 0, snow: 0, time: 14 }),
-  winter:  () => ({ rain: 0, wind: 0.22, fire: 0.55, stream: 0, cricket: 0, thunder: 0, birds: 0, bell: 0.3, snow: 0.85, time: 21.5 })
-};
-function loadCustoms() {
-  try { return JSON.parse(localStorage.getItem('scape-customs') || '[]'); } catch (e) { return []; }
-}
-function saveCustoms(a) { localStorage.setItem('scape-customs', JSON.stringify(a)); }
-function randomize() {
-  const chans = ['rain', 'wind', 'fire', 'stream', 'cricket', 'birds', 'thunder', 'bell'];
-  const zero = {};
-  chans.forEach(c => zero[c] = 0);
-  const picks = 1 + Math.floor(Math.random() * 2);
-  const pool = [...chans];
-  for (let i = 0; i < picks; i++) {
-    const c = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
-    if (c === 'cricket' || c === 'bell') zero[c] = 0.25 + Math.random() * 0.45;
-    else if (c === 'thunder') zero[c] = 0.15 + Math.random() * 0.4;
-    else zero[c] = 0.25 + Math.random() * 0.6;
-  }
-  const hour = Math.random() * 24;
-  Object.assign(S, zero, { time: hour });
-  if (S.thunder > 0.05 && S.rain < 0.3) S.rain = 0.35 + Math.random() * 0.3; // 雷随雨来
-  initAudio(); updateAudio(1.2);
-  buildBoard(); updateClock();
-  applyPresetActive(null);
-  if (S.thunder > 0.03) nextThunder = performance.now() + 4000 + Math.random() * 9000;
-  else nextThunder = Infinity;
-  document.getElementById('hint').classList.add('gone');
-}
-function applyPresetActive(name) {
-  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.p === name));
-}
-function buildPresets() {
-  const box = document.getElementById('presets');
-  box.innerHTML = '';
-  const keys = Object.keys(PRESETS);
-  keys.forEach((key, idx) => {
-    const b = document.createElement('button');
-    b.className = 'chip'; b.dataset.p = key;
-    b.textContent = T().presets[key];
-    b.addEventListener('click', () => {
-      Object.assign(S, PRESETS[key]());
-      initAudio(); updateAudio(1.2);
-      buildBoard(); updateClock();
-      applyPresetActive(key);
-      if (S.thunder > 0.03) nextThunder = performance.now() + 4000 + Math.random() * 9000;
-      else nextThunder = Infinity;
-      document.getElementById('hint').classList.add('gone');
-    });
-    box.appendChild(b);
-  });
-  // 随机
-  const rb = document.createElement('button');
-  rb.className = 'chip'; rb.dataset.p = '__rand';
-  rb.textContent = T().random;
-  rb.addEventListener('click', randomize);
-  box.appendChild(rb);
-  // 自定义境
-  const customs = loadCustoms();
-  customs.forEach((c, i) => {
-    const b = document.createElement('button');
-    b.className = 'chip'; b.dataset.p = 'custom' + i;
-    b.textContent = T().customName(i);
-    b.title = T().delTip;
-    b.addEventListener('click', () => {
-      Object.assign(S, JSON.parse(JSON.stringify(c)));
-      initAudio(); updateAudio(1.2);
-      buildBoard(); updateClock();
-      applyPresetActive('custom' + i);
-      if (S.thunder > 0.03) nextThunder = performance.now() + 4000 + Math.random() * 9000;
-      else nextThunder = Infinity;
-      document.getElementById('hint').classList.add('gone');
-    });
-    let lp = null;
-    b.addEventListener('pointerdown', () => {
-      lp = setTimeout(() => {
-        const arr = loadCustoms(); arr.splice(i, 1); saveCustoms(arr);
-        buildPresets(); applyPresetActive(null);
-        lp = null;
-      }, 700);
-    });
-    const cancelLp = () => { if (lp) { clearTimeout(lp); lp = null; } };
-    b.addEventListener('pointerup', cancelLp);
-    b.addEventListener('pointerleave', cancelLp);
-    box.appendChild(b);
-  });
-  // 存为境
-  const sb = document.createElement('button');
-  sb.className = 'chip'; sb.dataset.p = '__save';
-  sb.textContent = T().savePreset;
-  sb.addEventListener('click', () => {
-    const arr = loadCustoms();
-    const snap = {};
-    CH_ORDER.forEach(c => snap[c] = S[c]);
-    snap.time = S.time;
-    arr.push(snap);
-    while (arr.length > 6) arr.shift();
-    saveCustoms(arr);
-    buildPresets();
-    applyPresetActive('custom' + (arr.length - 1));
-  });
-  box.appendChild(sb);
-}
+
 function updateClock() {
-  const h = Math.floor(S.time) % 24, m = Math.floor((S.time % 1) * 60);
+  const h = Math.floor(time) % 24, m = Math.floor((time % 1) * 60);
   document.getElementById('clock').textContent = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
 }
-function applyI18n() {
-  document.documentElement.lang = lang === 'zh' ? 'zh' : 'en';
-  document.title = lang === 'zh' ? '造境 · SCAPE — 程序化声景' : 'SCAPE — procedural soundscape';
-  document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
-  if (!recorder) document.getElementById('recBtn').textContent = T().rec;
-  shareSceneBtn.textContent = T().shareScene;
-  shareSceneBtn.title = T().shareTip;
-  updThemeBtn();
-  updSeasonBtn();
-  updFlowBtn();
-  document.getElementById('hint').textContent = T().hint;
-  updTimerUI();
-  buildPresets(); buildBoard(); updateClock();
-}
+
+/* 主题按钮 */
+const themeBtn = document.getElementById('themeBtn');
+const THEMES = ['⛰ 山', '🌊 海', '🏙 城'];
+const THEMES_EN = ['⛰ MTN', '🌊 SEA', '🏙 CITY'];
+function updTheme() { themeBtn.textContent = lang === 'zh' ? THEMES[theme] : THEMES_EN[theme]; }
+themeBtn.addEventListener('click', () => { theme = (theme + 1) % 3; updTheme(); });
+
+/* 心境 */
+const MOODS = ['山雨欲来', '雪夜炉火', '城市黄昏', '海雾清晨', '樱花午后', '极夜深城'];
+document.getElementById('moodBtn').addEventListener('click', () => {
+  const m = MOODS[Math.floor(Math.random() * MOODS.length)];
+  const map = { '山雨欲来': {rain:.5,wind:.4,thunder:.3,time:16,theme:0}, '雪夜炉火': {fire:.8,snow:.9,time:21.5,theme:0},
+    '城市黄昏': {rain:0,wind:.2,birds:.3,time:18.2,theme:2}, '海雾清晨': {rain:.15,wind:.3,stream:.5,birds:.4,time:6.5,theme:1},
+    '樱花午后': {rain:0,wind:.25,stream:.3,birds:.5,time:14,theme:0}, '极夜深城': {rain:.3,wind:.3,snow:.8,bell:.3,time:23,theme:2} };
+  const s = map[m] || {};
+  CH.forEach(c => S[c] = s[c] !== undefined ? s[c] : 0);
+  time = s.time || 14;
+  theme = s.theme || 0;
+  updTheme(); buildUI(); updateClock();
+  initAudio(); updateAudio(1);
+});
+
+/* 声音 */
+const sndBtn = document.getElementById('sndBtn');
+function updSnd() { sndBtn.textContent = lang === 'zh' ? (sndOn ? '♪ 声' : '♪ 静') : (sndOn ? '♪ SND' : '♪ MUTE'); }
+sndBtn.addEventListener('click', () => {
+  sndOn = !sndOn;
+  if (master) master.gain.setTargetAtTime(sndOn ? 0.6 : 0, AC.currentTime, 0.3);
+  updSnd();
+});
+
+/* 语言 */
 document.getElementById('langBtn').addEventListener('click', () => {
   lang = lang === 'zh' ? 'en' : 'zh';
   localStorage.setItem('scape-lang', lang);
-  applyI18n();
+  document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+  updTheme(); updSnd(); buildUI();
 });
 
-/* ================= 睡眠定时 / 暂停 / 后台 ================= */
-let sleepIdx = 0, sleepDeadline = 0, sleepFading = false;
-const SLEEP_MINS = [0, 15, 30, 60];
-const sleepBtn = document.getElementById('sleepBtn');
-function updSleepBtn() {
-  sleepBtn.textContent = sleepIdx === 0 ? '☾ ∞' : '☾ ' + SLEEP_MINS[sleepIdx] + 'm';
-  sleepBtn.title = T().sleepTip;
-  sleepBtn.classList.toggle('on', sleepIdx > 0 || sleepFading);
-}
-sleepBtn.addEventListener('click', () => {
-  initAudio();
-  sleepIdx = (sleepIdx + 1) % SLEEP_MINS.length;
-  sleepFading = false;
-  sleepDeadline = sleepIdx === 0 ? 0 : performance.now() + SLEEP_MINS[sleepIdx] * 60000;
-  updSleepBtn();
-});
-function sleepTick(now) {
-  if (sleepDeadline && now >= sleepDeadline && !sleepFading && AC && master) {
-    sleepFading = true;
-    const t = AC.currentTime;
-    master.gain.cancelScheduledValues(t);
-    master.gain.setValueAtTime(master.gain.value, t);
-    master.gain.linearRampToValueAtTime(0.0001, t + 45);
-  }
-}
-function wake() {
-  if (sleepFading && AC && master) {
-    sleepFading = false; sleepDeadline = 0; sleepIdx = 0;
-    const t = AC.currentTime;
-    master.gain.cancelScheduledValues(t);
-    master.gain.setTargetAtTime(S.master, t, 0.5);
-    updSleepBtn();
-  }
-}
-window.addEventListener('pointerdown', wake);
-
-/* 分享场景：编码当前配置为 URL hash */
-const shareSceneBtn = document.getElementById('shareSceneBtn');
-shareSceneBtn.addEventListener('click', async () => {
-  const parts = [];
-  CH_ORDER.forEach(c => { if (S[c] > 0.01) parts.push(`${c}=${S[c].toFixed(2)}`); });
-  parts.push(`time=${S.time.toFixed(1)}`);
-  if (theme > 0) parts.push(`theme=${theme}`);
-  if (season > 0) parts.push(`season=${season}`);
-  const url = location.origin + location.pathname + '#' + parts.join('&');
-  try {
-    await navigator.clipboard.writeText(url);
-    shareSceneBtn.textContent = T().shareOk;
-  } catch (e) {
-    history.replaceState(null, '', '#' + parts.join('&'));
-    shareSceneBtn.textContent = T().shareOk;
-  }
-  setTimeout(() => shareSceneBtn.textContent = T().shareScene, 1800);
-});
-
-/* 心境：一键生成情绪连贯的场景组合 */
-const MOODS = [
-  { name: '山雨欲来',  rain: 0.5, wind: 0.4, fire: 0, stream: 0.2, cricket: 0, thunder: 0.3, birds: 0, bell: 0, snow: 0, time: 16, theme: 0, season: 0 },
-  { name: '雪夜炉火',  rain: 0, wind: 0.15, fire: 0.8, stream: 0, cricket: 0, thunder: 0, birds: 0, bell: 0.2, snow: 0.9, time: 21.5, theme: 0, season: 0 },
-  { name: '城市黄昏',  rain: 0, wind: 0.2, fire: 0, stream: 0, cricket: 0, thunder: 0, birds: 0.3, bell: 0, snow: 0, time: 18.2, theme: 2, season: 0 },
-  { name: '海雾清晨',  rain: 0.15, wind: 0.3, fire: 0, stream: 0.5, cricket: 0, thunder: 0, birds: 0.4, bell: 0, snow: 0, time: 6.5, theme: 1, season: 0 },
-  { name: '樱花午后',  rain: 0, wind: 0.25, fire: 0, stream: 0.3, cricket: 0, thunder: 0, birds: 0.5, bell: 0, snow: 0, time: 14, theme: 0, season: 1 },
-  { name: '极夜深城',  rain: 0.3, wind: 0.3, fire: 0, stream: 0, cricket: 0, thunder: 0.15, birds: 0, bell: 0.3, snow: 0.8, time: 23, theme: 2, season: 0 },
-  { name: '秋枫听雨',  rain: 0.6, wind: 0.2, fire: 0, stream: 0.4, cricket: 0, thunder: 0, birds: 0, bell: 0, snow: 0, time: 17, theme: 0, season: 2 },
-  { name: '深海电台',  rain: 0.1, wind: 0.1, fire: 0, stream: 0, cricket: 0, thunder: 0.5, birds: 0, bell: 0.4, snow: 0, time: 2, theme: 1, season: 0 }
-];
-const moodBtn = document.getElementById('moodBtn');
-moodBtn.addEventListener('click', () => {
-  initAudio();
-  const m = MOODS[Math.floor(Math.random() * MOODS.length)];
-  CH_ORDER.forEach(c => S[c] = m[c] !== undefined ? m[c] : 0);
-  S.time = m.time;
-  theme = m.theme;
-  season = m.season;
-  rebuildScenery();
-  buildBoard(); updateClock();
-  updThemeBtn(); updSeasonBtn();
-  if (S.thunder > 0.03) nextThunder = performance.now() + 4000 + Math.random() * 8000;
-  else nextThunder = Infinity;
-  document.getElementById('hint').classList.add('gone');
-});
-
-/* 场景主题：0 山 · 1 海 · 2 城 */
-let theme = 0;
-let cityData = null;
-const themeBtn = document.getElementById('themeBtn');
-function updThemeBtn() {
-  themeBtn.textContent = ['⛰', '🌊', '🏙'][theme] + ' ' + T().themes[theme];
-  themeBtn.title = T().themeTip;
-}
-themeBtn.addEventListener('click', () => { theme = (theme + 1) % 3; rebuildScenery(); updThemeBtn(); });
-
-/* 季节花瓣 */
-const seasonBtn = document.getElementById('seasonBtn');
-function updSeasonBtn() {
-  seasonBtn.textContent = season === 1 ? '🌸 樱' : season === 2 ? '🍁 枫' : '🍃 季';
-  seasonBtn.title = T().seasonTip;
-  seasonBtn.classList.toggle('on', season > 0);
-}
-seasonBtn.addEventListener('click', () => { season = (season + 1) % 3; updSeasonBtn(); });
-
-/* 时光流转 */
-let timeFlow = false;
-const flowBtn = document.getElementById('flowBtn');
-function updFlowBtn() {
-  flowBtn.textContent = timeFlow ? T().flowOn : T().flowOff;
-  flowBtn.classList.toggle('on', timeFlow);
-  flowBtn.title = T().flowTip;
-}
-flowBtn.addEventListener('click', () => {
-  timeFlow = !timeFlow;
-  updFlowBtn();
-});
-
-/* 音画录制 */
-let recorder = null, recChunks = [], recDest = null;
-const recBtn = document.getElementById('recBtn');
-function updRecBtn() { recBtn.textContent = recorder ? T().recStop : T().rec; recBtn.classList.toggle('recording', !!recorder); }
-recBtn.addEventListener('click', () => {
-  initAudio();
-  if (recorder) { recorder.stop(); return; }
-  if (!AC || !window.MediaRecorder || !cv.captureStream) {
-    recBtn.textContent = T().recFail;
-    setTimeout(updRecBtn, 1800);
-    return;
-  }
-  try {
-    const stream = cv.captureStream(30);
-    recDest = AC.createMediaStreamDestination();
-    master.connect(recDest);
-    recDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
-    recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm' });
-    recChunks = [];
-    recorder.ondataavailable = e => { if (e.data.size) recChunks.push(e.data); };
-    recorder.onstop = () => {
-      try { master.disconnect(recDest); } catch (e) {}
-      recDest = null;
-      const blob = new Blob(recChunks, { type: 'video/webm' });
-      const a = document.createElement('a');
-      a.download = `scape-${Date.now()}.webm`;
-      a.href = URL.createObjectURL(blob);
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-      recorder = null;
-      updRecBtn();
-      recBtn.textContent = T().recDone;
-      setTimeout(updRecBtn, 1800);
-    };
-    recorder.start(500);
-    updRecBtn();
-  } catch (e) {
-    recorder = null;
-    recBtn.textContent = T().recFail;
-    setTimeout(updRecBtn, 1800);
-  }
-});
-
-/* 空格暂停 / 数字键预设（1-5） */
-let audioPaused = false;
-window.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT') return;
-  if (e.key === ' ') {
-    e.preventDefault();
-    initAudio();
-    audioPaused = !audioPaused;
-    if (AC && master) master.gain.setTargetAtTime(audioPaused ? 0 : S.master, AC.currentTime, 0.3);
-    const h = document.getElementById('hint');
-    if (audioPaused) { h.textContent = T().paused; h.classList.remove('gone'); }
-    else h.classList.add('gone');
-  } else if (e.key >= '1' && e.key <= '5') {
-    const key = Object.keys(PRESETS)[+e.key - 1];
-    if (key) Object.assign(S, PRESETS[key]()), initAudio(), updateAudio(1.2), buildBoard(), updateClock(), applyPresetActive(key);
-  }
-});
-
-/* 后台保活：rAF 停摆时仍调度事件音 */
-setInterval(() => { if (document.hidden) audioTick(performance.now(), 0.25); }, 600);
-
-/* ================= 主循环 ================= */
+/* ---------- 主循环 ---------- */
 let prev = performance.now();
-let listenMs = 0, listenFlush = 0;
-function frame(now) {
+let pageHidden = false;
+document.addEventListener('visibilitychange', () => {
+  pageHidden = document.hidden;
+  if (!pageHidden) prev = performance.now();
+});
+function loop(now) {
+  requestAnimationFrame(loop);
+  if (pageHidden) return;
   const dt = Math.min((now - prev) / 1000, 0.05);
   prev = now;
-  if (timeFlow) {           // 4 分钟一昼夜
-    S.time = (S.time + dt * 0.1) % 24;
-    const ti = document.getElementById('timeR');
-    if (ti) ti.value = S.time.toFixed(1);
-    updateClock();
-    updateAudio(2);
-  }
-  scene(dt);
-  audioTick(now, dt);
-  timerTick(now);
-  sleepTick(now);
-  // 跨站统计：聆听时长（有声且未暂停时累计）
-  if (AC && !audioPaused && !sleepFading) {
-    listenMs += dt * 1000;
-    if (now - listenFlush > 10000) {
-      listenFlush = now;
-      try {
-        const s = JSON.parse(localStorage.getItem('scape-stats') || '{"minutes":0}');
-        s.minutes = Math.round((s.minutes * 60000 + listenMs) / 60000);
-        localStorage.setItem('scape-stats', JSON.stringify(s));
-        listenMs = 0;
-      } catch (e) { listenMs = 0; }
-    }
-  }
-  requestAnimationFrame(frame);
+  draw(dt);
+  // 时间自动流转（可选）
+  updateAudio(2);
 }
 
-/* ================= 启动 ================= */
-resize();
-applyI18n();
-// 开卷：午后山谷
-Object.assign(S, PRESETS.valley());
-// #key=val&… 测试直达：snow=0.9&time=23&rain=0.7 等（覆盖默认预设）
-try {
-location.hash.slice(1).split('&').forEach(kv => {
-  const [k, v] = kv.split('=');
-  if (k === 'theme' && v !== undefined) {
-    theme = Math.max(0, Math.min(2, +v));
-    rebuildScenery();
-    updThemeBtn();
-  } else if (k === 'season' && v !== undefined) {
-    season = Math.max(0, Math.min(2, +v));
-    updSeasonBtn();
-  } else if (k && v !== undefined && (k === 'time' || CH_ORDER.includes(k))) {
-    S[k] = +v;
-  }
-});
-buildBoard(); updateClock();
-applyPresetActive('valley');   // 开卷预设芯片高亮
-// #selftest：模拟点击全部控件做回归自测（结果写入标题）
-if (location.hash.includes('selftest')) {
-  const errs = [];
-  const safe = (name, fn) => { try { fn(); } catch (e) { errs.push(name + ': ' + e.message); } };
-  document.querySelectorAll('button').forEach((b, i) => {
-    safe('btn' + i + '(' + (b.id || b.textContent.slice(0, 6)) + ')', () => b.click());
-  });
-  safe('randomize', () => randomize());
-  safe('timeFlow', () => { timeFlow = true; });
-  safe('themes', () => { theme = 1; rebuildScenery(); theme = 2; rebuildScenery(); theme = 0; rebuildScenery(); });
-  safe('channels', () => CH_ORDER.forEach(c => { S[c] = 0.5; }));
-  safe('updateAudio', () => updateAudio(0.1));
-  safe('season1', () => { season = 1; }); safe('season2', () => { season = 2; }); season = 0;
-  timeFlow = false;
-  document.title = errs.length ? 'SELFTEST-FAIL: ' + errs.join(' | ') : 'SELFTEST-OK';
-}
-requestAnimationFrame(frame);
+/* ---------- 启动 ---------- */
+document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+updTheme(); updSnd(); buildUI(); updateClock();
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>

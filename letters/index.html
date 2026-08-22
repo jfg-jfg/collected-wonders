@@ -4,29 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#101a20">
-<title>纸间 · LETTERS — 守灯人</title>
+<title>纸间 · LETTERS — 互动书信</title>
 <style>
-  html { color-scheme: dark; }
   :root {
-    --ink: #33302a;
     --paper: #f0e8d6;
     --paper2: #e8ddc4;
+    --ink: #33302a;
     --seal: #9e3528;
-    --dim: #8a8375;
+    --gold: #d9b57c;
+    --ruling-c: rgba(130,108,64,0.09);
     --bg1: #101a20;
     --bg2: #1a2732;
-    --gold: #d9b57c;
+    --font: "Songti SC","STSong","SimSun","Noto Serif SC",Georgia,serif;
   }
+  html { color-scheme: dark; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; }
   body {
-    font-family: "Songti SC", "STSong", "SimSun", "Noto Serif SC", Georgia, serif;
+    font-family: var(--font);
     background: radial-gradient(ellipse at 50% 30%, var(--bg2), var(--bg1) 75%);
     color: var(--ink); overflow: hidden;
     -webkit-user-select: none; user-select: none;
+    transition: background 1.2s;
   }
   #motes { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
-
   .stage { position: fixed; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; padding: 20px; }
 
   /* ---------- 信封 ---------- */
@@ -38,12 +39,12 @@
   .envelope:hover { transform: translateY(-6px); }
   .env-body {
     position: absolute; inset: 0; border-radius: 6px;
-    background: linear-gradient(160deg, #d9cbae, #cbbc9c 55%, #cdbf9f);
-    box-shadow: 0 24px 60px rgba(0,0,0,0.5), inset 0 0 40px rgba(120,100,60,0.18);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--paper) 78%, #b8a888), color-mix(in srgb, var(--paper2) 82%, #a89878));
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.12);
   }
   .env-flap {
     position: absolute; top: 0; left: 0; right: 0; height: 56%;
-    background: linear-gradient(180deg, #cfc09e, #c2b28e);
+    background: color-mix(in srgb, var(--paper2) 85%, #9a8a6a);
     clip-path: polygon(0 0, 100% 0, 50% 100%);
     border-radius: 6px 6px 0 0;
     transform-origin: top center;
@@ -62,45 +63,38 @@
   .seal {
     position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%);
     width: 58px; height: 58px; border-radius: 50%;
-    background: radial-gradient(circle at 38% 32%, #c65b44, var(--seal) 60%, #7e281e);
+    background: radial-gradient(circle at 38% 32%, color-mix(in srgb, var(--seal) 70%, white), var(--seal) 60%);
     display: grid; place-items: center; z-index: 4;
-    color: #f3e2c8; font-size: 26px; font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.35), inset 0 0 0 3px rgba(243,226,200,0.35), inset 0 0 0 6px var(--seal);
+    color: var(--paper); font-size: 26px; font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35), inset 0 0 0 3px color-mix(in srgb, var(--paper) 70%, transparent), inset 0 0 0 6px var(--seal);
     transition: opacity .4s .5s;
-    letter-spacing: 0;
   }
   .envelope.open .seal { opacity: 0; }
   .env-hint {
     position: absolute; left: 50%; bottom: -44px; transform: translateX(-50%);
-    color: rgba(240,232,214,0.55); font-size: 13px; letter-spacing: 0.4em; white-space: nowrap;
+    color: color-mix(in srgb, var(--paper) 55%, transparent); font-size: 13px; letter-spacing: 0.4em; white-space: nowrap;
   }
 
   /* ---------- 信纸 ---------- */
   .letter {
     width: min(680px, 94vw); max-height: 82vh; overflow-y: auto;
+    overscroll-behavior: contain; scrollbar-width: thin;
     background:
-      repeating-linear-gradient(180deg, transparent 0, transparent 36px, rgba(130,108,64,0.09) 36px, rgba(130,108,64,0.09) 37px),
-      linear-gradient(105deg, transparent 40%, rgba(120,100,60,0.05) 41%, transparent 43%),
-      linear-gradient(105deg, transparent 68%, rgba(120,100,60,0.04) 69%, transparent 71%),
-      radial-gradient(ellipse at 20% 10%, rgba(160,140,90,0.08), transparent 55%),
+      repeating-linear-gradient(180deg, transparent 0, transparent 36px, var(--ruling-c) 36px, var(--ruling-c) 37px),
+      radial-gradient(ellipse at 20% 10%, rgba(0,0,0,0.05), transparent 55%),
       linear-gradient(165deg, var(--paper), var(--paper2));
     border-radius: 4px;
     padding: clamp(28px, 5vw, 56px) clamp(24px, 6vw, 64px);
-    box-shadow: 0 30px 80px rgba(0,0,0,0.55), inset 0 0 60px rgba(130,110,70,0.1);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55), inset 0 0 60px rgba(0,0,0,0.08);
     position: relative;
-    overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(90,80,60,0.3) transparent;
   }
-  .letter::before, .letter::after { /* 折痕 */
+  .letter::before, .letter::after {
     content: ''; position: absolute; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(90,75,50,0.22) 18%, rgba(90,75,50,0.22) 82%, transparent);
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.14) 18%, rgba(0,0,0,0.14) 82%, transparent);
   }
   .letter::before { top: 33%; } .letter::after { top: 66%; }
-  .letter .yr {
-    font-size: 12.5px; letter-spacing: 0.35em; color: var(--dim); margin-bottom: 4px;
-  }
-  .letter h2 {
-    font-size: clamp(19px, 3vw, 25px); font-weight: 600; letter-spacing: 0.14em; margin-bottom: 20px;
-  }
+  .letter .yr { font-size: 12.5px; letter-spacing: 0.35em; opacity: 0.6; margin-bottom: 4px; }
+  .letter h2 { font-size: clamp(19px, 3vw, 25px); font-weight: 600; letter-spacing: 0.14em; margin-bottom: 20px; }
   .letter p {
     font-size: clamp(15px, 2.2vw, 17.5px); line-height: 2.15; letter-spacing: 0.05em;
     margin-bottom: 1.1em; color: var(--ink);
@@ -111,43 +105,26 @@
     font-size: 1.9em; float: left; line-height: 1; padding: 6px 10px 0 0; color: var(--seal); font-weight: 600;
   }
   .letter.postcard { width: min(480px, 92vw); }
-  .letter.postcard p { line-height: 2; }
 
   /* ---------- 回信 ---------- */
   .replies { margin-top: 26px; display: none; flex-direction: column; gap: 12px; }
   .replies.in { display: flex; animation: fadeUp .8s ease both; }
-  .replies .q {
-    font-size: 13px; letter-spacing: 0.3em; color: var(--dim); text-align: center; margin-bottom: 4px;
-  }
+  .replies .q { font-size: 13px; letter-spacing: 0.3em; opacity: 0.55; text-align: center; margin-bottom: 4px; }
   .reply {
-    border: 1px solid rgba(90,75,50,0.35); background: rgba(255,252,244,0.35);
+    border: 1px solid color-mix(in srgb, var(--ink) 35%, transparent); background: color-mix(in srgb, var(--paper) 60%, transparent);
     color: var(--ink); font-family: inherit; font-size: 15px; line-height: 1.8; letter-spacing: 0.04em;
     padding: 13px 20px; border-radius: 3px; cursor: pointer; text-align: left;
-    transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s; position: relative;
+    transition: background .25s, border-color .25s, transform .25s; position: relative;
   }
-  .reply:hover { background: rgba(158,53,40,0.08); border-color: var(--seal); transform: translateX(4px); }
-  .reply::before {
-    content: '✎'; margin-right: 10px; color: var(--seal); opacity: 0; transition: opacity .25s;
-  }
-  .reply:hover::before { opacity: 1; }
-  button:focus-visible { outline: 2px solid var(--seal); outline-offset: 2px; }
-
-  .continue { display: none; margin: 10px auto 0; }
-  .continue.in { display: block; animation: fadeUp .8s ease both; }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .reply:hover { background: color-mix(in srgb, var(--seal) 10%, transparent); border-color: var(--seal); transform: translateX(4px); }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   /* ---------- 顶栏 ---------- */
   .topbar {
     position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 5;
     display: flex; gap: 14px; align-items: center;
-    color: rgba(240,232,214,0.6); font-size: 12.5px; letter-spacing: 0.25em;
+    color: color-mix(in srgb, var(--paper) 60%, transparent); font-size: 12.5px; letter-spacing: 0.25em;
   }
-  .prog {
-    position: fixed; top: 44px; left: 50%; transform: translateX(-50%);
-    width: 180px; height: 1px; background: rgba(240,232,214,0.14); z-index: 5;
-  }
-  .prog .fill { height: 100%; width: 0%; background: var(--gold); box-shadow: 0 0 8px rgba(217,181,124,0.7); transition: width .8s ease; }
-  .ts-stats { margin-top: 14px; font-size: 12px; letter-spacing: 0.2em; color: rgba(233,226,207,0.45); }
   .topbar .lampdot {
     width: 7px; height: 7px; border-radius: 50%; background: var(--gold);
     box-shadow: 0 0 10px var(--gold); animation: breathe 2.6s ease-in-out infinite;
@@ -155,97 +132,152 @@
   @keyframes breathe { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
   .corner { position: fixed; z-index: 5; top: 18px; right: 22px; display: flex; gap: 8px; }
   .btn-ghost {
-    border: 1px solid rgba(240,232,214,0.25); background: rgba(16,26,32,0.5);
-    backdrop-filter: blur(6px); color: rgba(240,232,214,0.8);
+    border: 1px solid color-mix(in srgb, var(--paper) 25%, transparent); background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(6px); color: color-mix(in srgb, var(--paper) 80%, transparent);
     font-family: inherit; font-size: 12px; letter-spacing: 0.12em;
-    padding: 6px 13px; border-radius: 999px; cursor: pointer; transition: color .2s, background .2s, border-color .2s, box-shadow .2s, transform .2s, opacity .2s;
+    padding: 6px 13px; border-radius: 999px; cursor: pointer;
+    transition: color .2s, border-color .2s;
   }
   .btn-ghost:hover { color: var(--gold); border-color: var(--gold); }
 
-  /* ---------- 标题屏 ---------- */
+  /* ---------- 选集屏 ---------- */
+  .select-ov {
+    position: fixed; inset: 0; z-index: 8; display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 32%, rgba(16,26,32,0.96), rgba(8,10,14,0.99));
+    overflow-y: auto; overscroll-behavior: contain; padding: 6vh 20px 40px;
+  }
+  .select-ov.show { display: flex; }
+  .sel-kicker { font-size: 12px; letter-spacing: 0.6em; color: rgba(217,181,124,0.7); }
+  .sel-title { font-size: clamp(30px, 6vw, 52px); letter-spacing: 0.24em; color: #ece5d2; margin-top: 12px; font-weight: 600; }
+  .sel-sub { font-size: 12.5px; letter-spacing: 0.4em; color: rgba(236,229,210,0.45); margin-top: 10px; }
+  .story-list { margin-top: 30px; display: flex; flex-direction: column; gap: 10px; width: min(560px, 92vw); }
+  .story-card {
+    border: 1px solid rgba(240,232,214,0.14); border-radius: 8px; cursor: pointer;
+    background: rgba(20,26,32,0.6); padding: 16px 20px; text-align: left;
+    color: #ece5d2; font-family: inherit; display: flex; align-items: baseline; gap: 14px;
+    transition: border-color .25s, background .25s, transform .25s;
+  }
+  .story-card:hover { border-color: rgba(217,181,124,0.6); transform: translateX(4px); }
+  .story-card .tt { font-size: 17px; letter-spacing: 0.14em; min-width: 108px; }
+  .story-card .kk { font-size: 11.5px; letter-spacing: 0.18em; color: rgba(236,229,210,0.5); flex: 1; }
+  .story-card .prog { font-size: 11px; font-family: Georgia, serif; color: rgba(217,181,124,0.8); }
+  .story-card .del {
+    border: none; background: none; color: rgba(236,229,210,0.35); cursor: pointer;
+    font-size: 13px; padding: 2px 6px; font-family: inherit;
+  }
+  .story-card .del:hover { color: #e88; }
+  .sel-actions { margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+  /* ---------- 标题屏（单故事） ---------- */
   .title-screen {
-    position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column;
+    position: fixed; inset: 0; z-index: 8; display: none; flex-direction: column;
     align-items: center; justify-content: center; text-align: center; padding: 30px;
-    background: radial-gradient(ellipse at 50% 35%, rgba(26,39,50,0.9), rgba(10,15,19,0.97));
+    background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--bg2) 90%, black), rgba(8,10,14,0.985));
     transition: opacity 1.2s; gap: 6px;
   }
-  .title-screen.gone { opacity: 0; pointer-events: none; }
-  .ts-kicker { font-size: 13px; letter-spacing: 0.6em; color: rgba(217,181,124,0.75); margin-bottom: 14px; }
-  .ts-title { font-size: clamp(44px, 9vw, 84px); font-weight: 600; letter-spacing: 0.18em; color: #e9e2cf; text-shadow: 0 0 40px rgba(217,181,124,0.25); }
-  .ts-sub { font-size: clamp(15px, 2.4vw, 19px); letter-spacing: 0.5em; color: rgba(233,226,207,0.55); margin-top: 10px; }
-  .ts-desc { margin-top: 26px; font-size: 14px; line-height: 2.2; letter-spacing: 0.12em; color: rgba(233,226,207,0.7); max-width: 480px; }
-  .ts-actions { margin-top: 36px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .title-screen.show { display: flex; }
+  .title-screen.gone { opacity: 0; pointer-events: none; display: flex !important; }
+  .ts-kicker { font-size: 13px; letter-spacing: 0.6em; color: color-mix(in srgb, var(--gold) 75%, transparent); margin-bottom: 14px; }
+  .ts-title { font-size: clamp(44px, 9vw, 84px); font-weight: 600; letter-spacing: 0.18em; color: color-mix(in srgb, var(--paper) 92%, white); text-shadow: 0 0 40px rgba(217,181,124,0.25); }
+  .ts-sub { font-size: clamp(15px, 2.4vw, 19px); letter-spacing: 0.5em; color: color-mix(in srgb, var(--paper) 55%, transparent); margin-top: 10px; }
+  .ts-desc { margin-top: 26px; font-size: 14px; line-height: 2.2; letter-spacing: 0.12em; color: color-mix(in srgb, var(--paper) 70%, transparent); max-width: 480px; }
+  .ts-actions { margin-top: 36px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
   .btn-main {
     border: 1px solid var(--gold); background: none; color: var(--gold);
-    font-family: inherit; font-size: 15px; letter-spacing: 0.3em; padding: 13px 34px;
-    border-radius: 2px; cursor: pointer; transition: color .3s, background .3s, border-color .3s, box-shadow .3s, transform .3s, opacity .3s;
+    font-family: inherit; font-size: 15px; letter-spacing: 0.3em; padding: 13px 30px;
+    border-radius: 2px; cursor: pointer; transition: background .3s, color .3s, box-shadow .3s;
   }
   .btn-main:hover { background: var(--gold); color: #14100a; box-shadow: 0 0 34px rgba(217,181,124,0.4); }
-  .ts-endings { margin-top: 30px; display: flex; gap: 10px; }
+  .btn-sub {
+    border: 1px solid color-mix(in srgb, var(--paper) 30%, transparent); background: none; color: color-mix(in srgb, var(--paper) 70%, transparent);
+    font-family: inherit; font-size: 13px; letter-spacing: 0.2em; padding: 11px 22px;
+    border-radius: 2px; cursor: pointer; transition: color .25s, border-color .25s;
+  }
+  .btn-sub:hover { color: var(--paper); border-color: var(--paper); }
+  .ts-endings { margin-top: 26px; display: flex; gap: 10px; }
   .ts-endings .dot {
     width: 12px; height: 12px; border-radius: 50%;
-    border: 1px solid rgba(240,232,214,0.35); transition: color .3s, background .3s, border-color .3s, box-shadow .3s, transform .3s, opacity .3s;
+    border: 1px solid color-mix(in srgb, var(--paper) 35%, transparent); transition: all .3s;
   }
   .ts-endings .dot.got { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 12px rgba(217,181,124,0.6); }
+  .ts-stats { margin-top: 14px; font-size: 12px; letter-spacing: 0.2em; color: color-mix(in srgb, var(--paper) 45%, transparent); }
 
   /* ---------- 结局屏 ---------- */
   .ending-note {
     position: fixed; inset: 0; z-index: 9; display: none;
     flex-direction: column; align-items: center; justify-content: center;
-    background: radial-gradient(ellipse at 50% 40%, rgba(30,34,44,0.94), rgba(8,10,14,0.98));
-    text-align: center; padding: 34px; overflow-y: auto;
+    background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--bg2) 92%, black), rgba(8,10,14,0.985));
+    text-align: center; padding: 34px; overflow-y: auto; overscroll-behavior: contain;
   }
   .ending-note.show { display: flex; }
-  .en-kicker { font-size: 12px; letter-spacing: 0.55em; color: rgba(217,181,124,0.7); }
-  .en-title { font-size: clamp(34px, 6.5vw, 58px); letter-spacing: 0.22em; color: #ece5d2; margin: 18px 0 26px; font-weight: 600; }
-  .en-text { font-size: clamp(15px, 2.2vw, 17px); line-height: 2.4; letter-spacing: 0.08em; color: rgba(236,229,210,0.85); max-width: 560px; }
-  .en-stats { margin-top: 28px; font-size: 13px; letter-spacing: 0.2em; color: rgba(236,229,210,0.5); }
-
-  .home-link {
-    position: fixed; left: 26px; bottom: 26px; z-index: 6;
-    width: 42px; height: 42px; border-radius: 50%;
-    border: 1px solid rgba(240,232,214,0.22); background: rgba(16,26,32,0.5); backdrop-filter: blur(6px);
-    color: rgba(240,232,214,0.7); display: grid; place-items: center;
-    font-size: 16px; text-decoration: none; transition: color .25s, background .25s, border-color .25s, box-shadow .25s, transform .25s, opacity .25s;
-  }
-  .home-link:hover { color: var(--gold); border-color: var(--gold); transform: translateY(-3px); }
-
-  /* ---------- 信堆图鉴 ---------- */
-  .stack-ov {
-    position: fixed; inset: 0; z-index: 9; display: none;
-    flex-direction: column; align-items: center; justify-content: flex-start;
-    background: radial-gradient(ellipse at 50% 30%, rgba(30,34,44,0.95), rgba(8,10,14,0.985));
-    overflow-y: auto; overscroll-behavior: contain; padding: 7vh 24px 60px;
-  }
-  .stack-ov.show { display: flex; }
-  .stack-ov h2 { font-size: 24px; letter-spacing: 0.4em; color: #ece5d2; font-weight: 600; }
-  .stack-ov .sub { margin-top: 10px; font-size: 12.5px; letter-spacing: 0.3em; color: rgba(236,229,210,0.5); }
-  .stack-list { margin-top: 34px; display: flex; flex-direction: column; gap: 9px; width: min(560px, 92vw); }
-  .stack-item {
-    display: flex; align-items: baseline; gap: 16px;
-    border: 1px solid rgba(240,232,214,0.12); border-radius: 4px;
-    padding: 11px 18px; font-size: 14px; letter-spacing: 0.08em;
-    transition: color .25s, border-color .25s, background .25s;
-  }
-  .stack-item .no { font-size: 11px; color: rgba(240,232,214,0.4); min-width: 34px; font-family: Georgia, serif; }
-  .stack-item .yr { min-width: 96px; color: rgba(217,181,124,0.8); font-size: 12px; }
-  .stack-item.read { color: #ece5d2; }
-  .stack-item.read .tt { color: #ece5d2; }
-  .stack-item.unread { color: rgba(236,229,210,0.35); }
-  .stack-item.unread .tt { letter-spacing: 0.3em; }
-  .stack-close { margin-top: 30px; }
-
-  /* 结尾小景 */
   .en-scene { width: 190px; height: 130px; margin: 0 auto 6px; opacity: 0.92; }
   .en-scene svg { width: 100%; height: 100%; }
   .ending-note.show .en-scene { animation: sceneIn 1.4s cubic-bezier(.2,.8,.2,1) both .3s; }
   @keyframes sceneIn { from { opacity: 0; transform: translateY(16px) scale(0.94); } to { opacity: 0.92; transform: none; } }
   @media (prefers-reduced-motion: reduce) { .ending-note.show .en-scene { animation: none; } }
+  .en-kicker { font-size: 12px; letter-spacing: 0.55em; color: color-mix(in srgb, var(--gold) 70%, transparent); }
+  .en-title { font-size: clamp(34px, 6.5vw, 58px); letter-spacing: 0.22em; color: color-mix(in srgb, var(--paper) 92%, white); margin: 18px 0 26px; font-weight: 600; }
+  .en-text { font-size: clamp(15px, 2.2vw, 17px); line-height: 2.4; letter-spacing: 0.08em; color: color-mix(in srgb, var(--paper) 85%, transparent); max-width: 560px; white-space: pre-line; text-align: left; }
+  .en-stats { margin-top: 28px; font-size: 13px; letter-spacing: 0.2em; color: color-mix(in srgb, var(--paper) 50%, transparent); }
 
-  @media (max-width: 640px) {
-    .letter { max-height: 76vh; }
-    .env-hint { font-size: 11px; letter-spacing: 0.25em; }
+  /* ---------- 信堆图鉴 ---------- */
+  .stack-ov {
+    position: fixed; inset: 0; z-index: 10; display: none;
+    flex-direction: column; align-items: center; justify-content: flex-start;
+    background: radial-gradient(ellipse at 50% 30%, color-mix(in srgb, var(--bg2) 95%, black), rgba(8,10,14,0.99));
+    overflow-y: auto; overscroll-behavior: contain; padding: 7vh 24px 60px;
   }
+  .stack-ov.show { display: flex; }
+  .stack-ov h2 { font-size: 24px; letter-spacing: 0.4em; color: color-mix(in srgb, var(--paper) 92%, white); font-weight: 600; }
+  .stack-ov .sub { margin-top: 10px; font-size: 12.5px; letter-spacing: 0.3em; color: color-mix(in srgb, var(--paper) 50%, transparent); }
+  .stack-list { margin-top: 34px; display: flex; flex-direction: column; gap: 9px; width: min(560px, 92vw); }
+  .stack-item {
+    display: flex; align-items: baseline; gap: 16px;
+    border: 1px solid rgba(240,232,214,0.12); border-radius: 4px;
+    padding: 11px 18px; font-size: 14px; letter-spacing: 0.08em;
+    color: color-mix(in srgb, var(--paper) 35%, transparent);
+    transition: border-color .25s, color .25s;
+  }
+  .stack-item .no { font-size: 11px; color: color-mix(in srgb, var(--paper) 40%, transparent); min-width: 34px; font-family: Georgia, serif; }
+  .stack-item .yr { min-width: 96px; color: color-mix(in srgb, var(--gold) 80%, transparent); font-size: 12px; }
+  .stack-item.read { color: color-mix(in srgb, var(--paper) 90%, white); }
+  .stack-item.unread .tt { letter-spacing: 0.3em; }
+  .stack-close { margin-top: 30px; }
+
+  /* ---------- 导入/AI 弹层 ---------- */
+  .io-ov {
+    position: fixed; inset: 0; z-index: 12; display: none;
+    align-items: center; justify-content: center; background: rgba(4,6,10,0.88); padding: 20px;
+  }
+  .io-ov.show { display: flex; }
+  .io-ov .box {
+    width: min(640px, 94vw); max-height: 88vh; display: flex; flex-direction: column;
+    border: 1px solid rgba(240,232,214,0.16); border-radius: 10px;
+    background: rgba(14,18,26,0.98); padding: 22px;
+  }
+  .io-ov h3 { font-size: 14px; letter-spacing: 0.4em; color: var(--gold); font-weight: 600; }
+  .io-ov .tip { margin-top: 10px; font-size: 12px; line-height: 2; color: rgba(236,229,210,0.65); }
+  .io-ov textarea {
+    flex: 1; min-height: 180px; margin-top: 12px; resize: none;
+    background: rgba(7,9,13,0.8); color: #cfe0d8; border: 1px solid rgba(240,232,214,0.14);
+    border-radius: 6px; font-family: Georgia, Consolas, monospace; font-size: 11.5px;
+    line-height: 1.7; padding: 10px; outline: none; white-space: pre;
+  }
+  .io-ov textarea:focus { border-color: var(--gold); }
+  .io-acts { margin-top: 14px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  .home-link {
+    position: fixed; left: 26px; bottom: 26px; z-index: 6;
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--paper) 22%, transparent); background: rgba(0,0,0,0.4); backdrop-filter: blur(6px);
+    color: color-mix(in srgb, var(--paper) 70%, transparent); display: grid; place-items: center;
+    font-size: 16px; text-decoration: none;
+    transition: color .25s, border-color .25s, transform .25s;
+  }
+  .home-link:hover { color: var(--gold); border-color: var(--gold); transform: translateY(-3px); }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -254,20 +286,39 @@
       transition-duration: 0.01ms !important;
     }
   }
+  @media (max-width: 640px) {
+    .letter { max-height: 76vh; }
+    .env-hint { font-size: 11px; letter-spacing: 0.25em; }
+    .story-card { flex-wrap: wrap; }
+    .story-card .tt { min-width: 0; }
+  }
 </style>
 </head>
 <body>
 <canvas id="motes"></canvas>
 
+<div class="select-ov show" id="selectOv">
+  <div class="sel-kicker">拾 遗 · 纸 间</div>
+  <div class="sel-title">选 一 个 信 箱</div>
+  <div class="sel-sub" id="selSub"></div>
+  <div class="story-list" id="storyList"></div>
+  <div class="sel-actions">
+    <button class="btn-sub" id="importBtn"></button>
+    <button class="btn-sub" id="aiBtn"></button>
+  </div>
+</div>
+
 <div class="title-screen" id="titleScreen">
-  <div class="ts-kicker" id="tsKicker">一 场 纸 上 的 相 遇</div>
-  <div class="ts-title" id="tsTitle">守灯人</div>
-  <div class="ts-sub" id="tsSub">THE KEEPER OF THE LIGHT</div>
+  <button class="btn-sub" id="backBtn" style="position:absolute;top:20px;left:20px">← 选 集</button>
+  <div class="ts-kicker" id="tsKicker"></div>
+  <div class="ts-title" id="tsTitle"></div>
+  <div class="ts-sub" id="tsSub"></div>
   <div class="ts-desc" id="tsDesc"></div>
   <div class="ts-actions">
-    <button class="btn-main" id="startBtn">拆 开 第 一 封 信</button>
-    <button class="btn-main" id="contBtn" style="display:none">继 续 读 信</button>
-    <button class="btn-sub" id="stackBtn" style="border:1px solid rgba(240,232,214,0.35); background:none; color:rgba(240,232,214,0.75); font-family:inherit; font-size:13.5px; letter-spacing:0.22em; padding:12px 26px; border-radius:2px; cursor:pointer;">信 堆</button>
+    <button class="btn-main" id="startBtn"></button>
+    <button class="btn-main" id="contBtn" style="display:none"></button>
+    <button class="btn-sub" id="stackBtn"></button>
+    <button class="btn-sub" id="shareStoryBtn"></button>
   </div>
   <div class="ts-endings" id="tsEndings"></div>
   <div class="ts-stats" id="tsStats"></div>
@@ -277,21 +328,45 @@
   <span class="lampdot"></span>
   <span id="letterNo"></span>
 </div>
-<div class="prog" id="prog" style="display:none"><div class="fill" id="progFill"></div></div>
+<div class="prog" id="prog" style="display:none;position:fixed;top:44px;left:50%;transform:translateX(-50%);width:180px;height:1px;background:color-mix(in srgb,var(--paper) 14%,transparent);z-index:5">
+  <div id="progFill" style="height:100%;width:0%;background:var(--gold);box-shadow:0 0 8px rgba(217,181,124,0.7);transition:width .8s ease"></div>
+</div>
 <div class="corner">
-  <button class="btn-ghost" id="sndBtn">声 · 开</button>
+  <button class="btn-ghost" id="sndBtn"></button>
   <button class="btn-ghost" id="langBtn">EN</button>
 </div>
 
 <div class="stage" id="stage"></div>
-
-<a class="home-link" href="../index.html" title="拾遗 · 序">序</a>
 
 <div class="stack-ov" id="stackOv">
   <h2 id="stackTitle"></h2>
   <div class="sub" id="stackSub"></div>
   <div class="stack-list" id="stackList"></div>
   <button class="btn-main stack-close" id="stackClose"></button>
+</div>
+
+<div class="io-ov" id="importOv">
+  <div class="box">
+    <h3 id="impTitle"></h3>
+    <div class="tip" id="impTip"></div>
+    <textarea id="impText" spellcheck="false"></textarea>
+    <div class="io-acts">
+      <button class="btn-main" id="impDo"></button>
+      <button class="btn-sub" id="impClose"></button>
+    </div>
+  </div>
+</div>
+
+<div class="io-ov" id="aiOv">
+  <div class="box">
+    <h3 id="aiTitle"></h3>
+    <div class="tip" id="aiTip"></div>
+    <textarea id="aiText" spellcheck="false" readonly></textarea>
+    <div class="io-acts">
+      <button class="btn-main" id="aiCopy"></button>
+      <button class="btn-sub" id="aiClose"></button>
+    </div>
+  </div>
 </div>
 
 <div class="ending-note" id="endingNote">
@@ -301,10 +376,13 @@
   <div class="en-text" id="enText"></div>
   <div class="en-stats" id="enStats"></div>
   <div class="ts-actions" style="margin-top:34px">
-    <button class="btn-main" id="againBtn">再 读 一 遍</button>
+    <button class="btn-main" id="againBtn"></button>
   </div>
 </div>
 
+<a class="home-link" href="../index.html" title="拾遗 · 序">序</a>
+
+<script src="story-data.js"></script>
 <script>
 'use strict';
 window.addEventListener('error', e => {
@@ -314,194 +392,543 @@ window.addEventListener('error', e => {
   document.body.appendChild(b);
 });
 
-/* ================= 双语剧本 ================= */
-const STORY = {
+/* ================= i18n（引擎文案） ================= */
+const UI = {
   zh: {
-    title: '守灯人', sub: 'THE KEEPER OF THE LIGHT',
-    kicker: '一 场 纸 上 的 相 遇',
-    desc: '白鹤礁灯塔将于今冬拆除。<br>你是来告别的——直到你推开灯室的门，<br>看见桌上那摞按了年份的信。',
+    selSub: '三个信箱 · 或导入你的故事',
+    importB: '导 入 故 事', aiB: '让 AI 写一个',
     start: '拆 开 第 一 封 信', cont: '继 续 读 信', again: '再 读 一 遍',
-    openHint: '点 击 拆 封', replyQ: '—— 你 要 如 何 回 信 ——', contBtn: '继续读下一封',
+    stack: '信 堆', shareStory: '分享此故事',
+    openHint: '点 击 拆 封', replyQ: '—— 你 要 如 何 回 信 ——',
     sndOn: '声 · 开', sndOff: '声 · 关',
-    letterNo: n => `第 ${n} 封信`,
-    endings: ['灯仍亮', '归航', '存信', '第十三封信'],
     enKicker: '结 局',
-    stats: (n, path) => `共读 ${n} 封信 · 走过「${path}」`,
+    stats: (n, path, total) => `共读 ${n} 封 · 走过「${path}」· 全卷 ${total} 封`,
     paths: { warm: '温情之路', probe: '追问之路' },
-    nodes: {
-      n1: { year: '无年份', title: '致后来的旅人', text: `如果你读到这里，说明灯塔还没有拆掉，而你恰好推开了这扇门。\n我叫周远，在此守灯三十一年。人们说我死在第三十一年的那个风暴夜——他们说得对，也不对。\n桌上的信封按了年份。拆开之前，点一盏灯吧。守灯人的规矩：读信时，屋里要有光。`,
-        cont: '拆开一九八九年的信' },
-      n2: { year: '一九八九 · 春', title: '灯芯', text: `海冰初融，今夜雾大，灯要亮到天明。\n我做了一盏新的灯芯，剪去旧年的焦头。守灯这件事，说到底就是不断把烧焦的部分剪掉，让光继续。\n你那边，天气如何？`,
-        replies: [
-          { label: '这里也在下雨。你剪灯芯的样子，让我想起很多事。', flag: 'warm', to: 'n3' },
-          { label: '等等——你说你“死在”风暴夜。到底发生了什么？', flag: 'probe', to: 'n4' }
-        ]},
-      n3: { year: '一九八九 · 夏', title: '声音', text: `你问我孤不孤独。\n海上有的是声音：浪、风、雾号、缆绳敲打铁桩。孤独的不是没有声音，是没有人听你说话。\n所以我写信。写了不一定寄，寄了不一定到，到了不一定有人回。但灯亮着，就当有人在看。\n你愿意听一个老头说这些吗？`,
-        replies: [
-          { label: '我愿意。从头说起吧——你是怎么来这座岛的？', flag: 'warm', to: 'n5' },
-          { label: '别只说你自己。说说奶奶——她为什么从来不肯提你？', flag: 'probe', to: 'n6' }
-        ]},
-      n4: { year: '一九八九 · 十月四日', title: '航海日志（抄）', text: `你问到那一夜。我只抄记录，记录不会撒谎：\n二十一时十七分，雾号失灵。二十一时三十分，一艘渔船请求引航。二十一时四十一分，灯灭了四分钟。\n四分钟。在海上，四分钟够埋葬很多东西。\n第二天他们找到了空的救生圈，没有找到人。信不信由你——那四分钟里，我不在灯室。`,
-        replies: [
-          { label: '那四分钟，你在哪里？', flag: 'probe', to: 'n7' },
-          { label: '记录是官方的。我想听你自己说那一夜。', flag: 'warm', to: 'n7' }
-        ]},
-      n5: { year: '一九六二 · 追记', title: '上岛', text: `我上这座岛，是因为一场争吵。年轻气盛，觉得整个世界欠我一个解释。\n你叔公说：去守灯吧，灯不问问题。\n我就住了下来。第一年我数过往的船，第二年我数星星，第三年之后我什么都不数了——我开始给海写信。\n你呢？你为什么推开这扇门？`,
-        replies: [
-          { label: '灯塔要拆了。我是来告别的。', flag: 'warm', to: 'n8' },
-          { label: '我在找你。家里人从来不肯说起你。', flag: 'probe', to: 'n6' }
-        ]},
-      n6: { year: '一九七五 · 追记', title: '那天的浪', text: `她……是我最对不起的人。\n我上岛那年，她怀着你父亲。我说守两年就回。灯底下的两年，和别处的两年不一样——它把人钉在原地。\n后来她带孩子来过一次。渡船靠不了岸，风浪太大。她站在船头朝灯室挥手，我看见了，我没能下去。那天的浪，我下去，就是两个人一起沉。\n那是我这辈子最亮的四分钟，也是最暗的。`,
-        replies: [
-          { label: '我不怪你。奶奶窗台上总点着一盏灯——现在我懂了。', flag: 'warm', to: 'n8' },
-          { label: '可她等了你一辈子。你欠她一句回答。', flag: 'probe', to: 'n8' },
-          { label: '她后来呢？她有没有给你写过信？', flag: 'probe', to: 'n12' }
-        ]},
-      n7: { year: '一九八九 · 十月四日（续）', title: '四分钟', text: `好。二十一点四十一分，灯室的油路堵了——老塔的旧病。我提着马灯下机房，来回四分钟。\n等我回到灯室，那艘渔船的桅杆已经在礁石上折断了。\n我发了求救信号，然后跳进海里。十月的水冷得像铁。我捞住一个年轻人，把救生圈套在他身上，把他推上礁石。第二个浪打过来的时候，我的手已经没有力气了。\n你还想问什么？`,
-        replies: [
-          { label: '那个年轻人……后来怎么样了？', flag: 'probe', to: 'n9' },
-          { label: '所以你救了他。你是救人的人，不是逃兵。', flag: 'warm', to: 'n9' }
-        ]},
-      n9: { year: '一九八九 · 无日期', title: '明信片', text: `他叫陈潮生。\n后来每年清明，有人寄一张明信片到岛上，三十多年，一张没断。他不知道我是谁——他醒来时，我已经“不在了”。\n有些债，海替我还了。有些话，只能由后来的人替我说。\n塔要拆了吧。`,
-        replies: [
-          { label: '要拆了。他们说，灯的意义已经完成了。', flag: 'warm', to: 'n8' },
-          { label: '（在信堆里翻检，想找一张他寄来的明信片）', flag: 'probe', to: 'n11' }
-        ]},
-      n11: { year: '一九九一 · 清明', title: '明信片（陈潮生寄）', age: 0.3, postcard: true, text: `正面是一张白鹤礁的旧照，塔还年轻，漆色新亮。\n背面只有一行字：\n"恩人：今年鱼汛好，家里添了个女儿，取名'念舟'。托您的福。"\n邮票是一条船。邮戳被海水洇开了，像一滴没干的泪。\n他年年都写，写了三十多年。你把明信片轻轻放回原处——好像替谁，收了三十年的信。`,
-        replies: [
-          { label: '把这张明信片收进口袋，带走。', flag: 'warm', to: 'n8' }
-        ]},
-      n12: { year: '一九七六 · 无日期', title: '未寄出的回信（林素秋）', age: 0.55, text: `在信堆最底下，压着一封不同的信。信封上写着"白鹤礁 灯塔 周远 亲启"——没有邮票。它从未被寄出。\n"远：\n见字如面。潮儿会走路了，走得比浪还急。\n我不问你何时回来。灯亮一夜，你就欠我们一夜；这话我说不出口。\n只在窗台点一盏灯。你看得见，看不见，都当我说了。\n素秋"\n信纸上有折了又展、展了又折的痕。像一句到了嘴边又咽回去的话。`,
-        replies: [
-          { label: '原来她也一直在写。只是没寄。', flag: 'warm', to: 'n8' },
-          { label: '合上信。有些话，不该由我替她读完。', flag: 'probe', to: 'n8' }
-        ]},
-      n8: { year: '最后一批 · 之一', title: '灯室里的马灯', text: `拆了也好。灯的意义是让人平安到家，不是让塔永远站着。\n我只求一件事：拆塔那天，把灯室里那盏黄铜马灯点亮一次。十分钟就够。让它最后亮一次，像有人在。\n你说，会被允许吗？`,
-        replies: [
-          { label: '我会去点。以你的名义。', flag: 'light', to: 'E1' },
-          { label: '塔都要拆了，灯点给谁看？让它去吧。', flag: 'letgo', to: 'n10' }
-        ]},
-      n10: { year: '最后一批 · 之二', title: '守灯人最后一条规矩', text: `你说得也对。光在人心里，不在玻璃罩子里。\n那么，替我把这些信烧了吧。纸归海，灰归风。\n守灯人最后一条规矩：灯灭之后，不要回头看塔。回头看塔的人，会一直留在原地。`,
-        replies: [
-          { label: '好。我替你烧。', flag: 'burn', to: 'E2' },
-          { label: '不。这些信应该留下来，给更多人读。', flag: 'keep', to: 'E3' }
-        ]}
-    },
-    endings: {
-      E1: { title: '灯仍亮', text: `拆塔那天，你提着那盏黄铜马灯走上九十九级台阶。\n傍晚六点整，灯室最后一次亮起。海面很静，静得像有人在很远很远的地方，终于睡着了。\n你把马灯留在原处，只带走了信。\n\n后来你在拆除报告的末尾添了一行字：建议保留灯室原物。\n没有人问理由。` },
-      E2: { title: '归航', text: `你在礁石上把信一封封烧了。火很小，很快就熄了，纸灰像一群白蝶飞向海面。\n风里好像有一句很轻的“谢谢”。\n\n回程的渡船上，你睡着了。\n三十年来第一次，你没有梦见海。` },
-      E3: { title: '存信', text: `你把十三封信捐给了镇上的海事博物馆。\n玻璃柜里，它们按年份排开，标签写着：白鹤礁灯塔信札。\n\n开展那天，一位白发的老人在第一封信前站了很久很久，然后深深鞠了一躬。\n他的胸牌上写着：陈潮生。` },
-      E4: { title: '第十三封信', text: `你一路问到最深处。信堆的最底下，压着第十三个信封——它是空的。\n里面只有一张字条：\n\n"如果你读到这里，说明你和我一样，是个不肯让海替你说话的人。\n那晚的名册上少了一个人的名字。去查'白鹤礁 · 拾遗号'。\n塔可以拆。名字不能。"` }
-    }
+    impTitle: '导 入 故 事', impTip: '粘贴故事 JSON（格式见「让 AI 写一个」），或导入别人分享的 .json 内容。',
+    impDo: '导 入', impClose: '关 闭',
+    impBad: '故事格式无效：', impOk: '✓ 已导入', impDup: '（同名故事已替换）',
+    aiTitle: 'AI 创作提示词', aiTip: '把下面这段话发给任意 AI，把生成结果粘贴回「导入故事」即可游玩。',
+    aiCopy: '复 制 提 示 词', aiCopied: '✓ 已复制',
+    aiClose: '关 闭',
+    stackSub: (n, t) => `${t} 封信，按年代排开 · 已启 ${n} 封`,
+    unopened: '未 启 封', reRead: '重读这封信', stackClose: '合 上 信 堆',
+    shareOk: '✓ 已复制 JSON', shareDl: '（同时下载 .json）',
+    delStory: '删除'
   },
   en: {
-    title: 'The Keeper of the Light', sub: '白鹤礁灯塔信札',
-    kicker: 'AN ENCOUNTER, ON PAPER',
-    desc: 'White Crane Reef Lighthouse is to be demolished this winter.<br>You came to say goodbye — until you pushed open the lamp-room door<br>and saw the stack of letters, marked by year.',
-    start: 'OPEN THE FIRST LETTER', cont: 'CONTINUE READING', again: 'READ AGAIN',
-    openHint: 'CLICK TO UNSEAL', replyQ: '— HOW WILL YOU REPLY —', contBtn: 'Read the next letter',
+    selSub: 'three mailboxes · or import your own',
+    importB: 'IMPORT STORY', aiB: 'ASK AN AI',
+    start: 'OPEN THE FIRST LETTER', cont: 'CONTINUE', again: 'READ AGAIN',
+    stack: 'STACK', shareStory: 'SHARE STORY',
+    openHint: 'CLICK TO UNSEAL', replyQ: '— HOW WILL YOU REPLY —',
     sndOn: 'SND ON', sndOff: 'SND OFF',
-    letterNo: n => `Letter ${n}`,
-    endings: ['The Light Stays', 'Homeward', 'Kept', 'The Thirteenth'],
     enKicker: 'ENDING',
-    stats: (n, path) => `${n} letters read · the ${path}`,
+    stats: (n, path, total) => `${n} letters read · the ${path} · ${total} in all`,
     paths: { warm: 'gentle road', probe: 'searching road' },
-    nodes: {
-      n1: { year: 'NO YEAR', title: 'To the Traveler After', text: `If you are reading this, the lighthouse still stands, and you have pushed open this door.\nMy name is Zhou Yuan. I kept this light for thirty-one years. They say I died on the storm night of my thirty-first year — they are right, and not right.\nThe envelopes on this desk are marked by year. Before you open one, light a lamp. A keeper's rule: letters are read by lamplight.`,
-        cont: 'Open the letter from 1989' },
-      n2: { year: '1989 · SPRING', title: 'The Wick', text: `The sea ice is breaking up. Fog tonight; the lamp will burn till dawn.\nI trimmed a new wick, cutting away last year's char. Keeping a light, in the end, is only this: cutting away what has burned, so the flame can go on.\nAnd where you are — what is the weather like?`,
-        replies: [
-          { label: 'It is raining here too. The way you trim the wick — it reminds me of so much.', flag: 'warm', to: 'n3' },
-          { label: 'Wait — you said you "died" on the storm night. What actually happened?', flag: 'probe', to: 'n4' }
-        ]},
-      n3: { year: '1989 · SUMMER', title: 'Voices', text: `You ask if I am lonely.\nThe sea is never quiet: waves, wind, the foghorn, halyards knocking against iron. Loneliness is not the absence of sound. It is having no one who listens.\nSo I write. A letter written is not always sent; sent, not always delivered; delivered, not always answered. But the light is on — let that count as someone watching.\nWould you listen to an old man go on like this?`,
-        replies: [
-          { label: 'I would. Start at the beginning — how did you come to this island?', flag: 'warm', to: 'n5' },
-          { label: 'Don\'t only speak of yourself. Tell me about grandmother — why did she never speak of you?', flag: 'probe', to: 'n6' }
-        ]},
-      n4: { year: '1989 · OCTOBER 4', title: 'The Log (Copied)', text: `You ask about that night. I copy only the record; records do not lie:\n21:17, the foghorn failed. 21:30, a fishing boat requested pilotage. 21:41, the light went dark for four minutes.\nFour minutes. At sea, four minutes is long enough to bury a great deal.\nThe next day they found the life-ring empty. They did not find the man. Believe what you like — in those four minutes, I was not in the lamp room.`,
-        replies: [
-          { label: 'Then where were you, in those four minutes?', flag: 'probe', to: 'n7' },
-          { label: 'That is the official record. I want to hear you tell that night yourself.', flag: 'warm', to: 'n7' }
-        ]},
-      n5: { year: '1962 · RECALLED', title: 'Coming Ashore', text: `I came to this island because of an argument. Young and proud, I felt the whole world owed me an explanation.\nYour great-uncle said: go keep the light. A lamp asks no questions.\nSo I stayed. The first year I counted ships. The second year I counted stars. After the third I counted nothing — I had begun writing letters to the sea.\nAnd you? Why did you push open this door?`,
-        replies: [
-          { label: 'The lighthouse is coming down. I came to say goodbye.', flag: 'warm', to: 'n8' },
-          { label: 'I came looking for you. My family would never speak of you.', flag: 'probe', to: 'n6' }
-        ]},
-      n6: { year: '1975 · RECALLED', title: 'The Waves That Day', text: `Her… I failed her more than anyone.\nThe year I took this post, she was carrying your father. I said two years, then I would come home. Two years beneath a light are not like two years anywhere else — it nails a man in place.\nShe came once, with the child. The ferry could not land; the swell was too high. She stood at the bow and waved up at the lamp room. I saw her. I could not go down. In those waves, going down meant two of us drowning.\nThe brightest four minutes of my life. And the darkest.`,
-        replies: [
-          { label: 'I don\'t blame you. Grandmother always kept a lamp on the windowsill — now I understand.', flag: 'warm', to: 'n8' },
-          { label: 'But she waited her whole life. You owe her an answer.', flag: 'probe', to: 'n8' },
-          { label: 'And her? Did she ever write back?', flag: 'probe', to: 'n12' }
-        ]},
-      n7: { year: '1989 · OCTOBER 4 (CONT.)', title: 'Four Minutes', text: `Very well. At 21:41 the oil line in the lamp room clogged — an old tower\'s old ailment. I took the storm lantern down to the engine room. Four minutes, there and back.\nWhen I returned, the fishing boat\'s mast had already snapped on the reef.\nI sent the distress signal, then went into the sea. October water is cold as iron. I caught hold of a young man, slipped the life-ring over him, and pushed him onto the rocks. When the second wave came, my hands had no strength left.\nWhat else do you want to ask?`,
-        replies: [
-          { label: 'That young man… what became of him?', flag: 'probe', to: 'n9' },
-          { label: 'So you saved him. You were a rescuer, not a deserter.', flag: 'warm', to: 'n9' }
-        ]},
-      n9: { year: '1989 · UNDATED', title: 'Postcard', text: `His name was Chen Chaosheng.\nEvery Qingming since, a postcard has arrived on this island. Thirty-odd years, not one missed. He never knew who I was — by the time he woke, I was already "gone".\nSome debts, the sea repaid for me. Some words only those who come after can say for me.\nThe tower is coming down, isn\'t it.`,
-        replies: [
-          { label: 'It is. They say the light\'s work is done.', flag: 'warm', to: 'n8' },
-          { label: '(Search the stack for one of his postcards.)', flag: 'probe', to: 'n11' }
-        ]},
-      n11: { year: '1991 · QINGMING', title: 'Postcard (from Chen Chaosheng)', age: 0.3, postcard: true, text: `On the front, an old photograph of White Crane Reef — the tower still young, its paint bright.\nOn the back, a single line:\n"Benefactor: the fish run was good this year, and a daughter came to the house. We named her Nianzhou — 'remembering the boat.' We owe it to you."\nThe stamp is a ship. The postmark has bled soft with sea damp, like a tear not yet dry.\nHe wrote every year, for thirty-odd years. You set it gently back with the others — as if collecting thirty years of mail on someone's behalf.`,
-        replies: [
-          { label: 'Slip this postcard into your pocket. Take it with you.', flag: 'warm', to: 'n8' }
-        ]},
-      n12: { year: '1976 · UNDATED', title: 'The Unsent Reply (Lin Suqiu)', age: 0.55, text: `At the very bottom of the stack lies a different letter. Addressed to "Zhou Yuan, Lighthouse, White Crane Reef" — no stamp. It was never sent.\n"Yuan —\nSeeing your words is like seeing you. Chao can walk now; he walks faster than the tide.\nI will not ask when you are coming home. Every night the lamp burns is a night you owe us — and I could never say that aloud.\nSo I keep a lamp on the windowsill. Whether you can see it or not, take it as spoken.\nSuqiu"\nThe paper is creased and creased again, folded and unfolded many times. Like a sentence brought to the lips, and swallowed back down.`,
-        replies: [
-          { label: 'So she was writing all along. She only never sent them.', flag: 'warm', to: 'n8' },
-          { label: 'Close the letter. Some words are not mine to finish reading.', flag: 'probe', to: 'n8' }
-        ]},
-      n8: { year: 'FINAL BATCH · I', title: 'The Storm Lantern', text: `Good. A light exists so people come safely home — not so a tower stands forever.\nI ask one thing only: on the day they take it down, light the brass storm lantern in the lamp room. Once. Ten minutes is enough. Let it burn one last time, as if someone were here.\nDo you think they will allow it?`,
-        replies: [
-          { label: 'I will light it. In your name.', flag: 'light', to: 'E1' },
-          { label: 'The tower is going — who would the lantern burn for? Let it rest.', flag: 'letgo', to: 'n10' }
-        ]},
-      n10: { year: 'FINAL BATCH · II', title: 'A Keeper\'s Last Rule', text: `You are right, too. Light lives in people, not in glass.\nThen burn these letters for me. The paper to the sea, the ash to the wind.\nA keeper\'s last rule: when the light goes out, do not look back at the tower. Those who look back will stay in place forever.`,
-        replies: [
-          { label: 'All right. I will burn them for you.', flag: 'burn', to: 'E2' },
-          { label: 'No. These letters should stay, for more people to read.', flag: 'keep', to: 'E3' }
-        ]}
-    },
-    endings: {
-      E1: { title: 'The Light Stays', text: `On demolition day, you carried the brass storm lantern up ninety-nine steps.\nAt six in the evening, the lamp room lit for the last time. The sea was very still — still as if someone, very far away, had finally fallen asleep.\nYou left the lantern where it was, and took only the letters.\n\nLater, at the end of the demolition report, you added one line: recommend preserving the lamp room artifacts.\nNo one asked why.` },
-      E2: { title: 'Homeward', text: `On the reef you burned the letters, one by one. The fire was small and soon out; the ash rose like a flight of white butterflies toward the water.\nIn the wind, perhaps, a very quiet "thank you".\n\nOn the ferry home, you fell asleep.\nFor the first time in thirty years, you did not dream of the sea.` },
-      E3: { title: 'Kept', text: `You gave the thirteen letters to the town maritime museum.\nBehind glass, arranged by year, their label reads: Letters of White Crane Reef Lighthouse.\n\nOn opening day, a white-haired man stood before the first letter for a long, long time, and then bowed deeply.\nHis name tag read: Chen Chaosheng.` },
-      E4: { title: 'The Thirteenth', text: `You asked your way to the very bottom of the stack, where a thirteenth envelope lay — empty.\nInside, a single note:\n\n"If you have read this far, you are like me: one who will not let the sea speak for you.\nOne name is missing from that night\'s roster. Look up the White Crane Reef · Shiyi.\nThe tower may come down. The name may not."` }
-    }
+    impTitle: 'IMPORT STORY', impTip: 'Paste story JSON (see the AI prompt for the format), or contents of a shared .json.',
+    impDo: 'IMPORT', impClose: 'CLOSE',
+    impBad: 'invalid story: ', impOk: '✓ imported', impDup: ' (replaced same-id story)',
+    aiTitle: 'AI AUTHORING PROMPT', aiTip: 'Send the text below to any AI; paste the JSON it produces back into IMPORT.',
+    aiCopy: 'COPY PROMPT', aiCopied: '✓ copied',
+    aiClose: 'CLOSE',
+    stackSub: (n, t) => `${t} letters, by year · ${n} opened`,
+    unopened: 'UNOPENED', reRead: 're-read this letter', stackClose: 'CLOSE',
+    shareOk: '✓ JSON copied', shareDl: ' (.json downloaded too)',
+    delStory: 'delete'
   }
 };
-const NODE_ORDER = ['n1','n2','n3','n4','n5','n6','n7','n9','n8','n10'];
+let lang = localStorage.getItem('letters-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+const T = () => UI[lang];
+
+/* ================= 故事装载 ================= */
+let imports = [];
+try { imports = JSON.parse(localStorage.getItem('letters-imports') || '[]'); } catch (e) {}
+const saveImports = () => localStorage.setItem('letters-imports', JSON.stringify(imports));
+let pack = null;          // 当前故事
+let save = null;          // 当前故事存档
+
+function normalizeStory(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const L = raw.letters && (raw.letters.zh || raw.letters.en);
+  if (!L || typeof L !== 'object') return null;
+  const zhL = raw.letters.zh || raw.letters.en;
+  const zhE = (raw.endings && (raw.endings.zh || raw.endings.en)) || {};
+  const nodeIds = Object.keys(zhL).filter(k => zhL[k] && zhL[k].text);
+  if (nodeIds.length < 4) return null;
+  for (const id of nodeIds) {
+    const nd = zhL[id];
+    if (nd.replies && !Array.isArray(nd.replies)) return null;
+  }
+  const endIds = Object.keys(zhE).filter(k => zhE[k] && zhE[k].text);
+  if (!endIds.length) return null;
+  const id = String(raw.id || ('story-' + Date.now())).replace(/[^\w-]/g, '').slice(0, 32) || ('s' + Date.now());
+  const style = raw.style || {};
+  return {
+    id,
+    title: raw.title || '无名信箱',
+    titleEn: raw.titleEn || raw.title || 'Untitled',
+    kicker: raw.kicker || '一沓旧信',
+    kickerEn: raw.kickerEn || raw.kicker || 'old letters',
+    desc: raw.desc || '（无简介）',
+    descEn: raw.descEn || raw.desc || '',
+    order: Array.isArray(raw.order) && raw.order.length >= nodeIds.length
+      ? raw.order : [...nodeIds, ...endIds],
+    hiddenEnding: raw.hiddenEnding || null,
+    style: {
+      font: style.font || '"Songti SC","STSong","SimSun",Georgia,serif',
+      paper: style.paper || '#f0e8d6',
+      paper2: style.paper2 || '#e8ddc4',
+      ink: style.ink || '#33302a',
+      seal: style.seal || '#9e3528',
+      gold: style.gold || '#d9b57c',
+      ruling: ('ruling' in style) ? style.ruling : 'rgba(130,108,64,0.09)',
+      bg1: style.bg1 || '#101a20',
+      bg2: style.bg2 || '#1a2732'
+    },
+    letters: {
+      zh: raw.letters.zh || raw.letters.en,
+      en: raw.letters.en || raw.letters.zh
+    },
+    endings: {
+      zh: (raw.endings && raw.endings.zh) || zhE,
+      en: (raw.endings && raw.endings.en) || zhE
+    }
+  };
+}
+function loadPack(p) {
+  pack = p;
+  const key = 'letters-save-' + p.id;
+  save = Object.assign({ node: null, read: 0, flags: [], endings: [], readNodes: [], snd: true, readEver: 0 },
+    JSON.parse(localStorage.getItem(key) || '{}'));
+  // 迁移旧版守灯人存档
+  if (p.id === 'lighthouse' && !localStorage.getItem(key)) {
+    const old = localStorage.getItem('letters-save');
+    if (old) {
+      try {
+        const o = JSON.parse(old);
+        save = Object.assign(save, o);
+        persist();
+      } catch (e) {}
+    }
+  }
+  applyStyle();
+}
+const persist = () => localStorage.setItem('letters-save-' + pack.id, JSON.stringify(save));
+function applyStyle() {
+  const s = pack.style, r = document.documentElement.style;
+  r.setProperty('--paper', s.paper);
+  r.setProperty('--paper2', s.paper2);
+  r.setProperty('--ink', s.ink);
+  r.setProperty('--seal', s.seal);
+  r.setProperty('--gold', s.gold);
+  r.setProperty('--ruling-c', s.ruling || 'transparent');
+  r.setProperty('--bg1', s.bg1);
+  r.setProperty('--bg2', s.bg2);
+  r.setProperty('--font', s.font);
+}
+const S = () => pack.letters[lang] || pack.letters.zh;
+const SE = () => pack.endings[lang] || pack.endings.zh;
+const packTotal = () => pack.order.filter(x => !String(x).startsWith('E')).length;
 
 /* ================= 状态 ================= */
-let lang = localStorage.getItem('letters-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
-const save = Object.assign({ node: null, read: 0, flags: [], endings: [], snd: true },
-  JSON.parse(localStorage.getItem('letters-save') || '{}'));
-const persist = () => localStorage.setItem('letters-save', JSON.stringify(save));
-const S = () => STORY[lang];
+let visited = new Set(), letterCount = 0, selectedPack = null;
 
-/* ================= 尘埃粒子 ================= */
-const motes = document.getElementById('motes');
-const mctx = motes.getContext('2d');
-let motesArr = [];
-function resizeMotes() {
-  motes.width = innerWidth; motes.height = innerHeight;
-  motesArr = [];
-  for (let i = 0; i < 46; i++)
-    motesArr.push({ x: Math.random() * motes.width, y: Math.random() * motes.height,
-      r: Math.random() * 1.6 + 0.4, v: 6 + Math.random() * 14, p: Math.random() * Math.PI * 2 });
+/* ================= 选集屏 ================= */
+function buildSelect() {
+  document.getElementById('selSub').textContent = T().selSub;
+  document.getElementById('importBtn').textContent = T().importB;
+  document.getElementById('aiBtn').textContent = T().aiB;
+  const list = document.getElementById('storyList');
+  list.innerHTML = '';
+  const all = [...BUILTIN_STORIES, ...imports];
+  all.forEach(p => {
+    const sv = JSON.parse(localStorage.getItem('letters-save-' + p.id) || '{}');
+    const read = Math.min(sv.readEver || 0, p.order.filter(x => !String(x).startsWith('E')).length);
+    const got = (sv.endings || []).length;
+    const b = document.createElement('button');
+    b.className = 'story-card';
+    b.innerHTML = `<span class="tt">${lang === 'zh' ? p.title : (p.titleEn || p.title)}</span>
+      <span class="kk">${lang === 'zh' ? p.kicker : (p.kickerEn || p.kicker)}</span>
+      <span class="prog">${read ? `✉${read} · ◈${got}` : 'NEW'}</span>`;
+    b.addEventListener('click', () => {
+      loadPack(p);
+      showTitle();
+    });
+    list.appendChild(b);
+    if (imports.includes(p)) {
+      const d = document.createElement('button');
+      d.className = 'del';
+      d.textContent = '✕';
+      d.title = T().delStory;
+      d.addEventListener('click', e => {
+        e.stopPropagation();
+        imports = imports.filter(x => x.id !== p.id);
+        saveImports();
+        buildSelect();
+      });
+      b.appendChild(d);
+    }
+  });
 }
-window.addEventListener('resize', resizeMotes);
-resizeMotes();
+function showSelect() {
+  selectedPack = null;
+  document.getElementById('selectOv').classList.add('show');
+  document.getElementById('titleScreen').classList.remove('show', 'gone');
+  buildSelect();
+}
+
+/* ================= 单故事标题屏 ================= */
+function showTitle() {
+  document.getElementById('selectOv').classList.remove('show');
+  const ts = document.getElementById('titleScreen');
+  ts.classList.remove('gone');
+  ts.classList.add('show');
+  refreshTitle();
+}
+function refreshTitle() {
+  document.getElementById('tsKicker').textContent = lang === 'zh' ? pack.kicker : (pack.kickerEn || pack.kicker);
+  document.getElementById('tsTitle').textContent = lang === 'zh' ? pack.title : (pack.titleEn || pack.title);
+  document.getElementById('tsSub').textContent = (lang === 'zh' ? pack.titleEn : pack.title) + ' · LETTERS';
+  document.getElementById('tsDesc').innerHTML = lang === 'zh' ? pack.desc : (pack.descEn || pack.desc);
+  document.getElementById('startBtn').textContent = T().start;
+  document.getElementById('contBtn').textContent = T().cont;
+  document.getElementById('stackBtn').textContent = T().stack;
+  document.getElementById('shareStoryBtn').textContent = T().shareStory;
+  document.getElementById('againBtn').textContent = T().again;
+  document.getElementById('contBtn').style.display = (save.node && !save.endings.length) ? 'inline-block' : 'none';
+  buildEndingDots();
+}
+function buildEndingDots() {
+  const box = document.getElementById('tsEndings');
+  box.innerHTML = '';
+  const keys = pack.order.filter(x => String(x).startsWith('E'));
+  keys.forEach(k => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (save.endings.includes(k) ? ' got' : '');
+    const e = SE()[k];
+    if (e) d.title = e.title;
+    box.appendChild(d);
+  });
+  const st = document.getElementById('tsStats');
+  const n = save.endings.length;
+  st.textContent = lang === 'zh'
+    ? `${packTotal()} 封信 · 你读过 ${Math.min(save.readEver || 0, packTotal())} 封 · 结局 ${n} / ${keys.length}`
+    : `${packTotal()} letters · ${Math.min(save.readEver || 0, packTotal())} read · endings ${n} / ${keys.length}`;
+}
+
+/* ================= 引擎 ================= */
+const stage = document.getElementById('stage');
+function showEnvelope(next) {
+  stage.innerHTML = '';
+  const env = document.createElement('div');
+  env.className = 'envelope';
+  env.innerHTML = `
+    <div class="env-body"></div>
+    <div class="env-letterpeek"></div>
+    <div class="env-flap"></div>
+    <div class="seal">${(pack.title || '信')[0]}</div>
+    <div class="env-hint">${T().openHint}</div>`;
+  stage.appendChild(env);
+  env.addEventListener('click', () => {
+    initAudio();
+    if (!env.classList.contains('open')) {
+      env.classList.add('open');
+      swish();
+      setTimeout(() => showLetter(next), 900);
+    }
+  });
+}
+let revealTimers = [];
+function showLetter(id, reread) {
+  revealTimers.forEach(clearTimeout); revealTimers = [];
+  const nd = S()[id];
+  if (!nd) { showEnvelope(Object.keys(S())[0]); return; }
+  visited.add('node:' + id);
+  if (!reread) {
+    letterCount++;
+    save.read = letterCount;
+    save.node = id;
+    save.readNodes = save.readNodes || [];
+    if (!save.readNodes.includes(id)) save.readNodes.push(id);
+    persist();
+  }
+  const total = packTotal();
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('prog').style.display = 'block';
+  document.getElementById('letterNo').textContent =
+    (lang === 'zh' ? `第 ${Math.min(letterCount, total)} 封信` : `Letter ${Math.min(letterCount, total)}`);
+  setTimeout(() => {
+    document.getElementById('progFill').style.width = (Math.min(letterCount, total) / total * 100).toFixed(1) + '%';
+  }, 60);
+  save.readEver = Math.max(save.readEver || 0, letterCount);
+  persist();
+  stage.innerHTML = '';
+  const lt = document.createElement('div');
+  lt.className = 'letter' + (nd.postcard ? ' postcard' : '');
+  const age = nd.age !== undefined ? nd.age : 0.06;
+  lt.style.filter = `sepia(${(age * 0.42).toFixed(3)}) saturate(${(1 - age * 0.15).toFixed(3)})`;
+  const paras = nd.text.split('\n').map(p => p.trim()).filter(Boolean);
+  lt.innerHTML = `<div class="yr">${nd.year}</div><h2>${nd.title}</h2>` +
+    paras.map((p, i) => `<p class="${i === 0 ? 'drop' : ''}">${p}</p>`).join('');
+  const actions = document.createElement('div');
+  actions.className = 'replies';
+  if (nd.replies && nd.replies.length) {
+    actions.innerHTML = `<div class="q">${T().replyQ}</div>`;
+    nd.replies.forEach(r => {
+      const b = document.createElement('button');
+      b.className = 'reply';
+      b.textContent = r.label;
+      b.addEventListener('click', () => {
+        initAudio(); quill();
+        visited.add(r.flag || 'warm');
+        gotoNode(r.to);
+      });
+      actions.appendChild(b);
+    });
+  } else if (nd.cont) {
+    const b = document.createElement('button');
+    b.className = 'reply';
+    b.textContent = nd.cont;
+    b.addEventListener('click', () => { swish(); gotoNode(nextAfter(id)); });
+    actions.appendChild(b);
+  }
+  lt.appendChild(actions);
+  stage.appendChild(lt);
+  const ps = lt.querySelectorAll('p');
+  let delay = 200;
+  ps.forEach((p, i) => {
+    revealTimers.push(setTimeout(() => {
+      p.classList.add('in');
+      if (i === ps.length - 1) {
+        revealTimers.push(setTimeout(() => {
+          actions.classList.add('in');
+          lt.scrollTop = lt.scrollHeight;
+        }, 1100));
+      }
+    }, delay));
+    delay += Math.min(1400, 500 + p.textContent.length * 22);
+  });
+  lt.addEventListener('click', e => {
+    if (e.target.closest('.reply')) return;
+    if (!actions.classList.contains('in')) {
+      revealTimers.forEach(clearTimeout);
+      ps.forEach(p => p.classList.add('in'));
+      actions.classList.add('in');
+    }
+  });
+}
+function nextAfter(id) {
+  const ids = pack.order.filter(x => !String(x).startsWith('E'));
+  const i = ids.indexOf(id);
+  return ids[Math.min(i + 1, ids.length - 1)] || ids[0];
+}
+function gotoNode(to) {
+  if (String(to).startsWith('E')) { showEnding(to); return; }
+  showEnvelope(to);
+}
+
+/* ================= 结局 ================= */
+function showEnding(eid) {
+  let final = String(eid);
+  if (pack.hiddenEnding) {
+    const h = pack.hiddenEnding;
+    if (final === h.replace && (h.require || []).every(n => visited.has('node:' + n)) && !save.endings.includes(h.id)) {
+      final = h.id;
+    }
+  }
+  const E = SE()[final] || {};
+  save.node = null;
+  if (!save.endings.includes(final)) save.endings.push(final);
+  if (pack.hiddenEnding && final === pack.hiddenEnding.id)
+    save.readEver = Math.max(save.readEver || 0, packTotal());  // 空信封算最后一封
+  persist();
+  document.getElementById('enScene').innerHTML = ENDING_SCENES[pack.id + final] || ENDING_SCENES[final] || '';
+  document.getElementById('enKicker').textContent = T().enKicker;
+  document.getElementById('enTitle').textContent = E.title || '';
+  document.getElementById('enText').textContent = E.text || '';
+  const path = [...visited].filter(f => f === 'warm' || f === 'probe');
+  const pw = path.filter(f => f === 'warm').length, pp = path.filter(f => f === 'probe').length;
+  document.getElementById('enStats').textContent =
+    T().stats(Math.min(save.readEver || 0, packTotal()), T().paths[pw >= pp ? 'warm' : 'probe'], packTotal());
+  document.getElementById('endingNote').classList.add('show');
+  document.getElementById('topbar').style.display = 'none';
+  endBell();
+}
+const ENDING_SCENES = {
+  E1: `<svg viewBox="0 0 190 130" fill="none"><defs><radialGradient id="lg"><stop offset="0" stop-color="#ffe9b8" stop-opacity=".9"/><stop offset="1" stop-color="#ffe9b8" stop-opacity="0"/></radialGradient></defs><polygon points="95,44 8,20 95,36" fill="#ffe9b8" opacity=".1"/><polygon points="95,44 182,20 95,36" fill="#ffe9b8" opacity=".1"/><rect x="88" y="40" width="14" height="82" rx="2" fill="#3d4652"/><rect x="84" y="118" width="22" height="8" rx="2" fill="#2c333d"/><rect x="86" y="30" width="18" height="12" rx="2" fill="#2c333d"/><circle cx="95" cy="36" r="6" fill="#ffe9b8"/><rect x="91.5" y="56" width="7" height="9" fill="#d9b57c" opacity=".7"/><rect x="91.5" y="74" width="7" height="9" fill="#d9b57c" opacity=".5"/><ellipse cx="95" cy="36" rx="42" ry="30" fill="url(#lg)"/><ellipse cx="95" cy="122" rx="60" ry="5" fill="#0d1420" opacity=".9"/></svg>`,
+  E2: `<svg viewBox="0 0 190 130" fill="none"><g transform="rotate(-6 95 78)"><rect x="58" y="62" width="46" height="30" rx="2" fill="#e8ddc4" opacity=".9"/><polygon points="58,62 81,80 104,62" fill="#d9cbae"/></g><g transform="rotate(7 118 82)"><rect x="96" y="68" width="44" height="28" rx="2" fill="#e8ddc4" opacity=".75"/><polygon points="96,68 118,85 140,68" fill="#d1c2a2"/></g><path d="M64 96 C58 86 66 78 64 70 C70 74 72 80 70 84 C76 80 78 72 76 66 C84 74 86 88 78 96Z" fill="#e8975a" opacity=".9"/><circle cx="52" cy="46" r="1.6" fill="#d9cbae" opacity=".7"/><circle cx="70" cy="32" r="1.2" fill="#d9cbae" opacity=".55"/><circle cx="88" cy="42" r="1.4" fill="#d9cbae" opacity=".6"/><ellipse cx="95" cy="122" rx="62" ry="5" fill="#0d1420" opacity=".9"/></svg>`,
+  E3: `<svg viewBox="0 0 190 130" fill="none"><rect x="34" y="22" width="122" height="86" rx="4" fill="#1b2330" stroke="#3d4652" stroke-width="3"/><rect x="44" y="32" width="102" height="66" rx="2" fill="#e8ddc4"/><line x1="54" y1="48" x2="136" y2="48" stroke="#8a8375" stroke-width="2" opacity=".5"/><line x1="54" y1="58" x2="128" y2="58" stroke="#8a8375" stroke-width="2" opacity=".4"/><line x1="54" y1="68" x2="132" y2="68" stroke="#8a8375" stroke-width="2" opacity=".4"/><line x1="54" y1="78" x2="118" y2="78" stroke="#8a8375" stroke-width="2" opacity=".35"/><polygon points="44,98 90,32 106,32 60,98" fill="#fff" opacity=".08"/><rect x="30" y="18" width="130" height="8" rx="3" fill="#2c333d"/></svg>`,
+  E4: `<svg viewBox="0 0 190 130" fill="none"><g transform="rotate(-4 95 66)"><rect x="55" y="46" width="80" height="52" rx="3" fill="#e8ddc4" opacity=".85" stroke="#b7a888" stroke-width="1.2"/><polygon points="55,46 95,76 135,46" fill="#d9cbae"/><rect x="72" y="60" width="46" height="26" rx="2" fill="none" stroke="#8a8375" stroke-dasharray="4 3"/></g><ellipse cx="95" cy="112" rx="56" ry="5" fill="#0d1420" opacity=".9"/></svg>`
+};
+
+/* ================= 信堆 ================= */
+function buildStack() {
+  document.getElementById('stackTitle').textContent = (lang === 'zh' ? pack.title : (pack.titleEn || pack.title)) + ' · ' + (lang === 'zh' ? '信堆' : 'STACK');
+  const read = Math.min(save.readEver || 0, packTotal());
+  document.getElementById('stackSub').textContent = T().stackSub(read, packTotal());
+  document.getElementById('stackClose').textContent = T().stackClose;
+  const list = document.getElementById('stackList');
+  list.innerHTML = '';
+  const readSet = new Set(save.readNodes || []);
+  pack.order.forEach((id, i) => {
+    const isE = String(id).startsWith('E');
+    const div = document.createElement('div');
+    const got = isE ? save.endings.includes(id) : readSet.has(id);
+    div.className = 'stack-item ' + (got ? 'read' : 'unread');
+    let yr = '— — —', tt = T().unopened;
+    if (got) {
+      if (isE) {
+        const e = SE()[id];
+        yr = e.year || (lang === 'zh' ? '无年份' : '—');
+        tt = e.title;
+      } else {
+        const nd = S()[id];
+        yr = nd.year; tt = nd.title;
+      }
+    }
+    div.innerHTML = `<span class="no">${i + 1}</span><span class="yr">${yr}</span><span class="tt">${tt}</span>`;
+    if (got && !isE) {
+      div.style.cursor = 'pointer';
+      div.title = T().reRead;
+      div.addEventListener('mouseenter', () => div.style.borderColor = 'rgba(217,181,124,0.55)');
+      div.addEventListener('mouseleave', () => div.style.borderColor = '');
+      div.addEventListener('click', () => {
+        document.getElementById('stackOv').classList.remove('show');
+        document.getElementById('titleScreen').classList.add('gone');
+        showLetter(id, true);
+      });
+    }
+    list.appendChild(div);
+  });
+}
+document.getElementById('stackBtn').addEventListener('click', () => {
+  buildStack();
+  document.getElementById('stackOv').classList.add('show');
+  document.getElementById('stackOv').scrollTop = 0;
+});
+document.getElementById('stackClose').addEventListener('click', () =>
+  document.getElementById('stackOv').classList.remove('show'));
+
+/* ================= 分享 / 导入 / AI ================= */
+function storyToJSON(p) {
+  const clone = JSON.parse(JSON.stringify(p));
+  delete clone._runtime;
+  return JSON.stringify(clone, null, 2);
+}
+document.getElementById('shareStoryBtn').addEventListener('click', async () => {
+  const json = storyToJSON(pack);
+  try { await navigator.clipboard.writeText(json); } catch (e) {}
+  const a = document.createElement('a');
+  a.download = `letters-story-${pack.id}.json`;
+  a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+  a.click();
+  const b = document.getElementById('shareStoryBtn');
+  const old = b.textContent;
+  b.textContent = T().shareOk + T().shareDl;
+  setTimeout(() => b.textContent = old, 1800);
+});
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('impTitle').textContent = T().impTitle;
+  document.getElementById('impTip').textContent = T().impTip;
+  document.getElementById('impDo').textContent = T().impDo;
+  document.getElementById('impClose').textContent = T().impClose;
+  document.getElementById('impText').value = '';
+  document.getElementById('importOv').classList.add('show');
+});
+document.getElementById('impClose').addEventListener('click', () =>
+  document.getElementById('importOv').classList.remove('show'));
+document.getElementById('impDo').addEventListener('click', () => {
+  let raw = document.getElementById('impText').value.trim();
+  // 容错：剥掉 AI 常见的 ```json 围栏
+  raw = raw.replace(/^```(json)?\s*/i, '').replace(/```\s*$/, '');
+  let p = null;
+  try { p = normalizeStory(JSON.parse(raw)); } catch (e) {
+    flashImp(T().impBad + e.message);
+    return;
+  }
+  if (!p) { flashImp(T().impBad + 'letters/endings'); return; }
+  const dup = imports.findIndex(x => x.id === p.id);
+  if (dup >= 0) imports[dup] = p; else imports.push(p);
+  saveImports();
+  document.getElementById('importOv').classList.remove('show');
+  buildSelect();
+  flashImp(T().impOk + (dup >= 0 ? T().impDup : ''), () => {});
+});
+function flashImp(msg) {
+  const tip = document.getElementById('impTip');
+  const old = tip.textContent;
+  tip.textContent = msg;
+  tip.style.color = msg.startsWith('✓') ? '#8fd8cf' : '#e8a0a0';
+  setTimeout(() => { tip.textContent = old; tip.style.color = ''; }, 2400);
+}
+/* AI 提示词 */
+function aiPromptText() {
+  return `请为一款"互动书信"网页游戏创作一个可导入的故事，输出【一个 JSON 代码块】，不要输出其它解释。
+
+要求：
+1. 主题自选（建议：旧物、旅途、告别、重逢、悬疑、科幻皆可），篇幅 6-10 封信，2-4 个结局。
+2. 文字风格：克制、有留白，每封信 60-140 字，像真的手写信。
+3. 剧情结构：玩家读到一封信后，从 1-3 个"回信"中选择其一，导向不同的下一封信（letters 的 replies[].to 指向另一个信的 id，或以 E 开头的结局 id）。
+4. 双语：优先写 zh；如有能力可附 en（缺省将回退 zh）。
+
+JSON 格式（严格遵守，可直接解析）：
+{
+  "id": "英文小写短id",
+  "title": "故事名", "titleEn": "英文题名",
+  "kicker": "一句话引子", "kickerEn": "English kicker",
+  "desc": "开场简介，可用<br>换行", "descEn": "English desc",
+  "order": ["n1","n2",...,"E1","E2"],   // 信与结局的图鉴顺序（E 开头是结局）
+  "style": {  // 可选，信纸气质
+    "paper": "#f0e8d6", "paper2": "#e8ddc4", "ink": "#33302a",
+    "seal": "#9e3528", "gold": "#d9b57c",
+    "ruling": "rgba(130,108,64,0.09)",   // 信纸横格颜色，暗色故事可设 null
+    "bg1": "#101a20", "bg2": "#1a2732",
+    "font": "KaiTi, STKaiti, serif"      // 可用：楷体 KaiTi / 仿宋 FangSong / 宋体 SimSun
+  },
+  "letters": {
+    "zh": {
+      "n1": { "year": "一九八四 · 冬", "title": "信题",
+              "text": "信的正文，\\n 分段",
+              "cont": "（无选项时）继续按钮文字" },
+      "n2": { "year": "...", "title": "...",
+              "text": "...",
+              "replies": [
+                { "label": "回信一（玩家说出的话）", "to": "n3" },
+                { "label": "回信二", "to": "n4" }
+              ] }
+    },
+    "en": { ...同结构，可省略... }
+  },
+  "endings": {
+    "zh": { "E1": { "title": "结局名", "text": "结局正文，\\n 分段" } },
+    "en": { ...可省略... }
+  }
+}
+
+规则：id 只用字母数字连字符；所有 to 指向的 id 必须存在；至少一个结局；不要输出注释。现在，创作你的故事。`;
+}
+document.getElementById('aiBtn').addEventListener('click', () => {
+  document.getElementById('aiTitle').textContent = T().aiTitle;
+  document.getElementById('aiTip').textContent = T().aiTip;
+  document.getElementById('aiCopy').textContent = T().aiCopy;
+  document.getElementById('aiClose').textContent = T().aiClose;
+  document.getElementById('aiText').value = aiPromptText();
+  document.getElementById('aiOv').classList.add('show');
+});
+document.getElementById('aiClose').addEventListener('click', () =>
+  document.getElementById('aiOv').classList.remove('show'));
+document.getElementById('aiCopy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(document.getElementById('aiText').value); } catch (e) {}
+  const b = document.getElementById('aiCopy');
+  b.textContent = T().aiCopied;
+  setTimeout(() => b.textContent = T().aiCopy, 1600);
+});
 
 /* ================= 音频 ================= */
 let AC = null, seaGain = null;
 function initAudio() {
   if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
   try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
-  // 海浪底噪
   const len = AC.sampleRate * 3;
   const buf = AC.createBuffer(1, len, AC.sampleRate);
   const d = buf.getChannelData(0);
@@ -520,7 +947,7 @@ function initAudio() {
   src.connect(f); f.connect(seaGain); seaGain.connect(AC.destination);
   src.start(); lfo.start();
 }
-function swish() { // 翻信纸声
+function swish() {
   if (!AC || !save.snd) return;
   const t = AC.currentTime;
   const len = 0.3, buf = AC.createBuffer(1, AC.sampleRate * len, AC.sampleRate);
@@ -531,7 +958,7 @@ function swish() { // 翻信纸声
   const g = AC.createGain(); g.gain.value = 0.05;
   s.connect(f); f.connect(g); g.connect(AC.destination); s.start(t);
 }
-function quill() { // 落笔
+function quill() {
   if (!AC || !save.snd) return;
   const t = AC.currentTime;
   const o = AC.createOscillator(), g = AC.createGain();
@@ -555,315 +982,19 @@ function endBell() {
   });
 }
 
-/* ================= 引擎 ================= */
-const stage = document.getElementById('stage');
-let visited = new Set(save.flags || []);
-let letterCount = save.read || 0;
-
-function showEnvelope(next) {
-  stage.innerHTML = '';
-  const env = document.createElement('div');
-  env.className = 'envelope';
-  env.innerHTML = `
-    <div class="env-body"></div>
-    <div class="env-letterpeek"></div>
-    <div class="env-flap"></div>
-    <div class="seal">${lang === 'zh' ? '守' : 'Z'}</div>
-    <div class="env-hint">${S().openHint}</div>`;
-  stage.appendChild(env);
-  env.addEventListener('click', () => {
-    initAudio();
-    if (!env.classList.contains('open')) {
-      env.classList.add('open');
-      swish();
-      setTimeout(() => showLetter(next), 900);
-    }
-  }, { once: false });
+/* ================= 尘埃粒子 ================= */
+const motes = document.getElementById('motes');
+const mctx = motes.getContext('2d');
+let motesArr = [];
+function resizeMotes() {
+  motes.width = innerWidth; motes.height = innerHeight;
+  motesArr = [];
+  for (let i = 0; i < 46; i++)
+    motesArr.push({ x: Math.random() * motes.width, y: Math.random() * motes.height,
+      r: Math.random() * 1.6 + 0.4, v: 6 + Math.random() * 14, p: Math.random() * Math.PI * 2 });
 }
-
-let revealTimers = [];
-function showLetter(id, reread) {
-  revealTimers.forEach(clearTimeout); revealTimers = [];
-  const nd = S().nodes[id];
-  visited.add('node:' + id);
-  if (!reread) {
-    letterCount++;
-    save.read = letterCount;
-    save.node = id;
-    save.readNodes = save.readNodes || [];
-    if (!save.readNodes.includes(id)) save.readNodes.push(id);
-    persist();
-  }
-  document.getElementById('topbar').style.display = 'flex';
-  document.getElementById('prog').style.display = 'block';
-  document.getElementById('letterNo').textContent = S().letterNo(Math.min(letterCount, 13));
-  setTimeout(() => {
-    document.getElementById('progFill').style.width = (Math.min(letterCount, 13) / 13 * 100).toFixed(1) + '%';
-  }, 60);
-  save.readEver = Math.max(save.readEver || 0, letterCount);
-  persist();
-
-  stage.innerHTML = '';
-  const lt = document.createElement('div');
-  lt.className = 'letter' + (nd.postcard ? ' postcard' : '');
-  // 年代泛黄：越久远的信越黄
-  const age = nd.age !== undefined ? nd.age : 0.06;
-  lt.style.filter = `sepia(${(age * 0.42).toFixed(3)}) saturate(${(1 - age * 0.15).toFixed(3)})`;
-  const paras = nd.text.split('\n').map(p => p.trim()).filter(Boolean);
-  lt.innerHTML = `<div class="yr">${nd.year}</div><h2>${nd.title}</h2>` +
-    paras.map((p, i) => `<p class="${i === 0 ? 'drop' : ''}">${p}</p>`).join('');
-  const actions = document.createElement('div');
-  actions.className = 'replies';
-  if (nd.replies) {
-    actions.innerHTML = `<div class="q">${S().replyQ}</div>`;
-    nd.replies.forEach(r => {
-      const b = document.createElement('button');
-      b.className = 'reply';
-      b.textContent = r.label;
-      b.addEventListener('click', () => {
-        initAudio(); quill();
-        visited.add(r.flag); save.flags = [...visited]; persist();
-        gotoNode(r.to);
-      });
-      actions.appendChild(b);
-    });
-  } else if (nd.cont) {
-    const b = document.createElement('button');
-    b.className = 'reply continue-btn';
-    b.textContent = nd.cont;
-    b.addEventListener('click', () => { swish(); gotoNode(id === 'n1' ? 'n2' : 'n2'); });
-    actions.appendChild(b);
-  }
-  lt.appendChild(actions);
-  stage.appendChild(lt);
-  // 逐段墨迹渐显
-  const ps = lt.querySelectorAll('p');
-  let delay = 200;
-  ps.forEach((p, i) => {
-    revealTimers.push(setTimeout(() => {
-      p.classList.add('in');
-      if (i === ps.length - 1) {
-        revealTimers.push(setTimeout(() => {
-          actions.classList.add('in');
-          lt.scrollTop = lt.scrollHeight;
-        }, 1100));
-      }
-    }, delay));
-    delay += Math.min(1400, 500 + p.textContent.length * 22);
-  });
-  // 点击跳过渐显
-  lt.addEventListener('click', e => {
-    if (e.target.closest('.reply')) return;
-    if (!actions.classList.contains('in')) {
-      revealTimers.forEach(clearTimeout);
-      ps.forEach(p => p.classList.add('in'));
-      actions.classList.add('in');
-    }
-  });
-}
-
-function gotoNode(to) {
-  if (to.startsWith('E')) { showEnding(to); return; }
-  showEnvelope(to);
-}
-
-/* ================= 结局 ================= */
-/* 结尾小景（SVG） */
-const ENDING_SCENES = {
-  E1: `<svg viewBox="0 0 190 130" fill="none">
-    <defs><radialGradient id="lg" cx="50%" cy="38%" r="55%"><stop offset="0" stop-color="#ffe9b8" stop-opacity="0.95"/><stop offset="1" stop-color="#ffe9b8" stop-opacity="0"/></radialGradient></defs>
-    <polygon points="95,44 8,20 95,36" fill="#ffe9b8" opacity="0.10"/>
-    <polygon points="95,44 182,20 95,36" fill="#ffe9b8" opacity="0.10"/>
-    <rect x="88" y="40" width="14" height="82" rx="2" fill="#3d4652"/>
-    <rect x="84" y="118" width="22" height="8" rx="2" fill="#2c333d"/>
-    <rect x="86" y="30" width="18" height="12" rx="2" fill="#2c333d"/>
-    <circle cx="95" cy="36" r="6" fill="#ffe9b8"/>
-    <rect x="91.5" y="56" width="7" height="9" fill="#d9b57c" opacity="0.8"/>
-    <rect x="91.5" y="74" width="7" height="9" fill="#d9b57c" opacity="0.6"/>
-    <rect x="91.5" y="92" width="7" height="9" fill="#d9b57c" opacity="0.4"/>
-    <ellipse cx="95" cy="122" rx="60" ry="5" fill="#0d1420" opacity="0.9"/>
-    <ellipse cx="95" cy="36" rx="42" ry="30" fill="url(#lg)"/>
-    <circle cx="26" cy="18" r="1.4" fill="#e9e2cf" opacity="0.8"/><circle cx="52" cy="10" r="1" fill="#e9e2cf" opacity="0.6"/><circle cx="150" cy="14" r="1.2" fill="#e9e2cf" opacity="0.7"/><circle cx="170" cy="30" r="1" fill="#e9e2cf" opacity="0.5"/>
-  </svg>`,
-  E2: `<svg viewBox="0 0 190 130" fill="none">
-    <defs><linearGradient id="fg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e86a3a"/><stop offset="0.6" stop-color="#f2a54a"/><stop offset="1" stop-color="#f8d47c"/></linearGradient></defs>
-    <g transform="rotate(-6 95 78)">
-      <rect x="58" y="62" width="46" height="30" rx="2" fill="#e8ddc4" opacity="0.9"/>
-      <polygon points="58,62 81,80 104,62" fill="#d9cbae"/>
-    </g>
-    <g transform="rotate(7 118 82)">
-      <rect x="96" y="68" width="44" height="28" rx="2" fill="#e8ddc4" opacity="0.75"/>
-      <polygon points="96,68 118,85 140,68" fill="#d1c2a2"/>
-    </g>
-    <path d="M64 96 C58 86 66 78 64 70 C70 74 72 80 70 84 C76 80 78 72 76 66 C84 74 86 88 78 96 Z" fill="url(#fg)" opacity="0.95"/>
-    <circle cx="52" cy="46" r="1.6" fill="#d9cbae" opacity="0.7"/><circle cx="70" cy="32" r="1.2" fill="#d9cbae" opacity="0.55"/><circle cx="88" cy="42" r="1.4" fill="#d9cbae" opacity="0.6"/><circle cx="60" cy="22" r="1" fill="#d9cbae" opacity="0.5"/><circle cx="102" cy="28" r="1.2" fill="#d9cbae" opacity="0.5"/>
-    <ellipse cx="95" cy="122" rx="62" ry="5" fill="#0d1420" opacity="0.9"/>
-  </svg>`,
-  E3: `<svg viewBox="0 0 190 130" fill="none">
-    <rect x="34" y="22" width="122" height="86" rx="4" fill="#1b2330" stroke="#3d4652" stroke-width="3"/>
-    <rect x="44" y="32" width="102" height="66" rx="2" fill="#e8ddc4"/>
-    <line x1="54" y1="48" x2="136" y2="48" stroke="#8a8375" stroke-width="2" opacity="0.5"/>
-    <line x1="54" y1="58" x2="128" y2="58" stroke="#8a8375" stroke-width="2" opacity="0.4"/>
-    <line x1="54" y1="68" x2="132" y2="68" stroke="#8a8375" stroke-width="2" opacity="0.4"/>
-    <line x1="54" y1="78" x2="118" y2="78" stroke="#8a8375" stroke-width="2" opacity="0.35"/>
-    <polygon points="44,98 90,32 106,32 60,98" fill="#ffffff" opacity="0.08"/>
-    <rect x="30" y="18" width="130" height="8" rx="3" fill="#2c333d"/>
-    <text x="95" y="118" text-anchor="middle" font-size="8" fill="#8a97ad" letter-spacing="2">白鹤礁灯塔信札</text>
-  </svg>`,
-  E4: `<svg viewBox="0 0 190 130" fill="none">
-    <g transform="rotate(-4 95 66)">
-      <rect x="55" y="46" width="80" height="52" rx="3" fill="#e8ddc4" opacity="0.85" stroke="#b7a888" stroke-width="1.2"/>
-      <polygon points="55,46 95,76 135,46" fill="#d9cbae"/>
-      <rect x="72" y="60" width="46" height="26" rx="2" fill="none" stroke="#8a8375" stroke-width="1" stroke-dasharray="4 3"/>
-      <text x="95" y="77" text-anchor="middle" font-size="9" fill="#8a8375" letter-spacing="3">空</text>
-    </g>
-    <ellipse cx="95" cy="112" rx="56" ry="5" fill="#0d1420" opacity="0.9"/>
-    <circle cx="42" cy="28" r="1.3" fill="#e9e2cf" opacity="0.6"/><circle cx="146" cy="34" r="1.3" fill="#e9e2cf" opacity="0.5"/>
-  </svg>`
-};
-function showEnding(eid) {
-  // 隐藏结局判定：追问线走完 n4→n7→n9 且已到终点选择
-  const probeDone = ['n4','n7','n9'].every(n => wasRead(n));
-  let final = eid;
-  if (eid === 'E1' && probeDone && !save.endings.includes('E4')) final = 'E4';
-  // wait—E4 应该在追问线到达 n8 抉择点时替换 E1
-  const E = S().endings[final];
-  save.node = null;
-  if (!save.endings.includes(final)) save.endings.push(final);
-  if (final === 'E4') save.readEver = Math.max(save.readEver || 0, 13);  // 空信封是第十三封
-  persist();
-  document.getElementById('enScene').innerHTML = ENDING_SCENES[final] || '';
-  document.getElementById('enKicker').textContent = S().enKicker;
-  document.getElementById('enTitle').textContent = E.title;
-  document.getElementById('enText').innerText = E.text;
-  const path = [...visited].filter(f => f === 'warm' || f === 'probe');
-  const pw = path.filter(f => f === 'warm').length, pp = path.filter(f => f === 'probe').length;
-  document.getElementById('enStats').textContent =
-    S().stats(letterCount, S().paths[pw >= pp ? 'warm' : 'probe']);
-  document.getElementById('endingNote').classList.add('show');
-  document.getElementById('topbar').style.display = 'none';
-  endBell();
-  buildEndingDots();
-}
-function wasRead(n) {
-  // 通过 flags 追溯不可靠，改为在读取时记录
-  return visited.has('node:' + n);
-}
-
-/* ================= 标题屏 ================= */
-function buildEndingDots() {
-  const box = document.getElementById('tsEndings');
-  box.innerHTML = '';
-  for (let i = 0; i < 4; i++) {
-    const d = document.createElement('div');
-    d.className = 'dot' + (save.endings.includes('E' + (i + 1)) ? ' got' : '');
-    d.title = S().endings[i];
-    box.appendChild(d);
-  }
-  const st = document.getElementById('tsStats');
-  if (st) {
-    const n = save.endings.length;
-    st.textContent = lang === 'zh'
-      ? `十三封信 · 你读过 ${Math.min(save.readEver || 0, 13)} 封 · 结局 ${n} / 4`
-      : `thirteen letters · ${Math.min(save.readEver || 0, 13)} read · endings ${n} / 4`;
-  }
-}
-function applyI18n() {
-  document.documentElement.lang = lang === 'zh' ? 'zh' : 'en';
-  document.title = lang === 'zh' ? '纸间 · LETTERS — 守灯人' : 'LETTERS — The Keeper of the Light';
-  document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
-  document.getElementById('tsKicker').textContent = S().kicker;
-  document.getElementById('tsTitle').textContent = S().title;
-  document.getElementById('tsSub').textContent = S().sub;
-  document.getElementById('tsDesc').innerHTML = S().desc;
-  document.getElementById('startBtn').textContent = S().start;
-  document.getElementById('contBtn').textContent = S().cont;
-  document.getElementById('againBtn').textContent = S().again;
-  document.getElementById('sndBtn').textContent = save.snd ? S().sndOn : S().sndOff;
-  buildEndingDots();
-}
-document.getElementById('langBtn').addEventListener('click', () => {
-  lang = lang === 'zh' ? 'en' : 'zh';
-  localStorage.setItem('letters-lang', lang);
-  applyI18n();
-  // 语言切换后重绘当前节点
-  if (save.node && document.getElementById('titleScreen').classList.contains('gone')) {
-    showLetter(save.node);
-  }
-});
-document.getElementById('sndBtn').addEventListener('click', () => {
-  save.snd = !save.snd; persist();
-  if (seaGain) seaGain.gain.value = save.snd ? 0.05 : 0;
-  document.getElementById('sndBtn').textContent = save.snd ? S().sndOn : S().sndOff;
-});
-
-document.getElementById('startBtn').addEventListener('click', () => {
-  initAudio();
-  visited = new Set(); letterCount = 0;
-  save.read = 0; save.flags = []; save.node = null; persist();
-  document.getElementById('titleScreen').classList.add('gone');
-  showEnvelope('n1');
-});
-document.getElementById('contBtn').addEventListener('click', () => {
-  initAudio();
-  document.getElementById('titleScreen').classList.add('gone');
-  showEnvelope(save.node || 'n1');
-});
-document.getElementById('againBtn').addEventListener('click', () => {
-  document.getElementById('endingNote').classList.remove('show');
-  visited = new Set(); letterCount = 0;
-  save.read = 0; save.flags = []; save.node = null; persist();
-  showEnvelope('n1');
-});
-
-/* ================= 信堆图鉴 ================= */
-const STACK_ORDER = ['n1','n5','n6','n12','n2','n3','n4','n7','n9','n11','n8','n10','E4'];
-function buildStack() {
-  document.getElementById('stackTitle').textContent = lang === 'zh' ? '信 堆' : 'THE STACK';
-  document.getElementById('stackSub').textContent = lang === 'zh'
-    ? `十三封信，按年代排开 · 已启 ${Math.min(save.readEver || 0, 13)} 封`
-    : `thirteen letters, by year · ${Math.min(save.readEver || 0, 13)} opened`;
-  document.getElementById('stackClose').textContent = lang === 'zh' ? '合 上 信 堆' : 'CLOSE';
-  const list = document.getElementById('stackList');
-  list.innerHTML = '';
-  const readSet = new Set(save.readNodes || []);
-  STACK_ORDER.forEach((id, i) => {
-    const div = document.createElement('div');
-    const no = i + 1;
-    if (id === 'E4') {
-      const got = save.endings.includes('E4');
-      div.className = 'stack-item ' + (got ? 'read' : 'unread');
-      div.innerHTML = `<span class="no">${no}</span><span class="yr">${got ? (lang === 'zh' ? '无年份' : 'NO YEAR') : '— — —'}</span><span class="tt">${got ? (lang === 'zh' ? '第十三封信（空）' : 'The Thirteenth (empty)') : (lang === 'zh' ? '未 启 封' : 'UNOPENED')}</span>`;
-    } else {
-      const nd = S().nodes[id];
-      const got = readSet.has(id);
-      div.className = 'stack-item ' + (got ? 'read' : 'unread');
-      div.innerHTML = `<span class="no">${no}</span><span class="yr">${got ? nd.year : '— — —'}</span><span class="tt">${got ? nd.title : (lang === 'zh' ? '未 启 封' : 'UNOPENED')}</span>`;
-      if (got) {
-        div.style.cursor = 'pointer';
-        div.title = lang === 'zh' ? '重读这封信' : 're-read this letter';
-        div.addEventListener('mouseenter', () => div.style.borderColor = 'rgba(217,181,124,0.55)');
-        div.addEventListener('mouseleave', () => div.style.borderColor = '');
-        div.addEventListener('click', () => {
-          document.getElementById('stackOv').classList.remove('show');
-          document.getElementById('titleScreen').classList.add('gone');
-          showLetter(id, true);
-        });
-      }
-    }
-    list.appendChild(div);
-  });
-}
-document.getElementById('stackBtn').addEventListener('click', () => {
-  buildStack();
-  document.getElementById('stackOv').classList.add('show');
-  document.getElementById('stackOv').scrollTop = 0;
-});
-document.getElementById('stackClose').addEventListener('click', () => {
-  document.getElementById('stackOv').classList.remove('show');
-});
-
-/* ================= 主循环（粒子） ================= */
+window.addEventListener('resize', resizeMotes);
+resizeMotes();
 let prevM = performance.now();
 function mframe(now) {
   const dt = Math.min((now - prevM) / 1000, 0.05);
@@ -880,23 +1011,66 @@ function mframe(now) {
   requestAnimationFrame(mframe);
 }
 
+/* ================= 按钮 ================= */
+document.getElementById('startBtn').addEventListener('click', () => {
+  initAudio();
+  visited = new Set(); letterCount = 0;
+  save.read = 0; save.flags = []; save.node = null; persist();
+  document.getElementById('titleScreen').classList.add('gone');
+  const first = pack.order.find(x => !String(x).startsWith('E')) || Object.keys(S())[0];
+  showEnvelope(first);
+});
+document.getElementById('contBtn').addEventListener('click', () => {
+  initAudio();
+  document.getElementById('titleScreen').classList.add('gone');
+  showEnvelope(save.node || pack.order[0]);
+});
+document.getElementById('againBtn').addEventListener('click', () => {
+  document.getElementById('endingNote').classList.remove('show');
+  visited = new Set(); letterCount = 0;
+  save.read = 0; save.flags = []; save.node = null; persist();
+  showEnvelope(pack.order.find(x => !String(x).startsWith('E')));
+});
+document.getElementById('backBtn').addEventListener('click', showSelect);
+document.getElementById('sndBtn').addEventListener('click', () => {
+  save.snd = !save.snd; persist();
+  if (seaGain) seaGain.gain.value = save.snd ? 0.05 : 0;
+  updSnd();
+});
+function updSnd() { document.getElementById('sndBtn').textContent = save && save.snd !== false ? T().sndOn : T().sndOff; }
+document.getElementById('langBtn').addEventListener('click', () => {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('letters-lang', lang);
+  document.documentElement.lang = lang;
+  document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+  document.title = lang === 'zh' ? '纸间 · LETTERS — 互动书信' : 'LETTERS — interactive epistolary';
+  if (document.getElementById('selectOv').classList.contains('show')) buildSelect();
+  else if (!document.getElementById('titleScreen').classList.contains('gone')) refreshTitle();
+  updSnd();
+});
+
 /* ================= 启动 ================= */
-applyI18n();
-// #n<id> 直达信件（测试用）
-if (location.hash.startsWith('#n')) {
-  const nid = location.hash.slice(1);
-  if (S().nodes[nid]) {
-    document.getElementById('titleScreen').classList.add('gone');
-    letterCount = 3;
-    showLetter(nid);
-  }
+document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+document.documentElement.lang = lang;
+document.title = lang === 'zh' ? '纸间 · LETTERS — 互动书信' : 'LETTERS — interactive epistolary';
+/* hash 直达：#p=<故事id> 选集；#p=<id>&n=<节点> 直读信 */
+{
+  const hm = location.hash.match(/^#p=(\w+)(?:&n=(\w+))?/);
+  if (hm) {
+    const p = [...BUILTIN_STORIES, ...imports].find(x => x.id === hm[1]);
+    if (p) {
+      loadPack(p);
+      if (hm[2] && S()[hm[2]]) {
+        document.getElementById('selectOv').classList.remove('show');
+        letterCount = 1;
+        showLetter(hm[2]);
+      } else {
+        showTitle();
+      }
+    } else showSelect();
+  } else showSelect();
 }
-if (save.node && !save.endings.length) {
-  document.getElementById('contBtn').style.display = 'inline-block';
-}
-if (save.endings.length && !save.node) {
-  document.getElementById('contBtn').style.display = 'none';
-}
+updSnd();
 requestAnimationFrame(mframe);
 </script>
 </body>

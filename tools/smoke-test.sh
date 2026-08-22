@@ -13,7 +13,7 @@ BASE="$(cd "$(dirname "$0")/.." && pwd)"
 PASS=0; FAIL=0
 
 for rel in "index.html" "ink/index.html" "echo/index.html#lv0" \
-           "scape/index.html" "letters/index.html#n2" "fold/index.html"; do
+           "scape/index.html" "letters/index.html#p=lighthouse&n=n2" "fold/index.html"; do
   err=$("$EDGE" --headless --disable-gpu-sandbox --window-size=800,600 \
         --virtual-time-budget=4000 --dump-dom "file:///$BASE/$rel" 2>/dev/null \
         | tr -d '\000' | grep -aoE 'ERR: [^<"]*' | grep -v 'e\.message' | head -1)

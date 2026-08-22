@@ -227,6 +227,8 @@
     <h2 id="clearTitle"></h2>
     <div class="lanterns" id="lanterns"></div>
     <div class="stats" id="clearStats"></div>
+    <div style="margin-top:16px;font-size:11px;letter-spacing:0.34em;color:rgba(157,176,201,0.6)" id="heatLbl"></div>
+    <canvas id="heatCv" width="420" height="280" style="width:100%;max-width:420px;margin-top:8px;border:1px solid var(--hairline);border-radius:5px"></canvas>
     <div class="ov-actions" style="margin-top:24px">
       <button class="btn-main" id="nextBtn" data-t="next"></button>
       <button class="btn-sub" id="retryBtn" data-t="retry"></button>
@@ -276,7 +278,7 @@ const I18N = {
     locked: '未至', best: '最佳',
     lvSub: ['醒来时，头顶的井口已是一枚远星。', '水声在回廊尽头折返，像有人应答。', '蜂巢般的居所，门都朝着黑暗敞开。', '迷津不在乎方向，只在乎你还愿意走。', '巨殿的柱影比夜更旧。', '归途上，每一步回声都更接近自己。'],
     daily: '每 日 深 潜', dailyDone: '今日已抵达 · 明日再来', dailyTitle: '每日深潜', dailySub: '同一日，全城同一个迷宫。',
-    exp: '照亮', achTitle: '灯 下 集 · ACHIEVEMENTS',
+    exp: '照亮', heatLbl: '你 的 足 迹 · YOUR TRAIL', achTitle: '灯 下 集 · ACHIEVEMENTS',
     achs: [
       { id: 'first', ico: '✦', n: '初啼', d: '发出第一声回声' },
       { id: 'lv1', ico: '◈', n: '深井之底', d: '通过第一层' },
@@ -285,7 +287,9 @@ const I18N = {
       { id: 'frag3', ico: '❖', n: '半卷听城', d: '集齐三枚碎片' },
       { id: 'frag6', ico: '✧', n: '全卷听城', d: '集齐六枚碎片' },
       { id: 'swift', ico: '⚡', n: '疾行者', d: '步数低于定额通关' },
-      { id: 'daily', ico: '☾', n: '每日回访', d: '完成一次每日深潜' }
+      { id: 'daily', ico: '☾', n: '每日回访', d: '完成一次每日深潜' },
+      { id: 'ghostless', ico: '🛡', n: '暗影无伤', d: '有游魂的层零迷失通关' },
+      { id: 'streak3', ico: '✹', n: '三灯连燃', d: '连续三关三盏灯' }
     ]
   },
   en: {
@@ -304,7 +308,7 @@ const I18N = {
     locked: 'locked', best: 'best',
     lvSub: ['Waking, the well mouth above is one far star.', 'Water turns at the corridor\'s end, like an answer.', 'Hive-homes, every door open to the dark.', 'The labyrinth cares not for direction, only that you still walk.', 'Pillar-shadows older than night in the great hall.', 'On the way back, each echo is nearer to yourself.'],
     daily: 'DAILY DIVE', dailyDone: 'ARRIVED TODAY · COME BACK TOMORROW', dailyTitle: 'Daily Dive', dailySub: 'One maze per day, same for everyone.',
-    exp: 'lit', achTitle: 'LAMPS · ACHIEVEMENTS',
+    exp: 'lit', heatLbl: 'YOUR TRAIL', achTitle: 'LAMPS · ACHIEVEMENTS',
     achs: [
       { id: 'first', ico: '✦', n: 'First Cry', d: 'emit your first echo' },
       { id: 'lv1', ico: '◈', n: 'Bottom of the Well', d: 'clear depth I' },
@@ -313,7 +317,9 @@ const I18N = {
       { id: 'frag3', ico: '❖', n: 'Half the City', d: 'collect 3 fragments' },
       { id: 'frag6', ico: '✧', n: 'The Whole City', d: 'collect all 6 fragments' },
       { id: 'swift', ico: '⚡', n: 'Swift One', d: 'clear under par steps' },
-      { id: 'daily', ico: '☾', n: 'Daily Visitor', d: 'complete a daily dive' }
+      { id: 'daily', ico: '☾', n: 'Daily Visitor', d: 'complete a daily dive' },
+      { id: 'ghostless', ico: '🛡', n: 'Untouched', d: 'clear a ghost depth without being lost' },
+      { id: 'streak3', ico: '✹', n: 'Triple Flame', d: 'three 3-lantern clears in a row' }
     ]
   }
 };
@@ -601,6 +607,7 @@ let ghosts = [];
 let lostCount = 0;
 let ghostFlash = 0;
 let afterglow = null;   // 余像：照亮记忆
+let visits = null;      // 逐格访问计数（通关热力回放）
 function ghostCountFor(level, daily) { return daily ? 1 : (level >= 2 ? (level >= 4 ? 2 : 1) : 0); }
 function spawnGhosts() {
   ghosts = [];
@@ -680,6 +687,7 @@ function loadLevel(i, daily) {
   ripples = [];
   lights = new Float32Array(cols * rows);
   afterglow = new Float32Array(cols * rows);
+  visits = new Float32Array(cols * rows);
   spawnGhosts();
   litWalls = new Set();
   totalWalls = 0;
@@ -725,6 +733,7 @@ function tryMove(dx, dy) {
   const nx = px + dx, ny = py + dy;
   if (G(nx, ny) === '#') { sndStep(); return; }
   px = nx; py = ny; steps++;
+  visits[ny * cols + nx] += 1;
   sndStep();
   ripples.push({ x: px + 0.5, y: py + 0.5, r: 0, maxR: 1.8, soft: true });
   if (G(nx, ny) === '*') {
@@ -1000,6 +1009,10 @@ function levelClear() {
   const score = steps <= par ? 3 : steps <= par * 1.5 ? 2 : 1;
   if (score === 3) award('par');
   if (steps < par) award('swift');
+  if (ghosts.length > 0 && lostCount === 0) award('ghostless');
+  save.parStreak = score === 3 ? (save.parStreak || 0) + 1 : 0;
+  if (save.parStreak >= 3) award('streak3');
+  persist();
   if (isDaily) award('daily');
   if (!isDaily && li === 0) award('lv1');
   if (!isDaily && li === LEVELS.length - 1) award('all');
@@ -1017,7 +1030,35 @@ function levelClear() {
     `${T().exp}：${exp}%　·　${nm}`;
   document.getElementById('nextBtn').textContent =
     isDaily ? T().toMenu : (li + 1 < LEVELS.length ? T().next : (lang === 'zh' ? '归 途 尽 头' : 'THE END'));
+  document.getElementById('heatLbl').textContent = T().heatLbl;
+  drawHeat();
   document.getElementById('clearOv').classList.add('show');
+}
+function drawHeat() {
+  const hc = document.getElementById('heatCv');
+  if (!hc || !visits) return;
+  const g2 = hc.getContext('2d');
+  const scale = Math.min(hc.width / cols, hc.height / rows);
+  const offx = (hc.width - cols * scale) / 2, offy = (hc.height - rows * scale) / 2;
+  g2.fillStyle = 'rgba(7,9,13,1)';
+  g2.fillRect(0, 0, hc.width, hc.height);
+  let maxV = 1;
+  for (let i = 0; i < visits.length; i++) if (visits[i] > maxV) maxV = visits[i];
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+    const c = grid[y][x];
+    const v = visits[y * cols + x] / maxV;
+    if (c === '#') {
+      g2.fillStyle = 'rgba(40,48,62,0.55)';
+      g2.fillRect(offx + x * scale, offy + y * scale, scale, scale);
+    } else if (v > 0) {
+      const a = 0.22 + v * 0.78;
+      g2.fillStyle = `rgba(232,192,122,${a.toFixed(3)})`;
+      g2.fillRect(offx + x * scale + 0.5, offy + y * scale + 0.5, Math.max(1, scale - 1), Math.max(1, scale - 1));
+    } else {
+      g2.fillStyle = 'rgba(157,176,201,0.05)';
+      g2.fillRect(offx + x * scale, offy + y * scale, scale, scale);
+    }
+  }
 }
 function keyOf() { return isDaily ? 'daily' : li; }
 

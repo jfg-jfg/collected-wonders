@@ -535,22 +535,41 @@ function genLevel(w, h, rng, style) {
       break;
     }
     case 'rooms': {
-      // 房间网格：墙形成房间，门随机开通
+      // 蜂巢式房间：不规则墙段 + 策略性门 + 房间内柱
       const rw = Math.floor(w / 4), rh = Math.floor(h / 4);
+      // 水平墙：不规则间距，部分段缺失
       for (let cy = 1; cy < rh; cy++) {
-        const y = cy * 4;
+        const y = cy * 4 + Math.floor(rng() * 2);
         if (y >= h - 1) break;
-        for (let x = 1; x < w - 1; x++) wall(x, y);
-        // 随机开门
-        const doors = 1 + Math.floor(rng() * 2);
-        for (let d = 0; d < doors; d++) clear(2 + Math.floor(rng() * (w - 4)), y);
+        let x = 1;
+        while (x < w - 1) {
+          // 墙段长度随机 2-6
+          const segLen = 2 + Math.floor(rng() * 5);
+          // 跳过段（门/开口）
+          const gapLen = rng() < 0.3 ? 1 + Math.floor(rng() * 2) : 0;
+          for (let j = 0; j < segLen && x + j < w - 1; j++) wall(x + j, y);
+          x += segLen + gapLen;
+        }
       }
+      // 垂直墙：类似但更稀疏
       for (let cx = 1; cx < rw; cx++) {
-        const x = cx * 4;
+        const x = cx * 4 + Math.floor(rng() * 2);
         if (x >= w - 1) break;
-        for (let y = 1; y < h - 1; y++) wall(x, y);
-        const doors = 1 + Math.floor(rng() * 2);
-        for (let d = 0; d < doors; d++) clear(x, 2 + Math.floor(rng() * (h - 4)));
+        let y = 1;
+        while (y < h - 1) {
+          const segLen = 2 + Math.floor(rng() * 4);
+          const gapLen = rng() < 0.35 ? 1 + Math.floor(rng() * 2) : 0;
+          for (let j = 0; j < segLen && y + j < h - 1; j++) wall(x, y + j);
+          y += segLen + gapLen;
+        }
+      }
+      // 房间内柱：在开阔区加 1-3 格孤柱
+      const pillarCount = Math.floor(rw * rh * 0.5);
+      for (let i = 0; i < pillarCount; i++) {
+        const px2 = 3 + Math.floor(rng() * (w - 6));
+        const py2 = 3 + Math.floor(rng() * (h - 6));
+        wall(px2, py2);
+        if (rng() < 0.3) wall(px2 + 1, py2);  // 偶尔双柱
       }
       break;
     }

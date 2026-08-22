@@ -316,6 +316,10 @@
     <button class="ed-t" id="edCustomSize">↵</button>
     <span style="width:8px"></span>
     <button class="ed-t" id="edFrags" data-e="fragTxt"></button>
+    <span class="ed-note" id="edGhostLbl"></span>
+    <select id="edGhosts" style="background:rgba(7,9,13,0.8);color:var(--pale);border:1px solid var(--hairline);border-radius:4px;padding:4px 6px;font-family:inherit;font-size:12px;outline:none">
+      <option value="0">👻 0</option><option value="1">👻 1</option><option value="2">👻 2</option><option value="3">👻 3</option>
+    </select>
     <button class="ed-t" id="edClear" data-e="clear"></button>
     <button class="ed-t" id="edShare" data-e="share"></button>
   </div>
@@ -1266,7 +1270,8 @@ function edPlay() {
   if (d < 0) return;
   customFrom = 'editor';
   curWell = -1;
-  enterCustomPlay(editor.map.map(r => r.join('')), Math.round(d * 1.2) + 4, T().edCustomName, 0);
+  const gCount = +document.getElementById('edGhosts').value || 0;
+  enterCustomPlay(editor.map.map(r => r.join('')), Math.round(d * 1.2) + 4, T().edCustomName, gCount);
 }
 function playWell(i) {
   const w = WELL_PACK[i];

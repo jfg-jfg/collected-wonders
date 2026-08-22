@@ -197,12 +197,14 @@
   <span id="hudLevel"></span><span class="sep">·</span>
   <span id="hudSteps"></span><span class="sep">·</span>
   <span id="hudPings"></span><span class="sep">·</span>
-  <span id="hudTime"></span>
+  <span id="hudTime"></span><span class="sep" id="hudLostSep" style="display:none">·</span>
+  <span id="hudLost" style="display:none"></span>
 </div>
 
 <div class="topbar" id="topbar" style="display:none">
   <button class="btn-ghost" id="menuBtn"></button>
   <button class="btn-ghost" id="sndBtn"></button>
+  <button class="btn-ghost" id="recallBtn"></button>
   <button class="btn-ghost" id="langBtn">EN</button>
 </div>
 
@@ -261,7 +263,9 @@ const I18N = {
   zh: {
     menuSub: '无光的深处，唯回声与你同行。<br>以声照路，走出这座沉没之城。', start: '入 井',
     kbd: '<span>方向键 / WASD</span> 移动　<span>空格 / 点击</span> 发出回声',
-    steps: '步', pings: '回声', par: '定额', time: '时',
+    steps: '步', pings: '回声', par: '定额', time: '时', lost: '迷失',
+    recallOn: '余像 · 开', recallOff: '余像 · 关',
+    recallTip: '余像：照过的墙留下微光（辅助模式）',
     sndOn: '声 · 开', sndOff: '声 · 关', menu: '回廊', toMenu: '回廊',
     clearTitle: '回声抵达', next: '下 潜', retry: '重来', again: '再入井',
     endEn: 'T H E   D A Y L I G H T',
@@ -287,7 +291,9 @@ const I18N = {
   en: {
     menuSub: 'In the lightless deep, only echoes walk with you.<br>Sound out the dark. Climb out of the drowned city.', start: 'DESCEND',
     kbd: '<span>Arrows / WASD</span> move　<span>Space / click</span> echo',
-    steps: 'steps', pings: 'echoes', par: 'par', time: 'time',
+    steps: 'steps', pings: 'echoes', par: 'par', time: 'time', lost: 'lost',
+    recallOn: 'RECALL ON', recallOff: 'RECALL OFF',
+    recallTip: 'Recall: lit walls leave a faint afterglow (assist mode)',
     sndOn: 'SND ON', sndOff: 'SND OFF', menu: 'MENU', toMenu: 'MENU',
     clearTitle: 'ECHO ARRIVED', next: 'DESCEND', retry: 'RETRY', again: 'DESCEND AGAIN',
     endEn: 'T H E   D A Y L I G H T',
@@ -590,6 +596,71 @@ let moveCooldown = 0;
 let goalPulse = 0;
 const FRAG_CELLS = [];
 let fragTakenSet = null;
+/* 游魂：巡逻的暗影 */
+let ghosts = [];
+let lostCount = 0;
+let ghostFlash = 0;
+let afterglow = null;   // 余像：照亮记忆
+function ghostCountFor(level, daily) { return daily ? 1 : (level >= 2 ? (level >= 4 ? 2 : 1) : 0); }
+function spawnGhosts() {
+  ghosts = [];
+  const n = ghostCountFor(li, isDaily);
+  let guard = 0;
+  while (ghosts.length < n && guard++ < 500) {
+    const x = 1 + Math.floor(Math.random() * (cols - 2));
+    const y = 1 + Math.floor(Math.random() * (rows - 2));
+    if (G(x, y) === '#' || G(x, y) === 'G' || G(x, y) === '*') continue;
+    if (Math.hypot(x - px, y - py) < 6) continue;
+    if (ghosts.some(g => Math.hypot(g.x - x, g.y - y) < 5)) continue;
+    ghosts.push({ x, y, dx: 0, dy: 1, t: 0, phase: Math.random() * 10 });
+  }
+}
+function moveGhosts(dt) {
+  for (const g of ghosts) {
+    g.t += dt;
+    g.phase += dt;
+    if (g.t < 0.55) continue;
+    g.t = 0;
+    // 尝试沿当前方向走，撞墙则随机换向
+    if (G(g.x + g.dx, g.y + g.dy) !== '#') {
+      g.x += g.dx; g.y += g.dy;
+    } else {
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => G(g.x+dx, g.y+dy) !== '#');
+      if (dirs.length) { [g.dx, g.dy] = dirs[Math.floor(Math.random() * dirs.length)]; g.x += g.dx; g.y += g.dy; }
+    }
+    checkGhostHit();
+  }
+}
+function checkGhostHit() {
+  if (state !== 'play') return;
+  for (const g of ghosts) {
+    if (g.x === px && g.y === py) {
+      lostCount++;
+      ghostFlash = 1;
+      sndGhostHit();
+      // 回到起点
+      for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++)
+        if (grid[y][x] === 'S') { px = x; py = y; }
+      spawnGhosts();
+      updateHud();
+      showFrag(lang === 'zh' ? '……黑暗里有什么擦身而过。你回到了井口。' : '...Something brushed past in the dark. You are back at the well mouth.', false);
+      return;
+    }
+  }
+}
+function sndGhostHit() {
+  const ac = audio(); if (!ac || !save.snd) return;
+  const t = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(160, t);
+  o.frequency.exponentialRampToValueAtTime(38, t + 0.7);
+  const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 400;
+  g.gain.setValueAtTime(0.14, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.75);
+  o.connect(f); f.connect(g); g.connect(ac.destination);
+  o.start(t); o.stop(t + 0.8);
+}
 
 function loadLevel(i, daily) {
   li = i;
@@ -605,8 +676,11 @@ function loadLevel(i, daily) {
     if (grid[y][x] === '*') FRAG_CELLS.push([x, y]);
   }
   steps = 0; pings = 0; elapsed = 0; startTime = performance.now();
+  lostCount = 0; ghostFlash = 0;
   ripples = [];
   lights = new Float32Array(cols * rows);
+  afterglow = new Float32Array(cols * rows);
+  spawnGhosts();
   litWalls = new Set();
   totalWalls = 0;
   for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++)
@@ -678,6 +752,11 @@ function ping(cx, cy) {
 function propagate(dt) {
   for (const rp of ripples) rp.r += 9.5 * dt;
   for (let i = 0; i < lights.length; i++) lights[i] *= Math.exp(-dt * 1.1);
+  if (save.recall) {
+    // 余像：记录曾经照亮的峰值
+    for (let i = 0; i < afterglow.length; i++)
+      if (lights[i] > afterglow[i]) afterglow[i] = lights[i];
+  }
   for (const rp of ripples) {
     const x0 = Math.max(0, Math.floor(rp.x - rp.r - 1));
     const x1 = Math.min(cols - 1, Math.ceil(rp.x + rp.r + 1));
@@ -713,9 +792,10 @@ function render(dt) {
   for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
     if (grid[y][x] === '#') {
       const l = lights[y * cols + x];
+      const mem = save.recall ? (afterglow ? afterglow[y * cols + x] * 0.14 : 0) : 0;
       const dpx = Math.hypot(x - px, y - py);
       const near = Math.max(0, 1 - dpx / 2.2) * 0.4 * breathe;
-      const a = Math.min(1, l + near);
+      const a = Math.min(1, l + near + mem);
       if (a < 0.015) continue;
       ctx.fillStyle = `rgba(93,107,133,${(a * 0.92).toFixed(3)})`;
       ctx.shadowColor = 'rgba(125,145,180,0.8)';
@@ -724,6 +804,29 @@ function render(dt) {
       ctx.fill();
       ctx.shadowBlur = 0;
     }
+  }
+
+  // 游魂：暗红微光，被涟漪照亮或靠近玩家时可见
+  for (const g of ghosts) {
+    const d = Math.hypot(g.x - px, g.y - py);
+    const near = Math.max(0, 1 - d / 3.2);
+    const lit = lights[g.y * cols + g.x] * 0.9;
+    const a = Math.min(1, near * 0.85 + lit);
+    if (a < 0.02) continue;
+    const gcx = ox + (g.x + 0.5) * cell, gcy = oy + (g.y + 0.5) * cell;
+    const wob = Math.sin(g.phase * 3.1) * cell * 0.08;
+    const gg = ctx.createRadialGradient(gcx, gcy, 0, gcx, gcy, cell * 1.1);
+    gg.addColorStop(0, `rgba(214,72,72,${(a * 0.5).toFixed(3)})`);
+    gg.addColorStop(1, 'rgba(214,72,72,0)');
+    ctx.fillStyle = gg;
+    ctx.fillRect(gcx - cell * 1.2, gcy - cell * 1.2, cell * 2.4, cell * 2.4);
+    ctx.fillStyle = `rgba(236,110,96,${(a * (0.55 + 0.25 * Math.sin(g.phase * 5))).toFixed(3)})`;
+    ctx.shadowColor = 'rgba(214,72,72,0.9)';
+    ctx.shadowBlur = 9 * a;
+    ctx.beginPath();
+    ctx.ellipse(gcx + wob, gcy, cell * 0.14, cell * 0.22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
   }
 
   { // 出口
@@ -792,6 +895,13 @@ function render(dt) {
 
   ctx.fillStyle = vg;
   ctx.fillRect(0, 0, W, H);
+
+  // 迷离红闪
+  if (ghostFlash > 0) {
+    ghostFlash -= dt * 1.8;
+    ctx.fillStyle = `rgba(160,30,30,${(Math.max(0, ghostFlash) * 0.32).toFixed(3)})`;
+    ctx.fillRect(0, 0, W, H);
+  }
 }
 
 function roundRectC(x, y, w, h, r) {
@@ -816,6 +926,12 @@ function updateHud() {
   document.getElementById('hudSteps').innerHTML = `${T().steps} <b>${steps}</b> / ${T().par} ${par}`;
   document.getElementById('hudPings').innerHTML = `${T().pings} <b>${pings}</b>`;
   document.getElementById('hudTime').innerHTML = `${T().time} <b>${fmtTime(elapsed)}</b>`;
+  const gh = document.getElementById('hudLost');
+  if (gh) {
+    gh.style.display = ghosts.length ? '' : 'none';
+    document.getElementById('hudLostSep').style.display = ghosts.length ? '' : 'none';
+    gh.innerHTML = `${T().lost} <b>${lostCount}</b>`;
+  }
 }
 let fragTimer = null;
 function showFrag(text, isStory) {
@@ -1005,6 +1121,15 @@ document.getElementById('endMenuBtn').addEventListener('click', () => document.g
 const sndBtn = document.getElementById('sndBtn');
 function updSnd() { sndBtn.textContent = save.snd ? T().sndOn : T().sndOff; }
 sndBtn.addEventListener('click', () => { save.snd = !save.snd; persist(); updSnd(); });
+const recallBtn = document.getElementById('recallBtn');
+function updRecall() {
+  recallBtn.textContent = save.recall ? T().recallOn : T().recallOff;
+  recallBtn.title = T().recallTip;
+}
+recallBtn.addEventListener('click', () => {
+  save.recall = !save.recall; persist(); updRecall();
+  if (!save.recall && afterglow) afterglow.fill(0);
+});
 document.getElementById('langBtn').addEventListener('click', () => {
   lang = lang === 'zh' ? 'en' : 'zh';
   localStorage.setItem('echo-lang', lang);
@@ -1020,6 +1145,7 @@ function frame(now) {
     elapsed = performance.now() - startTime;
     if (Math.floor(elapsed / 1000) % 2 === 0) updateHud();
     propagate(dt);
+    moveGhosts(dt);
     if (moveCooldown > 0) moveCooldown -= dt;
   }
   render(dt);
@@ -1029,6 +1155,7 @@ function frame(now) {
 /* ================= 启动 ================= */
 applyI18n();
 updSnd();
+updRecall();
 const m = location.hash.match(/^#lv(\d+)/);
 if (m && +m[1] < LEVELS.length) loadLevel(+m[1]);
 requestAnimationFrame(frame);

@@ -212,7 +212,8 @@
     <div><span class="k">1 – 4</span><span data-i18n="hBrushKeys"></span></div>
     <div><span class="k">Z / Ctrl+Z</span><span data-i18n="hUndo"></span></div>
     <div><span class="k">C</span><span data-i18n="hColor"></span></div>
-    <div><span class="k">W / S</span><span data-i18n="hWash"></span></div>
+    <div><span class="k" data-i18n="hAutoK"></span><span data-i18n="hAuto"></span></div>
+  <div><span class="k">W / S</span><span data-i18n="hWash"></span></div>
   </div>
 </div>
 
@@ -271,6 +272,7 @@ const I18N = {
     hSealK: '印章', hSeal: '印章模式下点画布落款',
     hSize: '笔宽增减', hBrushKeys: '切换笔刷', hUndo: '撤销一笔',
     hColor: '循环墨色', hWash: '洗纸 / 保存作品',
+    hAutoK: '存档', hAuto: '画作自动存于本机，刷新可续',
     brush: '笔宽', density: '墨浓',
     undo: '撤销', wash: '洗纸', seal: '印章', save: '保存',
     hint: '落 笔 成 墨 · 缓 行 则 浓',
@@ -290,6 +292,7 @@ const I18N = {
     hSealK: 'Seal', hSeal: 'In seal mode, click to stamp',
     hSize: 'brush size –/+', hBrushKeys: 'switch brush', hUndo: 'undo a stroke',
     hColor: 'cycle ink color', hWash: 'wash paper / save artwork',
+    hAutoK: 'Archive', hAuto: 'auto-saved locally — refresh to resume',
     brush: 'Brush', density: 'Ink',
     undo: 'Undo', wash: 'Wash', seal: 'Seal', save: 'Save',
     hint: 'EACH STROKE BECOMES INK',
@@ -971,6 +974,77 @@ async function saveArtwork() {
 }
 document.getElementById('saveBtn').addEventListener('click', saveArtwork);
 
+/* ---------------- 画作存档（IndexedDB） ----------------
+   染料纹理 readPixels → 半分辨率存 Float32 对；
+   载入时放大回写，刷新不丢作品 */
+let artDirty = false;
+const _origSplat = splat;
+splat = function (x, y, dx, dy, dyeAmt, radiusScale, tint) {
+  _origSplat(x, y, dx, dy, dyeAmt, radiusScale, tint);
+  artDirty = true;
+};
+function idbOpen() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('ink-art', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('art');
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function saveArtArchive() {
+  try {
+    const w = dye.width, h = dye.height;
+    const full = new Float32Array(w * h * 4);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, dye.read.fbo);
+    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, full);
+    const dw = w >> 1, dh = h >> 1;
+    const small = new Float32Array(dw * dh * 2);
+    for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) {
+      let r = 0, g = 0;
+      for (let oy = 0; oy < 2; oy++) for (let ox = 0; ox < 2; ox++) {
+        const i = ((y * 2 + oy) * w + (x * 2 + ox)) * 4;
+        r += full[i]; g += full[i + 1];
+      }
+      const o = (y * dw + x) * 2;
+      small[o] = r * 0.25; small[o + 1] = g * 0.25;
+    }
+    const db = await idbOpen();
+    await new Promise((res, rej) => {
+      const tx = db.transaction('art', 'readwrite');
+      tx.objectStore('art').put({ w: dw, h: dh, data: small }, 'current');
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+    });
+    artDirty = false;
+  } catch (e) { /* 存档失败不扰画 */ }
+}
+async function loadArtArchive() {
+  try {
+    const db = await idbOpen();
+    const rec = await new Promise((res, rej) => {
+      const rq = db.transaction('art').objectStore('art').get('current');
+      rq.onsuccess = () => res(rq.result);
+      rq.onerror = () => rej(rq.error);
+    });
+    if (!rec) return false;
+    const dw = rec.w, dh = rec.h, w = dw * 2, h = dh * 2;
+    const up = new Float32Array(w * h * 4);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const s = (Math.min(dh - 1, y >> 1) * dw + Math.min(dw - 1, x >> 1)) * 2;
+      const o = (y * w + x) * 4;
+      up[o] = rec.data[s]; up[o + 1] = rec.data[s + 1]; up[o + 2] = 0; up[o + 3] = 1;
+    }
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, dye.read.texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, w, h, 0, gl.RGBA, gl.FLOAT, up);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, dye.read.fbo);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, dye.write.fbo);
+    gl.blitFramebuffer(0, 0, w, h, 0, 0, w, h, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+    return true;
+  } catch (e) { return false; }
+}
+setInterval(() => { if (artDirty) saveArtArchive(); }, 20000);
+window.addEventListener('pagehide', () => { if (artDirty) saveArtArchive(); });
+
 /* ---------------- 闲时落墨 ---------------- */
 const REDUCED_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let nextDrop = 0;
@@ -1156,9 +1230,15 @@ applyI18n();
 updSizeVal();
 updateUndoBtn();
 resize();
-splat(0.62, 0.68, -160, -320, 0.8, 1.0, 0);
-splat(0.58, 0.62, -90, -220, 0.5, 0.6, 0);
-splat(0.66, 0.74, -220, -140, 0.35, 0.45, 0);
+// 续档：有存档则恢复，无则落开卷三笔
+loadArtArchive().then(ok => {
+  if (!ok) {
+    splat(0.62, 0.68, -160, -320, 0.8, 1.0, 0);
+    splat(0.58, 0.62, -90, -220, 0.5, 0.6, 0);
+    splat(0.66, 0.74, -220, -140, 0.35, 0.45, 0);
+  }
+  artDirty = false;
+});
 requestAnimationFrame(frame);
 </script>
 </body>

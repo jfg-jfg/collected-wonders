@@ -95,6 +95,9 @@
 </header>
 
 <div class="topright">
+  <button class="btn-ghost" id="palBtn"></button>
+  <button class="btn-ghost" id="juliaBtn"></button>
+  <button class="btn-ghost" id="shotBtn"></button>
   <button class="btn-ghost" id="shareBtn"></button>
   <button class="btn-ghost" id="resetBtn"></button>
   <button class="btn-ghost" id="langBtn">EN</button>
@@ -118,7 +121,10 @@ const I18N = {
     sub: '分形星球',
     hint: '滚轮缩放 · 拖拽巡游 · 双击俯冲',
     share: '分享坐标', copied: '已复制链接', copyFail: '链接已写入地址栏，请手动复制',
-    reset: '回母港', zoom: '倍率',
+    reset: '回母港', zoom: '倍率', palette: '色',
+    juliaOn: '儒', juliaOff: '曼',
+    juliaTipOn: '切换到儒利亚集合（以当前中心为 c）', juliaTipOff: '回到曼德博集合',
+    palTip: '切换调色板', shot: '存图', shotOk: '✓ 已保存',
     places: [
       { name: '母港', x: -0.6, y: 0, s: 1.4 },
       { name: '海马谷', x: -0.746806, y: 0.108665, s: 0.006 },
@@ -133,7 +139,10 @@ const I18N = {
     sub: 'Fractal Planet',
     hint: 'SCROLL TO ZOOM · DRAG TO DRIFT · DOUBLE-CLICK TO DIVE',
     share: 'SHARE SPOT', copied: 'link copied', copyFail: 'link is in the address bar — copy manually',
-    reset: 'HOME PORT', zoom: 'mag',
+    reset: 'HOME PORT', zoom: 'mag', palette: 'PAL',
+    juliaOn: 'JULIA', juliaOff: 'MSET',
+    juliaTipOn: 'switch to the Julia set (c = current center)', juliaTipOff: 'back to the Mandelbrot set',
+    palTip: 'cycle palette', shot: 'SHOT', shotOk: '✓ saved',
     places: [
       { name: 'Home Port', x: -0.6, y: 0, s: 1.4 },
       { name: 'Seahorse Valley', x: -0.746806, y: 0.108665, s: 0.006 },
@@ -210,6 +219,10 @@ uniform float uAspect;
 uniform float uIter;
 uniform float uPhase;
 uniform vec2 uRes;
+uniform float uJulia;
+uniform vec2 uCx;
+uniform vec2 uCy;
+uniform float uPal;
 
 vec2 ds_add(vec2 a, vec2 b) {
   float t1 = a.x + b.x;
@@ -234,31 +247,43 @@ vec2 ds_mul(vec2 a, vec2 b) {
   return r;
 }
 vec3 palette(float t) {
-  /* 靛蓝 - 青 - 金 - 米白 的墨系循环 */
-  vec3 a = vec3(0.16, 0.14, 0.20);
-  vec3 b = vec3(0.42, 0.36, 0.30);
-  vec3 c = vec3(1.0, 1.0, 1.0);
-  vec3 d = vec3(0.10, 0.20, 0.38);
-  return a + b * cos(6.28318 * (c * t + d));
+  /* 四套调色板：0墨 1极光 2炉火 3素宣 */
+  if (uPal < 0.5) {
+    vec3 a = vec3(0.16, 0.14, 0.20), b = vec3(0.42, 0.36, 0.30), d = vec3(0.10, 0.20, 0.38);
+    return a + b * cos(6.28318 * (t + d));
+  } else if (uPal < 1.5) {
+    vec3 a = vec3(0.10, 0.16, 0.18), b = vec3(0.30, 0.44, 0.40), d = vec3(0.45, 0.28, 0.60);
+    return a + b * cos(6.28318 * (t + d));
+  } else if (uPal < 2.5) {
+    vec3 a = vec3(0.18, 0.08, 0.05), b = vec3(0.42, 0.26, 0.12), d = vec3(0.02, 0.12, 0.24);
+    return a + b * cos(6.28318 * (t + d));
+  } else {
+    vec3 a = vec3(0.16, 0.15, 0.13), b = vec3(0.34, 0.32, 0.30), d = vec3(0.0, 0.04, 0.08);
+    return a + b * cos(6.28318 * (t + d));
+  }
 }
 void main() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
-  uv.x *= 1.0;
   // c = center + uv * scale（df64 加法保精度）
   vec2 cxc = ds_add(uCenterX, vec2(uv.x * uScale, 0.0));
   vec2 cyc = ds_add(uCenterY, vec2(uv.y * uScale, 0.0));
-  vec2 zx = vec2(0.0), zy = vec2(0.0);
+  vec2 zx, zy, Cx, Cy;
+  if (uJulia > 0.5) {
+    zx = cxc; zy = cyc;       // Julia：z 从像素点出发
+    Cx = uCx; Cy = uCy;       // c 固定
+  } else {
+    zx = vec2(0.0); zy = vec2(0.0);
+    Cx = cxc; Cy = cyc;
+  }
   float i = 0.0;
   float dd = 0.0;
   for (int k = 0; k < 2048; k++) {
     if (float(k) >= uIter) break;
-    // z = z^2 + c
     vec2 xx = ds_mul(zx, zx);
     vec2 yy = ds_mul(zy, zy);
     vec2 xy = ds_mul(zx, zy);
-    // zx' = xx - yy + c.x ; zy' = 2xy + c.y
-    vec2 nx = ds_add(ds_add(xx, vec2(-yy.x, -yy.y)), cxc);
-    vec2 ny = ds_add(ds_add(xy, xy), cyc);
+    vec2 nx = ds_add(ds_add(xx, vec2(-yy.x, -yy.y)), Cx);
+    vec2 ny = ds_add(ds_add(xy, xy), Cy);
     zx = nx; zy = ny;
     dd = zx.x * zx.x + zy.x * zy.x;
     if (dd > 65536.0) { i = float(k); break; }
@@ -287,12 +312,15 @@ gl.linkProgram(prog);
 if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error('link: ' + gl.getProgramInfoLog(prog));
 gl.useProgram(prog);
 const U = {};
-['uCenterX','uCenterY','uScale','uAspect','uIter','uPhase','uRes'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+['uCenterX','uCenterY','uScale','uAspect','uIter','uPhase','uRes','uJulia','uCx','uCy','uPal'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
 
 /* ============ 视图状态 ============ */
 const view = { x: -0.6, y: 0, s: 1.4 };   // 中心与半高
 let fly = null;                            // 飞行动画 {x0,y0,s0,x1,y1,s1,t0,dur}
 const MAG_LIMIT = 1e-13;
+let juliaOn = false, juliaC = { x: -0.7269, y: 0.1889 };
+let palIdx = 0;
+const PAL_NAMES = { zh: ['墨', '极光', '炉火', '素宣'], en: ['INK', 'AURORA', 'EMBER', 'PLAIN'] };
 
 function split64(v) {
   const hi = Math.fround(v);
@@ -316,6 +344,8 @@ function render() {
   const [xh, xl] = split64(view.x);
   const [yh, yl] = split64(view.y);
   const iter = Math.min(2000, Math.round(160 + 42 * Math.log2(3 / view.s) * 0.5 + 80));
+  const [cxh, cxl] = split64(juliaC.x);
+  const [cyh, cyl] = split64(juliaC.y);
   gl.uniform2f(U.uCenterX, xh, xl);
   gl.uniform2f(U.uCenterY, yh, yl);
   gl.uniform1f(U.uScale, view.s);
@@ -323,9 +353,15 @@ function render() {
   gl.uniform1f(U.uIter, iter);
   gl.uniform1f(U.uPhase, 0.0);
   gl.uniform2f(U.uRes, canvas.width, canvas.height);
+  gl.uniform1f(U.uJulia, juliaOn ? 1.0 : 0.0);
+  gl.uniform2f(U.uCx, cxh, cxl);
+  gl.uniform2f(U.uCy, cyh, cyl);
+  gl.uniform1f(U.uPal, palIdx);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
+  lastIter = iter;
   updateCoords();
 }
+let lastIter = 0;
 
 /* ============ HUD ============ */
 const coordsEl = document.getElementById('coords');
@@ -335,8 +371,12 @@ function updateCoords() {
     : mag >= 1e4 ? (mag / 1e4).toFixed(1) + '×10⁴'
     : mag >= 100 ? mag.toFixed(0)
     : mag.toFixed(1);
+  const jl = juliaOn
+    ? `<br>J c = ${juliaC.x.toFixed(8)}, ${juliaC.y.toFixed(8)}`
+    : '';
+  const pl = `<br>${T().palette} ${PAL_NAMES[lang][palIdx]} · ${lastIter || ''} iter`;
   coordsEl.innerHTML =
-    `RE ${view.x.toFixed(12).slice(0, 12)}<br>IM ${view.y.toFixed(12).slice(0, 12)}<br>${T().zoom} ${magStr}`;
+    `RE ${view.x.toFixed(12).slice(0, 12)}<br>IM ${view.y.toFixed(12).slice(0, 12)}<br>${T().zoom} ${magStr}${jl}${pl}`;
 }
 
 /* ============ 交互 ============ */
@@ -445,6 +485,55 @@ function flashTitle(btn, txt) {
   setTimeout(() => btn.textContent = old, 1800);
 }
 document.getElementById('resetBtn').addEventListener('click', () => flyTo(T().places[0]));
+/* Julia / 调色板 / 截图 */
+const juliaBtn = document.getElementById('juliaBtn');
+juliaBtn.addEventListener('click', () => {
+  if (!juliaOn) {
+    juliaC = { x: view.x, y: view.y };   // 以当前中心为 c
+    juliaOn = true;
+    view.x = 0; view.y = 0; view.s = 1.6;
+  } else {
+    juliaOn = false;
+    view.x = -0.6; view.y = 0; view.s = 1.4;
+  }
+  fly = null;
+  updateJuliaBtn(); updateCoords(); requestRender();
+});
+function updateJuliaBtn() {
+  juliaBtn.textContent = juliaOn ? T().juliaOff : T().juliaOn;
+  juliaBtn.title = juliaOn ? T().juliaTipOff : T().juliaTipOn;
+}
+const palBtn = document.getElementById('palBtn');
+palBtn.addEventListener('click', () => {
+  palIdx = (palIdx + 1) % 4;
+  palBtn.textContent = T().palette + ' ' + PAL_NAMES[lang][palIdx];
+  palBtn.title = T().palTip;
+  requestRender();
+});
+const shotBtn = document.getElementById('shotBtn');
+shotBtn.addEventListener('click', () => {
+  render();  // 同帧捕获（无需 preserveDrawingBuffer）
+  const a = document.createElement('a');
+  a.download = `fold-${Date.now()}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+  flashTitle(shotBtn, T().shotOk);
+});
+/* 键盘：缩放 / 平移 / 模式 */
+window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  const k = e.key;
+  if (k === '+' || k === '=') { zoomAt(innerWidth / 2, innerHeight / 2, 0.72); fly = null; }
+  else if (k === '-' || k === '_') { zoomAt(innerWidth / 2, innerHeight / 2, 1.38); fly = null; }
+  else if (k === 'ArrowLeft') { view.x -= view.s * 0.12; fly = null; requestRender(); }
+  else if (k === 'ArrowRight') { view.x += view.s * 0.12; fly = null; requestRender(); }
+  else if (k === 'ArrowUp') { view.y += view.s * 0.12; fly = null; requestRender(); }
+  else if (k === 'ArrowDown') { view.y -= view.s * 0.12; fly = null; requestRender(); }
+  else if (k === 'j' || k === 'J') juliaBtn.click();
+  else if (k === 'p' || k === 'P') palBtn.click();
+  else if (k === 's' || k === 'S') shotBtn.click();
+  if (k.startsWith('Arrow')) e.preventDefault();
+});
 document.getElementById('langBtn').addEventListener('click', () => {
   lang = lang === 'zh' ? 'en' : 'zh';
   localStorage.setItem('fold-lang', lang);
@@ -456,6 +545,10 @@ function applyI18n() {
   document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
   document.getElementById('shareBtn').textContent = T().share;
   document.getElementById('resetBtn').textContent = T().reset;
+  document.getElementById('shotBtn').textContent = T().shot;
+  palBtn.textContent = T().palette + ' ' + PAL_NAMES[lang][palIdx];
+  palBtn.title = T().palTip;
+  updateJuliaBtn();
   document.getElementById('hint').textContent = T().hint;
   buildPlaces();
   updateCoords();

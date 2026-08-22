@@ -316,6 +316,7 @@ const U = {};
 
 /* ============ 视图状态 ============ */
 const view = { x: -0.6, y: 0, s: 1.4 };   // 中心与半高
+const target = { x: -0.6, y: 0, s: 1.4 }; // 平滑追踪目标
 let fly = null;                            // 飞行动画 {x0,y0,s0,x1,y1,s1,t0,dur}
 const MAG_LIMIT = 1e-13;
 let juliaOn = false, juliaC = { x: -0.7269, y: 0.1889 };
@@ -401,6 +402,7 @@ canvas.addEventListener('pointermove', e => {
   if (Math.abs(e.clientX - dragStart.x) + Math.abs(e.clientY - dragStart.y) > 4) moved = true;
   view.x = dragStart.vx - dx;
   view.y = dragStart.vy + dy;
+  target.x = view.x; target.y = view.y; target.s = view.s;
   fly = null;
   document.getElementById('hint').classList.add('gone');
   requestRender();
@@ -416,13 +418,13 @@ canvas.addEventListener('wheel', e => {
 }, { passive: false });
 
 function zoomAt(cx, cy, f) {
-  const ns = Math.max(MAG_LIMIT * 1.4, Math.min(2.5, view.s * f));
+  const ns = Math.max(MAG_LIMIT * 1.4, Math.min(2.5, target.s * f));
   const kx = (cx - innerWidth / 2) / innerHeight * 2;
   const ky = -(cy - innerHeight / 2) / innerHeight * 2;
-  const ratio = ns / view.s;
-  view.x += kx * view.s * (1 - ratio);
-  view.y += ky * view.s * (1 - ratio);
-  view.s = ns;
+  const ratio = ns / target.s;
+  target.x += kx * target.s * (1 - ratio);
+  target.y += ky * target.s * (1 - ratio);
+  target.s = ns;
   requestRender();
 }
 canvas.addEventListener('dblclick', e => {
@@ -503,6 +505,7 @@ juliaBtn.addEventListener('click', () => {
     juliaOn = false;
     view.x = -0.6; view.y = 0; view.s = 1.4;
   }
+  target.x = view.x; target.y = view.y; target.s = view.s;
   fly = null;
   updateJuliaBtn(); updateCoords(); requestRender();
 });
@@ -530,12 +533,13 @@ shotBtn.addEventListener('click', () => {
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   const k = e.key;
+  const pan = (dx, dy) => { target.x += dx * view.s; target.y += dy * view.s; fly = null; requestRender(); };
   if (k === '+' || k === '=') { zoomAt(innerWidth / 2, innerHeight / 2, 0.72); fly = null; }
   else if (k === '-' || k === '_') { zoomAt(innerWidth / 2, innerHeight / 2, 1.38); fly = null; }
-  else if (k === 'ArrowLeft') { view.x -= view.s * 0.12; fly = null; requestRender(); }
-  else if (k === 'ArrowRight') { view.x += view.s * 0.12; fly = null; requestRender(); }
-  else if (k === 'ArrowUp') { view.y += view.s * 0.12; fly = null; requestRender(); }
-  else if (k === 'ArrowDown') { view.y -= view.s * 0.12; fly = null; requestRender(); }
+  else if (k === 'ArrowLeft') { pan(-0.12, 0); }
+  else if (k === 'ArrowRight') { pan(0.12, 0); }
+  else if (k === 'ArrowUp') { pan(0, 0.12); }
+  else if (k === 'ArrowDown') { pan(0, -0.12); }
   else if (k === 'j' || k === 'J') juliaBtn.click();
   else if (k === 'p' || k === 'P') palBtn.click();
   else if (k === 's' || k === 'S') shotBtn.click();
@@ -575,12 +579,23 @@ function frame(now) {
   if (fly) {
     const t = Math.min(1, (now - fly.t0) / fly.dur);
     const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;  // easeInOutQuad
-    // 对数插值 scale
     view.s = Math.exp(Math.log(fly.s0) + (Math.log(fly.s1) - Math.log(fly.s0)) * e);
     view.x = fly.x0 + (fly.x1 - fly.x0) * e;
     view.y = fly.y0 + (fly.y1 - fly.y0) * e;
+    target.x = view.x; target.y = view.y; target.s = view.s;
     if (t >= 1) fly = null;
     requestRender();
+  } else {
+    // 平滑追踪：view 指数逼近 target（惯性缩放）
+    const k = 1 - Math.exp(-dt * 9);
+    const dxs = (target.s - view.s) / view.s;
+    const dxy = Math.hypot(target.x - view.x, target.y - view.y) / Math.max(target.s, 1e-13);
+    if (Math.abs(dxs) > 1e-4 || dxy > 1e-4) {
+      view.s = Math.exp(Math.log(view.s) + Math.log(target.s / view.s) * k);
+      view.x += (target.x - view.x) * k;
+      view.y += (target.y - view.y) * k;
+      requestRender();
+    }
   }
   requestAnimationFrame(frame);
 }
@@ -591,6 +606,7 @@ applyI18n();
 const hm = location.hash.match(/x=([-\d.e+]+),y=([-\d.e+]+),s=([\d.e+-]+)/);
 if (hm) {
   view.x = +hm[1]; view.y = +hm[2]; view.s = +hm[3];
+  target.x = view.x; target.y = view.y; target.s = view.s;
 }
 render();
 requestAnimationFrame(frame);

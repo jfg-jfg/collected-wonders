@@ -277,6 +277,13 @@ const I18N = {
     lvNames: ['一 · 深井', '二 · 回廊', '三 · 蜂巢', '四 · 迷津', '五 · 巨殿', '六 · 归途'],
     endlessName: n => `无底之井 · 第 ${n} 层`,
     endlessBtn: '∞ · 无底之井',
+    endlessSubs: [
+      '井之下还有井。你听见自己的回声，从更深处返回。',
+      '这里的墙不记得名字，只记得光。',
+      '你开始分不清：是你在照亮城，还是城在照亮你。',
+      '水声很近了。像有人在耳边翻动一页纸。',
+      '再往下，连黑暗也是一种光。'
+    ],
     locked: '未至', best: '最佳',
     lvSub: ['醒来时，头顶的井口已是一枚远星。', '水声在回廊尽头折返，像有人应答。', '蜂巢般的居所，门都朝着黑暗敞开。', '迷津不在乎方向，只在乎你还愿意走。', '巨殿的柱影比夜更旧。', '归途上，每一步回声都更接近自己。'],
     daily: '每 日 深 潜', dailyDone: '今日已抵达 · 明日再来', dailyTitle: '每日深潜', dailySub: '同一日，全城同一个迷宫。',
@@ -310,6 +317,13 @@ const I18N = {
     lvNames: ['I · The Well', 'II · Corridors', 'III · The Hive', 'IV · Labyrinth', 'V · Great Hall', 'VI · The Way Back'],
     endlessName: n => `The Bottomless · Depth ${n}`,
     endlessBtn: '∞ · BOTTOMLESS',
+    endlessSubs: [
+      'Below the well, another well. Your echo returns from deeper still.',
+      'Walls here remember no names — only light.',
+      'You can no longer tell: are you lighting the city, or is it lighting you.',
+      'The water is very near now. Like someone turning a page at your ear.',
+      'Farther down, even the dark is a kind of light.'
+    ],
     locked: 'locked', best: 'best',
     lvSub: ['Waking, the well mouth above is one far star.', 'Water turns at the corridor\'s end, like an answer.', 'Hive-homes, every door open to the dark.', 'The labyrinth cares not for direction, only that you still walk.', 'Pillar-shadows older than night in the great hall.', 'On the way back, each echo is nearer to yourself.'],
     daily: 'DAILY DIVE', dailyDone: 'ARRIVED TODAY · COME BACK TOMORROW', dailyTitle: 'Daily Dive', dailySub: 'One maze per day, same for everyone.',
@@ -727,7 +741,9 @@ function showLevelCard() {
   const lc = document.getElementById('levelcard');
   const endless = li >= LEVELS.length;
   const nm = isDaily ? T().dailyTitle : lvName(li);
-  const sb = isDaily ? T().dailySub : (endless ? T().lvSub[5] : T().lvSub[li]);
+  const sb = isDaily ? T().dailySub
+    : endless ? T().endlessSubs[(li - 6) % T().endlessSubs.length]
+    : T().lvSub[li];
   const no = isDaily ? '◈ ' + todayKey()
     : endless ? '∞ ' + (li - 5)
     : ['一', '二', '三', '四', '五', '六'][li] + ' / 六';

@@ -122,6 +122,7 @@ const I18N = {
     hint: '滚轮缩放 · 拖拽巡游 · 双击俯冲',
     share: '分享坐标', copied: '已复制链接', copyFail: '链接已写入地址栏，请手动复制',
     reset: '回母港', zoom: '倍率', palette: '色',
+    addSpot: '存此地', delSpot: '长按删除',
     juliaOn: '儒', juliaOff: '曼',
     juliaTipOn: '切换到儒利亚集合（以当前中心为 c）', juliaTipOff: '回到曼德博集合',
     palTip: '切换调色板', shot: '存图', shotOk: '✓ 已保存',
@@ -140,6 +141,7 @@ const I18N = {
     hint: 'SCROLL TO ZOOM · DRAG TO DRIFT · DOUBLE-CLICK TO DIVE',
     share: 'SHARE SPOT', copied: 'link copied', copyFail: 'link is in the address bar — copy manually',
     reset: 'HOME PORT', zoom: 'mag', palette: 'PAL',
+    addSpot: 'MARK SPOT', delSpot: 'long-press to delete',
     juliaOn: 'JULIA', juliaOff: 'MSET',
     juliaTipOn: 'switch to the Julia set (c = current center)', juliaTipOff: 'back to the Mandelbrot set',
     palTip: 'cycle palette', shot: 'SHOT', shotOk: '✓ saved',
@@ -454,6 +456,10 @@ window.addEventListener('pointerup', e => {
 });
 
 /* ============ 地名巡航 ============ */
+/* 自定义书签：把当前坐标存为芯片 */
+let customSpots = [];
+try { customSpots = JSON.parse(localStorage.getItem('fold-spots') || '[]'); } catch (e) {}
+function saveSpots() { localStorage.setItem('fold-spots', JSON.stringify(customSpots)); }
 function flyTo(p) {
   fly = { x0: view.x, y0: view.y, s0: view.s, x1: p.x, y1: p.y, s1: p.s, t0: performance.now(), dur: 2600 };
   document.getElementById('hint').classList.add('gone');
@@ -472,6 +478,39 @@ function buildPlaces() {
     });
     box.appendChild(b);
   });
+  // 自定义书签
+  customSpots.forEach((p, i) => {
+    const b = document.createElement('button');
+    b.className = 'place';
+    b.textContent = '◈ ' + p.name;
+    b.title = T().delSpot;
+    b.addEventListener('click', () => { flyTo(p); document.querySelectorAll('.place').forEach(x => x.classList.remove('on')); b.classList.add('on'); });
+    let lp = null;
+    b.addEventListener('pointerdown', () => {
+      lp = setTimeout(() => {
+        customSpots.splice(i, 1); saveSpots(); buildPlaces();
+        lp = null;
+      }, 700);
+    });
+    const cancel = () => { if (lp) { clearTimeout(lp); lp = null; } };
+    b.addEventListener('pointerup', cancel);
+    b.addEventListener('pointerleave', cancel);
+    box.appendChild(b);
+  });
+  // 存此地
+  const sb = document.createElement('button');
+  sb.className = 'place';
+  sb.textContent = '✚ ' + T().addSpot;
+  sb.addEventListener('click', () => {
+    if (customSpots.length >= 5) customSpots.shift();
+    const d = new Date();
+    customSpots.push({
+      name: `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`,
+      x: view.x, y: view.y, s: view.s
+    });
+    saveSpots(); buildPlaces();
+  });
+  box.appendChild(sb);
 }
 
 /* ============ 分享 ============ */

@@ -574,16 +574,18 @@ function showEnvelope(next) {
 }
 
 let revealTimers = [];
-function showLetter(id) {
+function showLetter(id, reread) {
   revealTimers.forEach(clearTimeout); revealTimers = [];
   const nd = S().nodes[id];
   visited.add('node:' + id);
-  letterCount++;
-  save.read = letterCount;
-  save.node = id;
-  save.readNodes = save.readNodes || [];
-  if (!save.readNodes.includes(id)) save.readNodes.push(id);
-  persist();
+  if (!reread) {
+    letterCount++;
+    save.read = letterCount;
+    save.node = id;
+    save.readNodes = save.readNodes || [];
+    if (!save.readNodes.includes(id)) save.readNodes.push(id);
+    persist();
+  }
   document.getElementById('topbar').style.display = 'flex';
   document.getElementById('prog').style.display = 'block';
   document.getElementById('letterNo').textContent = S().letterNo(Math.min(letterCount, 13));
@@ -775,6 +777,17 @@ function buildStack() {
       const got = readSet.has(id);
       div.className = 'stack-item ' + (got ? 'read' : 'unread');
       div.innerHTML = `<span class="no">${no}</span><span class="yr">${got ? nd.year : '— — —'}</span><span class="tt">${got ? nd.title : (lang === 'zh' ? '未 启 封' : 'UNOPENED')}</span>`;
+      if (got) {
+        div.style.cursor = 'pointer';
+        div.title = lang === 'zh' ? '重读这封信' : 're-read this letter';
+        div.addEventListener('mouseenter', () => div.style.borderColor = 'rgba(217,181,124,0.55)');
+        div.addEventListener('mouseleave', () => div.style.borderColor = '');
+        div.addEventListener('click', () => {
+          document.getElementById('stackOv').classList.remove('show');
+          document.getElementById('titleScreen').classList.add('gone');
+          showLetter(id, true);
+        });
+      }
     }
     list.appendChild(div);
   });

@@ -1886,7 +1886,14 @@ document.getElementById('langBtn').addEventListener('click', () => {
 
 /* ================= 主循环 ================= */
 let prev = performance.now();
+let echoHidden = false;
+document.addEventListener('visibilitychange', () => {
+  echoHidden = document.hidden;
+  if (!echoHidden) prev = performance.now();
+});
 function frame(now) {
+  requestAnimationFrame(frame);
+  if (echoHidden) return;
   const dt = Math.min((now - prev) / 1000, 0.05);
   prev = now;
   if (state === 'play') {
@@ -1898,7 +1905,6 @@ function frame(now) {
     if (moveCooldown > 0) moveCooldown -= dt;
   }
   render(dt);
-  requestAnimationFrame(frame);
 }
 
 /* ================= 启动 ================= */

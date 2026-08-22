@@ -669,7 +669,14 @@ function requestRender() {
   requestAnimationFrame(() => { renderPending = false; render(); });
 }
 let prev = performance.now();
+let foldHidden = false;
+document.addEventListener('visibilitychange', () => {
+  foldHidden = document.hidden;
+  if (!foldHidden) prev = performance.now();
+});
 function frame(now) {
+  requestAnimationFrame(frame);
+  if (foldHidden) return;
   const dt = Math.min((now - prev) / 1000, 0.05);
   prev = now;
   if (fly) {
@@ -697,7 +704,6 @@ function frame(now) {
       requestRender();
     }
   }
-  requestAnimationFrame(frame);
 }
 
 /* ============ 启动 ============ */

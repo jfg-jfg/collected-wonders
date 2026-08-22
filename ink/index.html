@@ -1627,12 +1627,18 @@ function renderFrame(dt, forceFlat) {
 
 /* ---------------- 主循环 ---------------- */
 let prevTime = performance.now();
+let hidden = false;
+document.addEventListener('visibilitychange', () => {
+  hidden = document.hidden;
+  if (!hidden) prevTime = performance.now();  // 防止累积dt跳帧
+});
 function frame(now) {
+  requestAnimationFrame(frame);
+  if (hidden) return;   // 页面不可见时跳过渲染与模拟
   const dt = Math.min((now - prevTime) / 1000, 0.033);
   prevTime = now;
   idleDrop(now, dt);
   renderFrame(dt, false);
-  requestAnimationFrame(frame);
 }
 
 /* ---------------- resize ---------------- */

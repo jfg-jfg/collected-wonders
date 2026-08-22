@@ -1227,7 +1227,14 @@ function resizeMotes() {
 window.addEventListener('resize', resizeMotes);
 resizeMotes();
 let prevM = performance.now();
+let lettersHidden = false;
+document.addEventListener('visibilitychange', () => {
+  lettersHidden = document.hidden;
+  if (!lettersHidden) prevM = performance.now();
+});
 function mframe(now) {
+  requestAnimationFrame(mframe);
+  if (lettersHidden) return;
   const dt = Math.min((now - prevM) / 1000, 0.05);
   prevM = now;
   mctx.clearRect(0, 0, motes.width, motes.height);
@@ -1239,7 +1246,6 @@ function mframe(now) {
     mctx.fillStyle = `rgba(222,204,160,${Math.max(0, a).toFixed(3)})`;
     mctx.beginPath(); mctx.arc(m.x, m.y, m.r, 0, Math.PI * 2); mctx.fill();
   }
-  requestAnimationFrame(mframe);
 }
 
 /* ================= 按钮 ================= */

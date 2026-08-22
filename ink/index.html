@@ -110,6 +110,12 @@
     background: var(--ink); border: 2px solid var(--paper); cursor: grab;
   }
   .ctrl .val { font-size: 11px; color: var(--ink-light); min-width: 30px; text-align: right; font-family: Georgia, serif; }
+  .ctrl input[type=text] {
+    border: 1px solid var(--hairline); background: rgba(255,252,244,0.5);
+    color: var(--ink); font-family: inherit; font-size: 13px; letter-spacing: 0.12em;
+    padding: 5px 10px; border-radius: 6px; outline: none; width: 108px;
+  }
+  .ctrl input[type=text]:focus { border-color: var(--ink); }
 
   .btn {
     border: 1px solid transparent; background: none; color: var(--ink);
@@ -236,6 +242,12 @@
       <input type="range" id="inkDensity" min="0.2" max="1.6" step="0.05" value="0.9">
     </div>
     <div class="vsep"></div>
+    <div class="ctrl">
+      <label for="inscText" data-i18n="inscLbl"></label>
+      <input type="text" id="inscText" maxlength="10" autocomplete="off">
+    </div>
+    <button class="chip on" id="frameBtn" data-i18n="frame"></button>
+    <div class="vsep"></div>
     <button class="btn" id="undoBtn" data-i18n="undo"></button>
     <button class="btn" id="washBtn" data-i18n="wash"></button>
     <button class="btn" id="sealBtn" data-i18n="seal"></button>
@@ -278,6 +290,7 @@ const I18N = {
     hint: '落 笔 成 墨 · 缓 行 则 浓',
     fallback: '此浏览器不支持 WebGL2，无法展卷。请换用新版 Chrome / Edge / Firefox。',
     brushLbl: '笔', inkLbl: '墨', paperLbl: '纸',
+    inscLbl: '题款', frame: '装裱', inscPh: '拾遗',
     brushes: ['圆笔', '硬笔', '泼墨', '水笔'],
     inkNames: ['玄墨', '靛青', '赭石', '朱砂'],
     papers: ['生宣', '熟宣', '绢本']
@@ -298,6 +311,7 @@ const I18N = {
     hint: 'EACH STROKE BECOMES INK',
     fallback: 'WebGL2 is unavailable in this browser. Please try a recent Chrome / Edge / Firefox.',
     brushLbl: 'BRUSH', inkLbl: 'INK', paperLbl: 'PAPER',
+    inscLbl: 'INSCR', frame: 'FRAME', inscPh: '拾遗',
     brushes: ['Round', 'Hard', 'Splash', 'Water'],
     inkNames: ['Black', 'Indigo', 'Ochre', 'Cinnabar'],
     papers: ['Raw Xuan', 'Sized Xuan', 'Silk']
@@ -311,6 +325,8 @@ function applyI18n() {
     if (I18N[lang][k] !== undefined) el.textContent = I18N[lang][k];
   });
   document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+  document.getElementById('frameBtn').textContent = I18N[lang].frame;
+  inscEl.placeholder = I18N[lang].inscPh;
   document.title = lang === 'zh' ? '墨 · INK — 水墨流体画室' : 'INK — Ink Flow Studio';
   buildChips();
 }
@@ -941,6 +957,14 @@ function roundRect(ctx, x, y, w, h, r) {
 
 /* ---------------- 导出 ---------------- */
 let flatPaperNext = false;
+let framed = true;
+const frameBtn = document.getElementById('frameBtn');
+frameBtn.addEventListener('click', () => { framed = !framed; frameBtn.classList.toggle('on', framed); });
+const inscEl = document.getElementById('inscText');
+function ganzhi(y) {
+  const stems = '甲乙丙丁戊己庚辛壬癸', branches = '子丑寅卯辰巳午未申酉戌亥';
+  return stems[(y - 4) % 10] + branches[(y - 4) % 12];
+}
 async function saveArtwork() {
   const W = 2048;
   const H = Math.round(W / (canvas.width / canvas.height));
@@ -950,22 +974,56 @@ async function saveArtwork() {
   const inkURL = canvas.toDataURL('image/png');
   const inkImg = new Image();
   await new Promise(res => { inkImg.onload = res; inkImg.src = inkURL; });
-  const out = document.createElement('canvas');
-  out.width = W; out.height = H;
-  const ctx = out.getContext('2d');
   const P = PAPERS[paperIdx];
   const paperHi = makePaper(2048, P.seed, P.fiber);
-  ctx.drawImage(paperHi, 0, 0, W, H);
+  const out = document.createElement('canvas');
+  const pad = framed ? Math.round(W * 0.045) : 0;
+  out.width = W + pad * 2; out.height = H + pad * 2;
+  const ctx = out.getContext('2d');
+  ctx.drawImage(paperHi, 0, 0, out.width, out.height);
   if (P.tint[0] !== 1) {
     ctx.globalCompositeOperation = 'multiply';
     ctx.fillStyle = `rgb(${Math.round(P.tint[0]*255)},${Math.round(P.tint[1]*255)},${Math.round(P.tint[2]*255)})`;
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, 0, out.width, out.height);
     ctx.globalCompositeOperation = 'source-over';
   }
+  // 画心
   ctx.globalCompositeOperation = 'multiply';
-  ctx.drawImage(inkImg, 0, 0, W, H);
+  ctx.drawImage(inkImg, pad, pad, W, H);
   ctx.globalCompositeOperation = 'source-over';
-  if (overlay.width) ctx.drawImage(overlay, 0, 0, W, H);
+  if (overlay.width) ctx.drawImage(overlay, pad, pad, W, H);
+  if (framed) {
+    // 双线画框
+    ctx.strokeStyle = 'rgba(43,43,51,0.55)';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(pad - 9, pad - 9, W + 18, H + 18);
+    ctx.strokeStyle = 'rgba(43,43,51,0.3)';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(pad - 15, pad - 15, W + 30, H + 30);
+    // 竖排题款（右上）
+    const insc = (inscEl.value.trim() || I18N[lang].inscPh);
+    const chars = (insc + ' · ' + ganzhi(new Date().getFullYear()) + '年').split('');
+    const fs = Math.round(pad * 0.46);
+    ctx.font = `${fs}px "Songti SC", "STSong", "SimSun", serif`;
+    ctx.fillStyle = 'rgba(43,43,51,0.88)';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    let ty = pad + fs;
+    const tx = pad + W - fs * 0.9;
+    for (const ch of chars) {
+      ctx.fillText(ch, tx, ty);
+      ty += fs * 1.22;
+    }
+    // 题款印
+    const ss = Math.round(fs * 1.15);
+    const sy = ty + 10;
+    ctx.fillStyle = 'rgba(158,53,40,0.92)';
+    roundRect(ctx, tx - ss / 2, sy, ss, ss, 3);
+    ctx.fill();
+    ctx.fillStyle = '#f6f2e7';
+    ctx.font = `${Math.round(ss * 0.44)}px "KaiTi", "STKaiti", serif`;
+    ctx.fillText('拾', tx, sy + ss * 0.28);
+    ctx.fillText('遗', tx, sy + ss * 0.74);
+  }
   const a = document.createElement('a');
   a.download = `ink-${Date.now()}.png`;
   a.href = out.toDataURL('image/png');

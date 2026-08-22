@@ -409,9 +409,18 @@ uniform float aspectRatio;
 uniform vec3 color;
 uniform vec2 point;
 uniform float radius;
+uniform vec2 uDir;
+uniform float uAniso;
 void main(){
   vec2 p = vUv - point; p.x *= aspectRatio;
-  vec3 splat = exp(-dot(p,p) / radius) * color;
+  // 各向异性：沿运笔方向拉伸（硬笔出锋）
+  float len = length(uDir) + 1e-6;
+  vec2 d = uDir / len;
+  float pa = p.x * d.x + p.y * d.y;
+  float pb = -p.x * d.y + p.y * d.x;
+  pa /= uAniso;
+  vec2 q = vec2(pa, pb);
+  vec3 splat = exp(-dot(q,q) / radius) * color;
   vec3 base = texture(uTarget, vUv).xyz;
   fragColor = vec4(base + splat, 1.0);
 }`;
@@ -781,6 +790,11 @@ function splat(x, y, dx, dy, dyeAmt, radiusScale, tint) {
   const tt = tint === undefined ? INKS[inkIdx].tint : tint;
   const amt = dyeAmt * BRUSHES[brushType].dyeMul;
   const P = PAPERS[paperIdx];
+  // 各向异性：硬笔沿运笔方向拉伸 2.4 倍（出锋）
+  const aniso = brushType === 1 ? 2.4 : 1.0;
+  const dl = Math.hypot(dx, dy);
+  const dirX = dl > 1e-6 ? dx / dl : 0;
+  const dirY = dl > 1e-6 ? dy / dl : 1;
   gl.useProgram(progSplat.p);
   gl.uniform2f(progSplat.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);
   gl.uniform1i(progSplat.uni.uTarget, velocity.read.attach(0));
@@ -788,6 +802,8 @@ function splat(x, y, dx, dy, dyeAmt, radiusScale, tint) {
   gl.uniform2f(progSplat.uni.point, x, y);
   gl.uniform3f(progSplat.uni.color, dx * BRUSHES[brushType].force, dy * BRUSHES[brushType].force, 0);
   gl.uniform1f(progSplat.uni.radius, r * 0.6);
+  gl.uniform2f(progSplat.uni.uDir, dirX, dirY);
+  gl.uniform1f(progSplat.uni.uAniso, aniso);
   blit(velocity.write); velocity.swap();
 
   gl.uniform2f(progSplat.uni.texelSize, dye.texelSizeX, dye.texelSizeY);

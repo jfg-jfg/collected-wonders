@@ -969,7 +969,7 @@ function edCellAt(e) {
   if (cx < 0 || cy < 0 || cx >= cols || cy >= rows) return null;
   return [cx, cy];
 }
-function edPaint(e, first) {
+function edPaint(e) {
   const c = edCellAt(e);
   if (!c) return;
   const [x, y] = c;
@@ -994,7 +994,7 @@ function edPaint(e, first) {
   } else if (editor.tool === 'frag') {
     if (!border) editor.map[y][x] = cur === '*' ? '.' : '*';
   }
-  if (first || true) edValidate();
+  edValidate();
 }
 function edValidate() {
   const g = editor.map;

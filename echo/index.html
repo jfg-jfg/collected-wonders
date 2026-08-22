@@ -275,6 +275,8 @@ const I18N = {
     fragGot: '碎片', of: '／',
     lantern: ['灯', '灯', '灯'],
     lvNames: ['一 · 深井', '二 · 回廊', '三 · 蜂巢', '四 · 迷津', '五 · 巨殿', '六 · 归途'],
+    endlessName: n => `无底之井 · 第 ${n} 层`,
+    endlessBtn: '∞ · 无底之井',
     locked: '未至', best: '最佳',
     lvSub: ['醒来时，头顶的井口已是一枚远星。', '水声在回廊尽头折返，像有人应答。', '蜂巢般的居所，门都朝着黑暗敞开。', '迷津不在乎方向，只在乎你还愿意走。', '巨殿的柱影比夜更旧。', '归途上，每一步回声都更接近自己。'],
     daily: '每 日 深 潜', dailyDone: '今日已抵达 · 明日再来', dailyTitle: '每日深潜', dailySub: '同一日，全城同一个迷宫。',
@@ -289,7 +291,8 @@ const I18N = {
       { id: 'swift', ico: '⚡', n: '疾行者', d: '步数低于定额通关' },
       { id: 'daily', ico: '☾', n: '每日回访', d: '完成一次每日深潜' },
       { id: 'ghostless', ico: '🛡', n: '暗影无伤', d: '有游魂的层零迷失通关' },
-      { id: 'streak3', ico: '✹', n: '三灯连燃', d: '连续三关三盏灯' }
+      { id: 'streak3', ico: '✹', n: '三灯连燃', d: '连续三关三盏灯' },
+      { id: 'abyss', ico: '⌘', n: '无底之井', d: '无尽下潜抵达第十层' }
     ]
   },
   en: {
@@ -305,6 +308,8 @@ const I18N = {
     fragGot: 'fragments', of: '/',
     lantern: ['◆', '◆', '◆'],
     lvNames: ['I · The Well', 'II · Corridors', 'III · The Hive', 'IV · Labyrinth', 'V · Great Hall', 'VI · The Way Back'],
+    endlessName: n => `The Bottomless · Depth ${n}`,
+    endlessBtn: '∞ · BOTTOMLESS',
     locked: 'locked', best: 'best',
     lvSub: ['Waking, the well mouth above is one far star.', 'Water turns at the corridor\'s end, like an answer.', 'Hive-homes, every door open to the dark.', 'The labyrinth cares not for direction, only that you still walk.', 'Pillar-shadows older than night in the great hall.', 'On the way back, each echo is nearer to yourself.'],
     daily: 'DAILY DIVE', dailyDone: 'ARRIVED TODAY · COME BACK TOMORROW', dailyTitle: 'Daily Dive', dailySub: 'One maze per day, same for everyone.',
@@ -319,7 +324,8 @@ const I18N = {
       { id: 'swift', ico: '⚡', n: 'Swift One', d: 'clear under par steps' },
       { id: 'daily', ico: '☾', n: 'Daily Visitor', d: 'complete a daily dive' },
       { id: 'ghostless', ico: '🛡', n: 'Untouched', d: 'clear a ghost depth without being lost' },
-      { id: 'streak3', ico: '✹', n: 'Triple Flame', d: 'three 3-lantern clears in a row' }
+      { id: 'streak3', ico: '✹', n: 'Triple Flame', d: 'three 3-lantern clears in a row' },
+      { id: 'abyss', ico: '⌘', n: 'The Bottomless', d: 'reach endless depth Ⅹ' }
     ]
   }
 };
@@ -439,6 +445,14 @@ function finishLevel(g) {
   return { par, map: g.map(r => r.join('')) };
 }
 const LEVELS = buildLevels();
+
+/* 无尽层：通关六层后解锁，尺寸与密度随深度增长 */
+function buildEndless(di) {
+  const w = Math.min(29, 21 + di * 2), h = Math.min(21, 15 + di);
+  const g = genMaze(w, h, mulberry32(7700 + di * 137), 0.3 + Math.min(0.25, di * 0.03));
+  return finishLevel(g);
+}
+const lvName = i => i < LEVELS.length ? T().lvNames[i] : T().endlessName(i - 5);
 
 /* 每日挑战：日期种子迷宫 */
 function todayKey() {
@@ -608,7 +622,13 @@ let lostCount = 0;
 let ghostFlash = 0;
 let afterglow = null;   // 余像：照亮记忆
 let visits = null;      // 逐格访问计数（通关热力回放）
-function ghostCountFor(level, daily) { return daily ? 1 : (level >= 2 ? (level >= 4 ? 2 : 1) : 0); }
+function ghostCountFor(level, daily) {
+  if (daily) return 1;
+  if (level >= 6) return 3;
+  if (level >= 4) return 2;
+  if (level >= 2) return 1;
+  return 0;
+}
 function spawnGhosts() {
   ghosts = [];
   const n = ghostCountFor(li, isDaily);
@@ -672,7 +692,7 @@ function sndGhostHit() {
 function loadLevel(i, daily) {
   li = i;
   isDaily = !!daily;
-  const L = isDaily ? buildDaily() : LEVELS[i];
+  const L = isDaily ? buildDaily() : (i < LEVELS.length ? LEVELS[i] : buildEndless(i - 5));
   grid = L.map.map(r => r.split(''));
   rows = grid.length; cols = grid[0].length;
   par = L.par;
@@ -705,10 +725,13 @@ let par = 0;
 
 function showLevelCard() {
   const lc = document.getElementById('levelcard');
-  const nm = isDaily ? T().dailyTitle : T().lvNames[li];
-  const sb = isDaily ? T().dailySub : T().lvSub[li];
-  const no = isDaily ? '◈ ' + todayKey() : ['一', '二', '三', '四', '五', '六'][li] + ' / 六';
-  lc.innerHTML = `<div class="no">${no}</div><div class="nm">${nm.split(' · ')[isDaily ? 0 : 1] || nm}</div><div class="sb">${sb}</div>`;
+  const endless = li >= LEVELS.length;
+  const nm = isDaily ? T().dailyTitle : lvName(li);
+  const sb = isDaily ? T().dailySub : (endless ? T().lvSub[5] : T().lvSub[li]);
+  const no = isDaily ? '◈ ' + todayKey()
+    : endless ? '∞ ' + (li - 5)
+    : ['一', '二', '三', '四', '五', '六'][li] + ' / 六';
+  lc.innerHTML = `<div class="no">${no}</div><div class="nm">${nm.split(' · ')[isDaily || endless ? 0 : 1] || nm}</div><div class="sb">${sb}</div>`;
   lc.classList.add('show');
   setTimeout(() => lc.classList.remove('show'), 2400);
 }
@@ -930,7 +953,7 @@ function fmtTime(ms) {
 }
 function updateHud() {
   if (state !== 'play') { document.getElementById('hud').style.display = 'none'; return; }
-  const nm = isDaily ? T().dailyTitle : T().lvNames[li];
+  const nm = isDaily ? T().dailyTitle : lvName(li);
   document.getElementById('hudLevel').innerHTML = `<b>${nm}</b>`;
   document.getElementById('hudSteps').innerHTML = `${T().steps} <b>${steps}</b> / ${T().par} ${par}`;
   document.getElementById('hudPings').innerHTML = `${T().pings} <b>${pings}</b>`;
@@ -1004,6 +1027,10 @@ function levelClear() {
   const prev = save.best[keyOf()];
   if (!prev || steps + pings < prev.s + prev.p) save.best[keyOf()] = { s: steps, p: pings, t: Math.round(elapsed), exp };
   else save.best[keyOf()].exp = Math.max(save.best[keyOf()].exp, exp);
+  if (!isDaily && li >= LEVELS.length) {
+    save.best.endless = save.best.endless || { s: 0 };
+    save.best.endless.s = Math.max(save.best.endless.s, li - 5);
+  }
   persist();
 
   const score = steps <= par ? 3 : steps <= par * 1.5 ? 2 : 1;
@@ -1024,12 +1051,15 @@ function levelClear() {
   document.getElementById('clearTitle').textContent = T().clearTitle;
   document.getElementById('lanterns').innerHTML =
     L.map((c, i) => `<span class="${i < score ? '' : 'off'}">${c}</span>`).join('');
-  const nm = isDaily ? T().dailyTitle : T().lvNames[li];
+  const nm = isDaily ? T().dailyTitle : lvName(li);
   document.getElementById('clearStats').innerHTML =
     `${T().steps}：${steps}　·　${T().pings}：${pings}　·　${T().time}：${fmtTime(elapsed)}<br>` +
     `${T().exp}：${exp}%　·　${nm}`;
+  if (!isDaily && li >= 10) award('abyss');
   document.getElementById('nextBtn').textContent =
-    isDaily ? T().toMenu : (li + 1 < LEVELS.length ? T().next : (lang === 'zh' ? '归 途 尽 头' : 'THE END'));
+    isDaily ? T().toMenu
+    : li >= LEVELS.length ? T().next
+    : (li + 1 < LEVELS.length ? T().next : (lang === 'zh' ? '归 途 尽 头' : 'THE END'));
   document.getElementById('heatLbl').textContent = T().heatLbl;
   drawHeat();
   document.getElementById('clearOv').classList.add('show');
@@ -1097,6 +1127,16 @@ function buildLevelGrid() {
     if (!locked) b.addEventListener('click', () => loadLevel(i));
     box.appendChild(b);
   });
+  // 无尽入口：六层通关后解锁
+  const eb = document.createElement('button');
+  eb.className = 'lv';
+  const eLocked = save.unlocked < LEVELS.length;
+  eb.disabled = eLocked;
+  eb.innerHTML = `<div class="n">∞</div>
+    <div class="t">${eLocked ? T().locked : (lang === 'zh' ? '无底之井' : 'Bottomless')}</div>
+    <div class="b">${save.best['endless'] ? `${T().best} ${lang === 'zh' ? '第' : 'D'}${save.best['endless'].s}` : ''}</div>`;
+  if (!eLocked) eb.addEventListener('click', () => loadLevel(LEVELS.length));
+  box.appendChild(eb);
 }
 function updateDailyBtn() {
   const b = document.getElementById('dailyBtn');
@@ -1146,6 +1186,7 @@ document.getElementById('dailyBtn').addEventListener('click', () => loadLevel(0,
 document.getElementById('retryBtn').addEventListener('click', () => loadLevel(li, isDaily));
 document.getElementById('nextBtn').addEventListener('click', () => {
   if (isDaily) { document.getElementById('menuBtn').click(); return; }
+  if (li >= LEVELS.length) { loadLevel(li + 1); return; }   // 无尽继续
   if (li + 1 < LEVELS.length) loadLevel(li + 1);
   else showEnding();
 });

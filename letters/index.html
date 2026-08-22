@@ -631,6 +631,7 @@ function showEnding(eid) {
   const E = S().endings[final];
   save.node = null;
   if (!save.endings.includes(final)) save.endings.push(final);
+  if (final === 'E4') save.readEver = Math.max(save.readEver || 0, 13);  // 空信封是第十三封
   persist();
   document.getElementById('enKicker').textContent = S().enKicker;
   document.getElementById('enTitle').textContent = E.title;

@@ -565,6 +565,12 @@ function applyI18n() {
   updateCoords();
 }
 
+/* ============ 待机深潜 ============ */
+const REDUCED_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let lastInteractF = performance.now();
+['pointerdown', 'pointermove', 'wheel', 'keydown', 'touchstart'].forEach(ev =>
+  window.addEventListener(ev, () => { lastInteractF = performance.now(); }, { passive: true }));
+
 /* ============ 渲染循环 ============ */
 let renderPending = false;
 function requestRender() {
@@ -586,6 +592,10 @@ function frame(now) {
     if (t >= 1) fly = null;
     requestRender();
   } else {
+    // 待机深潜：闲置 25s 缓缓深入（屏保）；reduced-motion 用户跳过
+    if (!REDUCED_MOTION && now - lastInteractF > 25000) {
+      target.s = Math.max(MAG_LIMIT * 1.4, target.s * Math.exp(-dt * 0.07));
+    }
     // 平滑追踪：view 指数逼近 target（惯性缩放）
     const k = 1 - Math.exp(-dt * 9);
     const dxs = (target.s - view.s) / view.s;

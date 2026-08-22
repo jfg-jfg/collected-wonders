@@ -166,9 +166,9 @@ window.addEventListener('error', e => {
 const I18N = {
   zh: {
     sub: '程序化声景 · 声音与画面皆由数学生成',
-    channels: { rain: '雨', wind: '风', fire: '篝火', stream: '溪流', cricket: '夜虫', thunder: '雷', birds: '鸟鸣', bell: '远钟' },
+    channels: { rain: '雨', wind: '风', fire: '篝火', stream: '溪流', cricket: '夜虫', thunder: '雷', birds: '鸟鸣', bell: '远钟', snow: '雪' },
     time: '时刻', presets: {
-      rainy: '雨夜读书', morning: '山涧清晨', fireside: '炉边听风', valley: '午后山谷'
+      rainy: '雨夜读书', morning: '山涧清晨', fireside: '炉边听风', valley: '午后山谷', winter: '冬夜围炉'
     },
     hint: '拨动天气与时刻 · 声画同源',
     random: '随 机', savePreset: '存 为 境',
@@ -181,9 +181,9 @@ const I18N = {
   },
   en: {
     sub: 'Procedural soundscape — sound and scene, both born of math',
-    channels: { rain: 'RAIN', wind: 'WIND', fire: 'FIRE', stream: 'STREAM', cricket: 'CRICKETS', thunder: 'THUNDER', birds: 'BIRDS', bell: 'BELL' },
+    channels: { rain: 'RAIN', wind: 'WIND', fire: 'FIRE', stream: 'STREAM', cricket: 'CRICKETS', thunder: 'THUNDER', birds: 'BIRDS', bell: 'BELL', snow: 'SNOW' },
     time: 'HOUR', presets: {
-      rainy: 'Rainy Night', morning: 'Mountain Dawn', fireside: 'Fireside', valley: 'Valley Noon'
+      rainy: 'Rainy Night', morning: 'Mountain Dawn', fireside: 'Fireside', valley: 'Valley Noon', winter: 'Winter Hearth'
     },
     hint: 'DIAL WEATHER & HOUR — SOUND AND SCENE ARE ONE',
     random: 'RANDOM', savePreset: 'SAVE SCENE',
@@ -201,10 +201,10 @@ const T = () => I18N[lang];
 /* ================= 状态 ================= */
 const S = {
   rain: 0, wind: 0.15, fire: 0, stream: 0.3, cricket: 0, thunder: 0,
-  birds: 0, bell: 0,
+  birds: 0, bell: 0, snow: 0,
   time: 14, master: 0.8
 };
-const CH_ORDER = ['rain', 'wind', 'fire', 'stream', 'cricket', 'thunder', 'birds', 'bell'];
+const CH_ORDER = ['rain', 'wind', 'fire', 'stream', 'cricket', 'thunder', 'birds', 'bell', 'snow'];
 
 /* ================= 音频引擎（全合成） ================= */
 let AC = null, master = null, nodes = {};
@@ -492,9 +492,12 @@ function rebuildScenery() {
   raindrops = [];
   for (let i = 0; i < 240; i++)
     raindrops.push({ x: Math.random() * W * 1.2 - W * 0.1, y: Math.random() * H, v: 620 + Math.random() * 380, l: 9 + Math.random() * 13 });
+  snowflakes = [];
+  for (let i = 0; i < 190; i++)
+    snowflakes.push({ x: Math.random() * W, y: Math.random() * H, v: 26 + Math.random() * 52, r: 1 + Math.random() * 2.4, p: Math.random() * Math.PI * 2 });
   embers = [];
 }
-let stars = [], clouds = [], raindrops = [], embers = [];
+let stars = [], clouds = [], raindrops = [], embers = [], snowflakes = [];
 function resize() {
   dpr = Math.min(window.devicePixelRatio || 1, 2);
   W = innerWidth; H = innerHeight;
@@ -629,6 +632,32 @@ function scene(dt) {
       ctx.lineTo(d.x - dx, d.y - d.l);
     }
     ctx.stroke();
+  }
+
+  // 雪：摆动飘落 + 风漂移 + 地面微积
+  if (S.snow > 0.02) {
+    const count = Math.round(snowflakes.length * S.snow);
+    ctx.fillStyle = 'rgba(240,246,255,0.85)';
+    for (let i = 0; i < count; i++) {
+      const f = snowflakes[i];
+      f.y += f.v * dt * (0.5 + S.snow * 0.7);
+      f.x += Math.sin(time * 0.9 + f.p) * 16 * dt + S.wind * 90 * dt;
+      if (f.y > H + 4) { f.y = -6; f.x = Math.random() * W; }
+      if (f.x > W + 6) f.x -= W + 12;
+      if (f.x < -6) f.x += W + 12;
+      ctx.globalAlpha = 0.35 + 0.55 * S.snow;
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // 地面积雪微光
+    const sgA = 0.05 + S.snow * 0.12;
+    const sgr = ctx.createLinearGradient(0, H * 0.9, 0, H);
+    sgr.addColorStop(0, `rgba(235,242,252,0)`);
+    sgr.addColorStop(1, `rgba(235,242,252,${sgA.toFixed(3)})`);
+    ctx.fillStyle = sgr;
+    ctx.fillRect(0, H * 0.9, W, H * 0.1);
   }
 
   // 篝火（右下角）
@@ -820,7 +849,8 @@ const ICONS = {
   cricket: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 19c0-6 3-9 7-10M9 19c0-4 2-6 5-7M12 9l4-4M14 11l5-3M13 7l3-5"/><circle cx="16" cy="16" r="1" fill="currentColor" stroke="none"/></svg>',
   thunder: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14a5 5 0 0 1 .3-9.97A6 6 0 0 1 18 7.5 3.5 3.5 0 0 1 17.5 14z"/><path d="M12 12l-2.5 4.5H13L10.5 21"/></svg>',
   birds: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 12c2-2.5 4-2.5 6 0M9 12c2-2.5 4-2.5 6 0M15 9c1.6-2 3.2-2 4.8 0"/><path d="M6 17c2-2.5 4-2.5 6 0M14 16c1.6-2 3.2-2 4.8 0" opacity=".55"/></svg>',
-  bell: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a5.5 5.5 0 0 0-5.5 5.5c0 4-2 5-2 5h15s-2-1-2-5A5.5 5.5 0 0 0 12 4z"/><path d="M10.5 18a1.8 1.8 0 0 0 3 0"/><path d="M12 2v1" opacity=".5"/></svg>'
+  bell: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a5.5 5.5 0 0 0-5.5 5.5c0 4-2 5-2 5h15s-2-1-2-5A5.5 5.5 0 0 0 12 4z"/><path d="M10.5 18a1.8 1.8 0 0 0 3 0"/><path d="M12 2v1" opacity=".5"/></svg>',
+  snow: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/><path d="M12 3l-2 2.2M12 3l2 2.2M12 21l-2-2.2M12 21l2-2.2" opacity=".8"/><path d="M4.2 7.5l2.9.4M4.2 7.5l-.4-2.9M19.8 16.5l-2.9-.4M19.8 16.5l.4 2.9" opacity=".8"/><path d="M19.8 7.5l-2.9.4M19.8 7.5l.4-2.9M4.2 16.5l2.9-.4M4.2 16.5l-.4 2.9" opacity=".8"/></svg>'
 };
 function buildBoard() {
   const board = document.getElementById('board');
@@ -860,10 +890,11 @@ function buildBoard() {
   board.appendChild(tc);
 }
 const PRESETS = {
-  rainy:   () => ({ rain: 0.65, wind: 0.18, fire: 0, stream: 0, cricket: 0, thunder: 0.35, birds: 0, bell: 0, time: 22 }),
-  morning: () => ({ rain: 0, wind: 0.12, fire: 0, stream: 0.6, cricket: 0.35, thunder: 0, birds: 0.4, bell: 0, time: 6.2 }),
-  fireside:() => ({ rain: 0.3, wind: 0.28, fire: 0.75, stream: 0, cricket: 0.2, thunder: 0, birds: 0, bell: 0.15, time: 20.5 }),
-  valley:  () => ({ rain: 0, wind: 0.38, fire: 0, stream: 0.32, cricket: 0, thunder: 0, birds: 0.5, bell: 0, time: 14 })
+  rainy:   () => ({ rain: 0.65, wind: 0.18, fire: 0, stream: 0, cricket: 0, thunder: 0.35, birds: 0, bell: 0, snow: 0, time: 22 }),
+  morning: () => ({ rain: 0, wind: 0.12, fire: 0, stream: 0.6, cricket: 0.35, thunder: 0, birds: 0.4, bell: 0, snow: 0, time: 6.2 }),
+  fireside:() => ({ rain: 0.3, wind: 0.28, fire: 0.75, stream: 0, cricket: 0.2, thunder: 0, birds: 0, bell: 0.15, snow: 0, time: 20.5 }),
+  valley:  () => ({ rain: 0, wind: 0.38, fire: 0, stream: 0.32, cricket: 0, thunder: 0, birds: 0.5, bell: 0, snow: 0, time: 14 }),
+  winter:  () => ({ rain: 0, wind: 0.22, fire: 0.55, stream: 0, cricket: 0, thunder: 0, birds: 0, bell: 0.3, snow: 0.85, time: 21.5 })
 };
 function loadCustoms() {
   try { return JSON.parse(localStorage.getItem('scape-customs') || '[]'); } catch (e) { return []; }
@@ -1019,7 +1050,7 @@ function wake() {
 }
 window.addEventListener('pointerdown', wake);
 
-/* 空格暂停 / 数字键预设 */
+/* 空格暂停 / 数字键预设（1-5） */
 let audioPaused = false;
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
@@ -1031,7 +1062,7 @@ window.addEventListener('keydown', e => {
     const h = document.getElementById('hint');
     if (audioPaused) { h.textContent = T().paused; h.classList.remove('gone'); }
     else h.classList.add('gone');
-  } else if (e.key >= '1' && e.key <= '4') {
+  } else if (e.key >= '1' && e.key <= '5') {
     const key = Object.keys(PRESETS)[+e.key - 1];
     if (key) Object.assign(S, PRESETS[key]()), initAudio(), updateAudio(1.2), buildBoard(), updateClock(), applyPresetActive(key);
   }

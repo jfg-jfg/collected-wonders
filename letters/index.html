@@ -210,6 +210,31 @@
   }
   .home-link:hover { color: var(--gold); border-color: var(--gold); transform: translateY(-3px); }
 
+  /* ---------- 信堆图鉴 ---------- */
+  .stack-ov {
+    position: fixed; inset: 0; z-index: 9; display: none;
+    flex-direction: column; align-items: center; justify-content: flex-start;
+    background: radial-gradient(ellipse at 50% 30%, rgba(30,34,44,0.95), rgba(8,10,14,0.985));
+    overflow-y: auto; overscroll-behavior: contain; padding: 7vh 24px 60px;
+  }
+  .stack-ov.show { display: flex; }
+  .stack-ov h2 { font-size: 24px; letter-spacing: 0.4em; color: #ece5d2; font-weight: 600; }
+  .stack-ov .sub { margin-top: 10px; font-size: 12.5px; letter-spacing: 0.3em; color: rgba(236,229,210,0.5); }
+  .stack-list { margin-top: 34px; display: flex; flex-direction: column; gap: 9px; width: min(560px, 92vw); }
+  .stack-item {
+    display: flex; align-items: baseline; gap: 16px;
+    border: 1px solid rgba(240,232,214,0.12); border-radius: 4px;
+    padding: 11px 18px; font-size: 14px; letter-spacing: 0.08em;
+    transition: color .25s, border-color .25s, background .25s;
+  }
+  .stack-item .no { font-size: 11px; color: rgba(240,232,214,0.4); min-width: 34px; font-family: Georgia, serif; }
+  .stack-item .yr { min-width: 96px; color: rgba(217,181,124,0.8); font-size: 12px; }
+  .stack-item.read { color: #ece5d2; }
+  .stack-item.read .tt { color: #ece5d2; }
+  .stack-item.unread { color: rgba(236,229,210,0.35); }
+  .stack-item.unread .tt { letter-spacing: 0.3em; }
+  .stack-close { margin-top: 30px; }
+
   @media (max-width: 640px) {
     .letter { max-height: 76vh; }
     .env-hint { font-size: 11px; letter-spacing: 0.25em; }
@@ -235,6 +260,7 @@
   <div class="ts-actions">
     <button class="btn-main" id="startBtn">拆 开 第 一 封 信</button>
     <button class="btn-main" id="contBtn" style="display:none">继 续 读 信</button>
+    <button class="btn-sub" id="stackBtn" style="border:1px solid rgba(240,232,214,0.35); background:none; color:rgba(240,232,214,0.75); font-family:inherit; font-size:13.5px; letter-spacing:0.22em; padding:12px 26px; border-radius:2px; cursor:pointer;">信 堆</button>
   </div>
   <div class="ts-endings" id="tsEndings"></div>
   <div class="ts-stats" id="tsStats"></div>
@@ -253,6 +279,14 @@
 <div class="stage" id="stage"></div>
 
 <a class="home-link" href="../index.html" title="拾遗 · 序">序</a>
+
+<div class="stack-ov" id="stackOv">
+  <h2 id="stackTitle"></h2>
+  <div class="sub" id="stackSub"></div>
+  <div class="stack-list" id="stackList"></div>
+  <button class="btn-main stack-close" id="stackClose"></button>
+</div>
+
 <div class="ending-note" id="endingNote">
   <div class="en-kicker" id="enKicker"></div>
   <div class="en-title" id="enTitle"></div>
@@ -547,6 +581,8 @@ function showLetter(id) {
   letterCount++;
   save.read = letterCount;
   save.node = id;
+  save.readNodes = save.readNodes || [];
+  if (!save.readNodes.includes(id)) save.readNodes.push(id);
   persist();
   document.getElementById('topbar').style.display = 'flex';
   document.getElementById('prog').style.display = 'block';
@@ -714,6 +750,42 @@ document.getElementById('againBtn').addEventListener('click', () => {
   visited = new Set(); letterCount = 0;
   save.read = 0; save.flags = []; save.node = null; persist();
   showEnvelope('n1');
+});
+
+/* ================= 信堆图鉴 ================= */
+const STACK_ORDER = ['n1','n5','n6','n12','n2','n3','n4','n7','n9','n11','n8','n10','E4'];
+function buildStack() {
+  document.getElementById('stackTitle').textContent = lang === 'zh' ? '信 堆' : 'THE STACK';
+  document.getElementById('stackSub').textContent = lang === 'zh'
+    ? `十三封信，按年代排开 · 已启 ${Math.min(save.readEver || 0, 13)} 封`
+    : `thirteen letters, by year · ${Math.min(save.readEver || 0, 13)} opened`;
+  document.getElementById('stackClose').textContent = lang === 'zh' ? '合 上 信 堆' : 'CLOSE';
+  const list = document.getElementById('stackList');
+  list.innerHTML = '';
+  const readSet = new Set(save.readNodes || []);
+  STACK_ORDER.forEach((id, i) => {
+    const div = document.createElement('div');
+    const no = i + 1;
+    if (id === 'E4') {
+      const got = save.endings.includes('E4');
+      div.className = 'stack-item ' + (got ? 'read' : 'unread');
+      div.innerHTML = `<span class="no">${no}</span><span class="yr">${got ? (lang === 'zh' ? '无年份' : 'NO YEAR') : '— — —'}</span><span class="tt">${got ? (lang === 'zh' ? '第十三封信（空）' : 'The Thirteenth (empty)') : (lang === 'zh' ? '未 启 封' : 'UNOPENED')}</span>`;
+    } else {
+      const nd = S().nodes[id];
+      const got = readSet.has(id);
+      div.className = 'stack-item ' + (got ? 'read' : 'unread');
+      div.innerHTML = `<span class="no">${no}</span><span class="yr">${got ? nd.year : '— — —'}</span><span class="tt">${got ? nd.title : (lang === 'zh' ? '未 启 封' : 'UNOPENED')}</span>`;
+    }
+    list.appendChild(div);
+  });
+}
+document.getElementById('stackBtn').addEventListener('click', () => {
+  buildStack();
+  document.getElementById('stackOv').classList.add('show');
+  document.getElementById('stackOv').scrollTop = 0;
+});
+document.getElementById('stackClose').addEventListener('click', () => {
+  document.getElementById('stackOv').classList.remove('show');
 });
 
 /* ================= 主循环（粒子） ================= */

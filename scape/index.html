@@ -162,6 +162,7 @@
 
 <script>
 'use strict';
+
 window.addEventListener('error', e => {
   const b = document.createElement('div');
   b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99;background:#401414;color:#ffb4b4;font-size:12px;padding:8px 12px';
@@ -1383,6 +1384,7 @@ applyI18n();
 // 开卷：午后山谷
 Object.assign(S, PRESETS.valley());
 // #key=val&… 测试直达：snow=0.9&time=23&rain=0.7 等（覆盖默认预设）
+try {
 location.hash.slice(1).split('&').forEach(kv => {
   const [k, v] = kv.split('=');
   if (k === 'theme' && v !== undefined) {
@@ -1395,6 +1397,22 @@ location.hash.slice(1).split('&').forEach(kv => {
 });
 buildBoard(); updateClock();
 applyPresetActive('valley');   // 开卷预设芯片高亮
+// #selftest：模拟点击全部控件做回归自测（结果写入标题）
+if (location.hash.includes('selftest')) {
+  const errs = [];
+  const safe = (name, fn) => { try { fn(); } catch (e) { errs.push(name + ': ' + e.message); } };
+  document.querySelectorAll('button').forEach((b, i) => {
+    safe('btn' + i + '(' + (b.id || b.textContent.slice(0, 6)) + ')', () => b.click());
+  });
+  safe('randomize', () => randomize());
+  safe('timeFlow', () => { timeFlow = true; });
+  safe('themes', () => { theme = 1; rebuildScenery(); theme = 2; rebuildScenery(); theme = 0; rebuildScenery(); });
+  safe('channels', () => CH_ORDER.forEach(c => { S[c] = 0.5; }));
+  safe('updateAudio', () => updateAudio(0.1));
+  safe('season1', () => { season = 1; }); safe('season2', () => { season = 2; }); season = 0;
+  timeFlow = false;
+  document.title = errs.length ? 'SELFTEST-FAIL: ' + errs.join(' | ') : 'SELFTEST-OK';
+}
 requestAnimationFrame(frame);
 </script>
 </body>

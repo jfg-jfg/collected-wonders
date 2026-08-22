@@ -310,7 +310,12 @@
     <button class="ed-t edsz" data-w="13" data-h="9">13×9</button>
     <button class="ed-t edsz" data-w="17" data-h="13">17×13</button>
     <button class="ed-t edsz" data-w="21" data-h="15">21×15</button>
-    <span style="width:10px"></span>
+    <span class="ed-note" id="edCustomLbl"></span>
+    <input type="number" id="edW" min="7" max="31" step="2" style="width:44px;background:rgba(7,9,13,0.8);color:var(--pale);border:1px solid var(--hairline);border-radius:4px;padding:4px 6px;font-family:Georgia,serif;font-size:12px;text-align:center" value="17">×
+    <input type="number" id="edH" min="7" max="25" step="2" style="width:44px;background:rgba(7,9,13,0.8);color:var(--pale);border:1px solid var(--hairline);border-radius:4px;padding:4px 6px;font-family:Georgia,serif;font-size:12px;text-align:center" value="13">
+    <button class="ed-t" id="edCustomSize">↵</button>
+    <span style="width:8px"></span>
+    <button class="ed-t" id="edFrags" data-e="fragTxt"></button>
     <button class="ed-t" id="edClear" data-e="clear"></button>
     <button class="ed-t" id="edShare" data-e="share"></button>
   </div>
@@ -367,6 +372,9 @@ const I18N = {
     edBtn: '造 井', edCustomName: '自造之井',
     ed: {
       tools: '工具', size: '尺寸', clear: '清空', share: '关卡码', play: '▶ 试玩', exit: '回廊',
+      customLbl: '自定', fragTxt: '碎片台词',
+      fragTitle: '碎 片 台 词', fragTip: '每行一句（按放置顺序对应）。空行 = 用默认台词。',
+      fragClose: '关 闭',
       wall: '墙', floor: '通路', start: '起点', goal: '出口', frag: '碎片',
       noteValid: '点「试玩」检验连通性',
       noteNoSG: '缺少起点或出口', noteUnreachable: '出口不可达！', noteOk: '通路距离 N 步 · 可以试玩',
@@ -418,6 +426,9 @@ const I18N = {
     edBtn: 'BUILD', edCustomName: 'A Well of Your Own',
     ed: {
       tools: 'TOOLS', size: 'SIZE', clear: 'CLEAR', share: 'CODE', play: '▶ TEST', exit: 'MENU',
+      customLbl: 'custom', fragTxt: 'Fragment lines',
+      fragTitle: 'FRAGMENT LINES', fragTip: 'One per line (in placement order). Empty = default.',
+      fragClose: 'CLOSE',
       wall: 'Wall', floor: 'Path', start: 'Start', goal: 'Exit', frag: 'Frag',
       noteValid: 'press TEST to validate',
       noteNoSG: 'missing start or exit', noteUnreachable: 'exit unreachable!', noteOk: 'path is N steps · ready to test',
@@ -758,12 +769,14 @@ let moveCooldown = 0;
 let goalPulse = 0;
 const FRAG_CELLS = [];
 let fragTakenSet = null;
-/* 游魂：巡逻的暗影 */
+/* 游魂：被声音吸引的暗影 */
 let ghosts = [];
 let lostCount = 0;
 let ghostFlash = 0;
 let afterglow = null;   // 余像：照亮记忆
 let visits = null;      // 逐格访问计数（通关热力回放）
+let niches = null;      // 壁龛：死路格，玩家的躲避处
+let lastPingCell = null;   // 游魂的趋向目标
 function ghostCountFor(level, daily) {
   if (daily) return 1;
   if (level >= 6) return 3;
@@ -771,6 +784,18 @@ function ghostCountFor(level, daily) {
   if (level >= 2) return 1;
   return 0;
 }
+/* 壁龛识别：只有一个开放邻居的格子 = 躲避处 */
+function findNiches() {
+  niches = new Set();
+  for (let y = 1; y < rows - 1; y++) for (let x = 1; x < cols - 1; x++) {
+    if (G(x, y) === '#') continue;
+    let open = 0;
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]])
+      if (G(x + dx, y + dy) !== '#') open++;
+    if (open === 1) niches.add(x + ',' + y);
+  }
+}
+function isNiche(x, y) { return niches && niches.has(x + ',' + y); }
 function spawnGhosts() {
   ghosts = [];
   const n = ghostCountFor(li, isDaily);
@@ -780,6 +805,7 @@ function spawnGhosts() {
     const y = 1 + Math.floor(Math.random() * (rows - 2));
     if (G(x, y) === '#' || G(x, y) === 'G' || G(x, y) === '*') continue;
     if (Math.hypot(x - px, y - py) < 6) continue;
+    if (isNiche(x, y)) continue;
     if (ghosts.some(g => Math.hypot(g.x - x, g.y - y) < 5)) continue;
     ghosts.push({ x, y, dx: 0, dy: 1, t: 0, phase: Math.random() * 10 });
   }
@@ -788,29 +814,38 @@ function moveGhosts(dt) {
   for (const g of ghosts) {
     g.t += dt;
     g.phase += dt;
-    if (g.t < 0.55) continue;
+    if (g.t < 0.62) continue;
     g.t = 0;
-    // 尝试沿当前方向走，撞墙则随机换向
-    if (G(g.x + g.dx, g.y + g.dy) !== '#') {
-      g.x += g.dx; g.y += g.dy;
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => {
+      const nx = g.x + dx, ny = g.y + dy;
+      if (G(nx, ny) === '#') return false;
+      if (isNiche(nx, ny)) return false;                     // 不入壁龛
+      // 不在起点近旁逗留（出生保护区）
+      let sx = 1, sy = 1;
+      for (let yy = 0; yy < rows; yy++) for (let xx = 0; xx < cols; xx++)
+        if (grid[yy][xx] === 'S') { sx = xx; sy = yy; }
+      if (Math.hypot(nx - sx, ny - sy) <= 1.5) return false;
+      return true;
+    });
+    if (!dirs.length) continue;
+    let pick;
+    if (lastPingCell && Math.random() < 0.75) {
+      // 趋声：朝最近回声发生地移动（留 25% 随机性避免完美追踪）
+      const sorted = dirs.slice().sort((a, b) =>
+        Math.hypot(g.x + a[0] - lastPingCell[0], g.y + a[1] - lastPingCell[1]) -
+        Math.hypot(g.x + b[0] - lastPingCell[0], g.y + b[1] - lastPingCell[1]));
+      pick = Math.random() < 0.8 ? sorted[0] : dirs[Math.floor(Math.random() * dirs.length)];
     } else {
-      let dirs = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => G(g.x+dx, g.y+dy) !== '#');
-      if (dirs.length) {
-        // 追猎偏置：两成几率改走逼近玩家的方向
-        if (Math.random() < 0.2) {
-          const hunt = dirs.sort((a, b) =>
-            Math.hypot(g.x + a[0] - px, g.y + a[1] - py) - Math.hypot(g.x + b[0] - px, g.y + b[1] - py));
-          dirs = [hunt[0]];
-        }
-        [g.dx, g.dy] = dirs[Math.floor(Math.random() * dirs.length)];
-        g.x += g.dx; g.y += g.dy;
-      }
+      pick = dirs[Math.floor(Math.random() * dirs.length)];
     }
+    [g.dx, g.dy] = pick;
+    g.x += g.dx; g.y += g.dy;
     checkGhostHit();
   }
 }
 function checkGhostHit() {
   if (state !== 'play') return;
+  if (isNiche(px, py)) return;   // 壁龛藏身，游魂触不到
   for (const g of ghosts) {
     if (g.x === px && g.y === py) {
       lostCount++;
@@ -859,6 +894,8 @@ function loadLevel(i, daily) {
   lights = new Float32Array(cols * rows);
   afterglow = new Float32Array(cols * rows);
   visits = new Float32Array(cols * rows);
+  findNiches();
+  lastPingCell = null;
   spawnGhosts();
   litWalls = new Set();
   totalWalls = 0;
@@ -918,7 +955,11 @@ function tryMove(dx, dy) {
     fragTakenSet.add(nx + ',' + ny);
     sndFrag();
     if (isCustom) {
-      showFrag(lang === 'zh' ? '✦ 一枚记忆碎片。' : '✦ a fragment of memory.', false);
+      const fi = fragTakenSet.size - 1;
+      const custom = (edFragTexts && edFragTexts[fi] && edFragTexts[fi].trim())
+        ? edFragTexts[fi].trim()
+        : (lang === 'zh' ? '✦ 一枚记忆碎片。' : '✦ a fragment of memory.');
+      showFrag(custom, false);
     } else {
       save.frags[li] = true;   // 每层一句，任一碎片点亮
       persist();
@@ -933,8 +974,11 @@ function tryMove(dx, dy) {
 function ping(cx, cy) {
   if (state !== 'play') return;
   pings++;
-  ripples.push({ x: cx !== undefined ? cx : px + 0.5, y: cy !== undefined ? cy : py + 0.5, r: 0, maxR: 7.5 });
+  const gx = cx !== undefined ? cx : px + 0.5;
+  const gy = cy !== undefined ? cy : py + 0.5;
+  ripples.push({ x: gx, y: gy, r: 0, maxR: 7.5 });
   sndPing();
+  lastPingCell = [gx, gy];   // 游魂闻声而动
   award('first');
   updateHud();
 }
@@ -954,14 +998,19 @@ function edBlankMap(w, h) {
   g[h - 2][w - 2] = 'G';
   return g;
 }
-function edEnter(map) {
+function edEnter(data) {
   editor.on = true;
   isCustom = false;
-  if (map) {
-    editor.map = map.map(r => r.split(''));
+  if (data && data.rows) {
+    editor.map = data.rows.map(r => r.split(''));
+    editor.w = editor.map[0].length; editor.h = editor.map.length;
+    edFragTexts = data.frags || [];
+  } else if (Array.isArray(data)) {  // 兼容直接传字符串数组
+    editor.map = data.map(r => r.split(''));
     editor.w = editor.map[0].length; editor.h = editor.map.length;
   } else if (!editor.map.length) {
     editor.map = edBlankMap(editor.w, editor.h);
+    edFragTexts = [];
   }
   state = 'edit';
   hideAll();
@@ -1091,18 +1140,31 @@ function renderEditor() {
   ctx.fillRect(0, 0, W, H);
 }
 /* 关卡码：Base64 编解码 */
-function edEncode() { return btoa(editor.map.map(r => r.join('')).join('\n')); }
+/* 关卡码 v2：JSON（地图 + 碎片台词），向后兼容纯 base64 地图 */
+let edFragTexts = [];
+function edEncode() {
+  const payload = { m: editor.map.map(r => r.join('')) };
+  if (edFragTexts.some(t => t.trim())) payload.f = edFragTexts;
+  return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+}
 function edDecode(str) {
   try {
-    const rows = atob(str.trim()).split('\n');
-    if (rows.length < 5 || rows.length > 25) return null;
+    const raw = decodeURIComponent(escape(atob(str.trim())));
+    let rows, frags = [];
+    if (raw.startsWith('{')) {
+      const obj = JSON.parse(raw);
+      rows = obj.m; frags = obj.f || [];
+    } else {
+      rows = raw.split('\n');
+    }
+    if (!Array.isArray(rows) || rows.length < 5 || rows.length > 25) return null;
     const w = rows[0].length;
     if (w < 5 || w > 31) return null;
     for (const r of rows) {
       if (r.length !== w) return null;
       if (!/^[#.SG*]+$/.test(r)) return null;
     }
-    return rows;
+    return { rows, frags };
   } catch (e) { return null; }
 }
 /* 试玩 / 名井：以自定义地图进入游戏 */
@@ -1126,6 +1188,8 @@ function enterCustomPlay(map, parVal, name, ghostCount) {
   lights = new Float32Array(cols * rows);
   afterglow = new Float32Array(cols * rows);
   visits = new Float32Array(cols * rows);
+  findNiches();
+  lastPingCell = null;
   litWalls = new Set();
   totalWalls = 0;
   for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++)
@@ -1160,11 +1224,12 @@ function edPlay() {
 }
 function playWell(i) {
   const w = WELL_PACK[i];
-  const rows = edDecode(w.code);
-  if (!rows) return;
+  const dec = edDecode(w.code);
+  if (!dec) return;
   customFrom = 'well';
   curWell = i;
-  enterCustomPlay(rows, w.par, lang === 'zh' ? w.name : w.nameEn, w.ghosts);
+  edFragTexts = dec.frags || [];
+  enterCustomPlay(dec.rows, w.par, lang === 'zh' ? w.name : w.nameEn, w.ghosts);
 }
 /* 编辑器输入 */
 cv.addEventListener('pointerdown', e => {
@@ -1183,6 +1248,51 @@ document.getElementById('editBtn').addEventListener('click', () => edEnter());
 document.getElementById('edExit').addEventListener('click', edExit);
 document.getElementById('edClear').addEventListener('click', () => {
   editor.map = edBlankMap(editor.w, editor.h);
+  edFragTexts = [];
+  edValidate();
+});
+/* 自定义尺寸（奇数网格） */
+document.getElementById('edCustomLbl').textContent = '';
+document.getElementById('edCustomSize').addEventListener('click', () => {
+  let w = +document.getElementById('edW').value || 17;
+  let h = +document.getElementById('edH').value || 13;
+  w = Math.max(7, Math.min(31, w % 2 === 0 ? w + 1 : w));
+  h = Math.max(7, Math.min(25, h % 2 === 0 ? h + 1 : h));
+  document.getElementById('edW').value = w;
+  document.getElementById('edH').value = h;
+  editor.w = w; editor.h = h;
+  editor.map = edBlankMap(w, h);
+  edFragTexts = [];
+  cols = w; rows = h;
+  layout(); buildEdTools(); edValidate();
+});
+/* 碎片台词编辑 */
+const edFragsOv = document.createElement('div');
+edFragsOv.className = 'ed-share';
+edFragsOv.id = 'edFragsOv';
+edFragsOv.innerHTML = `<div class="box">
+  <h3 id="edFragsTitle" style="font-size:14px;letter-spacing:0.3em;color:var(--cyan)"></h3>
+  <div style="font-size:12px;color:rgba(157,176,201,0.7);margin-top:8px;line-height:1.8" id="edFragsTip"></div>
+  <textarea id="edFragsText" style="width:100%;height:150px;margin-top:12px;resize:none;background:rgba(7,9,13,0.8);color:var(--pale);border:1px solid var(--hairline);border-radius:6px;font-family:Georgia,serif;font-size:12px;padding:10px;outline:none" spellcheck="false"></textarea>
+  <div style="margin-top:12px;display:flex;gap:10px;justify-content:center">
+    <button class="ed-t go" id="edFragsSave"></button>
+    <button class="ed-t" id="edFragsClose"></button>
+  </div>
+</div>`;
+document.body.appendChild(edFragsOv);
+document.getElementById('edFrags').addEventListener('click', () => {
+  document.getElementById('edFragsTitle').textContent = T().ed.fragTitle;
+  document.getElementById('edFragsTip').textContent = T().ed.fragTip;
+  document.getElementById('edFragsSave').textContent = T().ed.play.replace('▶ ', '');  // 借用通用"保存"→改为动态
+  document.getElementById('edFragsSave').textContent = '✓';
+  document.getElementById('edFragsClose').textContent = T().ed.fragClose;
+  document.getElementById('edFragsText').value = edFragTexts.join('\n');
+  edFragsOv.classList.add('show');
+});
+document.getElementById('edFragsClose').addEventListener('click', () => edFragsOv.classList.remove('show'));
+document.getElementById('edFragsSave').addEventListener('click', () => {
+  edFragTexts = document.getElementById('edFragsText').value.split('\n').map(s => s.trim());
+  edFragsOv.classList.remove('show');
   edValidate();
 });
 document.querySelectorAll('.edsz').forEach(b => {
@@ -1212,14 +1322,14 @@ document.getElementById('edCopy').addEventListener('click', async () => {
   setTimeout(() => document.getElementById('edCopy').textContent = T().ed.copy, 1600);
 });
 document.getElementById('edImport').addEventListener('click', () => {
-  const rows = edDecode(document.getElementById('edCode').value);
-  if (!rows) {
+  const dec = edDecode(document.getElementById('edCode').value);
+  if (!dec) {
     document.getElementById('edNote').textContent = T().ed.importBad;
     document.getElementById('edNote').style.color = '#e8a0a0';
     return;
   }
   document.getElementById('edShareOv').classList.remove('show');
-  edEnter(rows);
+  edEnter(dec);
 });
 
 /* ================= 涟漪照明 ================= */
@@ -1322,6 +1432,26 @@ function render(dt) {
       ctx.font = `${Math.round(cell * 0.52)}px serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(lang === 'zh' ? '出' : '⌂', gcx, gcy + 1);
+    }
+  }
+
+  // 壁龛微光：安全格的暗淡凹槽标记
+  if (niches && ghosts.length) {
+    for (const key of niches) {
+      const [nx, ny] = key.split(',').map(Number);
+      const d = Math.hypot(nx - px, ny - py);
+      const a = Math.max(0.03, 0.4 - d * 0.08);
+      const ncx = ox + (nx + 0.5) * cell, ncy = oy + (ny + 0.5) * cell;
+      ctx.strokeStyle = `rgba(127,216,208,${a.toFixed(3)})`;
+      ctx.lineWidth = 1.2;
+      const s = cell * 0.22;
+      ctx.beginPath();
+      ctx.arc(ncx, ncy, s, Math.PI * 0.15, Math.PI * 0.85);    // 下弧
+      ctx.moveTo(ncx - s * 1.3, ncy + s * 0.6);
+      ctx.lineTo(ncx - s * 1.3, ncy - s * 0.4);               // 左壁
+      ctx.lineTo(ncx + s * 1.3, ncy - s * 0.4);               // 顶
+      ctx.lineTo(ncx + s * 1.3, ncy + s * 0.6);               // 右壁
+      ctx.stroke();
     }
   }
 
@@ -1672,7 +1802,7 @@ document.getElementById('retryBtn').addEventListener('click', () => {
 document.getElementById('nextBtn').addEventListener('click', () => {
   if (isCustom) {
     isCustom = false;
-    if (customFrom === 'editor') edEnter(editor.map.length ? editor.map : null);
+    if (customFrom === 'editor') edEnter(editor.map.length ? { rows: editor.map.map(r => r.join('')), frags: edFragTexts } : null);
     else document.getElementById('menuBtn').click();
     return;
   }
@@ -1734,8 +1864,8 @@ if (m && +m[1] < LEVELS.length) loadLevel(+m[1]);
 // #edit 或 #edit=<关卡码> 直达编辑器
 const em = location.hash.match(/^#edit(?:=([A-Za-z0-9+/=]+))?$/);
 if (em) {
-  const rows = em[1] ? edDecode(em[1]) : null;
-  if (!em[1] || rows) edEnter(rows);
+  const dec = em[1] ? edDecode(em[1]) : null;
+  if (!em[1] || dec) edEnter(dec);
 }
 requestAnimationFrame(frame);
 </script>

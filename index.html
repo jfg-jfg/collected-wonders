@@ -311,7 +311,7 @@ function workStat(en) {
         const s = JSON.parse(localStorage.getItem('echo-save') || '{}');
         const c = (s.statsExt && s.statsExt.clears) || 0;
         const a = s.ach ? Object.keys(s.ach).length : 0;
-        return lang === 'zh' ? `通关 ${c} 次 · 灯 ${a}/8` : `${c} clears · ${a}/8 lamps`;
+        return lang === 'zh' ? `通关 ${c} 次 · 灯 ${a}/11` : `${c} clears · ${a}/11 lamps`;
       }
       case 'SCAPE': {
         const s = JSON.parse(localStorage.getItem('scape-stats') || '{}');

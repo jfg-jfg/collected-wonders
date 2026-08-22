@@ -145,6 +145,7 @@
     <svg class="ring" viewBox="0 0 20 20"><circle id="ringBg" cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2"/><circle id="ringFg" cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="50.3" stroke-dashoffset="50.3" transform="rotate(-90 10 10)"/></svg><span id="timerTxt">25:00</span>
   </button>
   <button class="btn-ghost" id="sleepBtn" title="">☾ ∞</button>
+  <button class="btn-ghost" id="flowBtn">⏳ 流转</button>
   <button class="btn-ghost" id="recBtn">● 录</button>
   <button class="btn-ghost" id="langBtn">EN</button>
 </div>
@@ -180,6 +181,7 @@ const I18N = {
     delTip: '长按删除此境',
     sleepTip: '睡眠渐弱', paused: '已暂停 · 空格继续',
     rec: '● 录', recStop: '■ 停止', recDone: '✓ 录像已保存', recFail: '此浏览器不支持录制',
+    flowOn: '⏳ 流转 · 开', flowOff: '⏳ 流转', flowTip: '时光流转：昼夜每 4 分钟一轮回',
     timer: ['专注 25 分', '专注 45 分', '专注 60 分', '取消计时'],
     timeNames: ['夜', '晨', '昼', '暮'],
     sndTip: '点任意滑杆开启声音'
@@ -196,6 +198,7 @@ const I18N = {
     delTip: 'long-press to delete',
     sleepTip: 'sleep fade', paused: 'PAUSED · SPACE TO RESUME',
     rec: '● REC', recStop: '■ STOP', recDone: '✓ recording saved', recFail: 'recording unsupported here',
+    flowOn: '⏳ FLOW ON', flowOff: '⏳ FLOW', flowTip: 'time flows — a full day every 4 minutes',
     timer: ['FOCUS 25', 'FOCUS 45', 'FOCUS 60', 'CANCEL'],
     timeNames: ['NIGHT', 'DAWN', 'DAY', 'DUSK'],
     sndTip: 'touch any dial to start sound'
@@ -1075,6 +1078,7 @@ function applyI18n() {
   document.title = lang === 'zh' ? '造境 · SCAPE — 程序化声景' : 'SCAPE — procedural soundscape';
   document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
   if (!recorder) document.getElementById('recBtn').textContent = T().rec;
+  updFlowBtn();
   document.getElementById('hint').textContent = T().hint;
   updTimerUI();
   buildPresets(); buildBoard(); updateClock();
@@ -1120,6 +1124,19 @@ function wake() {
   }
 }
 window.addEventListener('pointerdown', wake);
+
+/* 时光流转 */
+let timeFlow = false;
+const flowBtn = document.getElementById('flowBtn');
+function updFlowBtn() {
+  flowBtn.textContent = timeFlow ? T().flowOn : T().flowOff;
+  flowBtn.classList.toggle('on', timeFlow);
+  flowBtn.title = T().flowTip;
+}
+flowBtn.addEventListener('click', () => {
+  timeFlow = !timeFlow;
+  updFlowBtn();
+});
 
 /* 音画录制 */
 let recorder = null, recChunks = [], recDest = null;
@@ -1191,6 +1208,13 @@ let listenMs = 0, listenFlush = 0;
 function frame(now) {
   const dt = Math.min((now - prev) / 1000, 0.05);
   prev = now;
+  if (timeFlow) {           // 4 分钟一昼夜
+    S.time = (S.time + dt * 0.1) % 24;
+    const ti = document.getElementById('timeR');
+    if (ti) ti.value = S.time.toFixed(1);
+    updateClock();
+    updateAudio(2);
+  }
   scene(dt);
   audioTick(now, dt);
   timerTick(now);

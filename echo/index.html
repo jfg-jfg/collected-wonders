@@ -666,8 +666,17 @@ function moveGhosts(dt) {
     if (G(g.x + g.dx, g.y + g.dy) !== '#') {
       g.x += g.dx; g.y += g.dy;
     } else {
-      const dirs = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => G(g.x+dx, g.y+dy) !== '#');
-      if (dirs.length) { [g.dx, g.dy] = dirs[Math.floor(Math.random() * dirs.length)]; g.x += g.dx; g.y += g.dy; }
+      let dirs = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => G(g.x+dx, g.y+dy) !== '#');
+      if (dirs.length) {
+        // 追猎偏置：两成几率改走逼近玩家的方向
+        if (Math.random() < 0.2) {
+          const hunt = dirs.sort((a, b) =>
+            Math.hypot(g.x + a[0] - px, g.y + a[1] - py) - Math.hypot(g.x + b[0] - px, g.y + b[1] - py));
+          dirs = [hunt[0]];
+        }
+        [g.dx, g.dy] = dirs[Math.floor(Math.random() * dirs.length)];
+        g.x += g.dx; g.y += g.dy;
+      }
     }
     checkGhostHit();
   }

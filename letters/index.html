@@ -6,406 +6,135 @@
 <meta name="theme-color" content="#101a20">
 <title>纸间 · LETTERS — 互动书信</title>
 <style>
+  html { color-scheme: dark; }
   :root {
-    --paper: #f0e8d6;
-    --paper2: #e8ddc4;
-    --ink: #33302a;
-    --seal: #9e3528;
-    --gold: #d9b57c;
-    --ruling-c: rgba(130,108,64,0.09);
-    --bg1: #101a20;
-    --bg2: #1a2732;
+    --paper: #f0e8d6; --paper2: #e8ddc4; --ink: #33302a;
+    --seal: #9e3528; --gold: #d9b57c;
+    --ruling: rgba(130,108,64,0.09);
+    --bg1: #101a20; --bg2: #1a2732;
     --font: "Songti SC","STSong","SimSun","Noto Serif SC",Georgia,serif;
   }
-  html { color-scheme: dark; }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100%; }
-  body {
-    font-family: var(--font);
-    background: radial-gradient(ellipse at 50% 30%, var(--bg2), var(--bg1) 75%);
-    color: var(--ink); overflow: hidden;
-    -webkit-user-select: none; user-select: none;
-    transition: background 1.2s;
-  }
-  #motes { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
-  .stage { position: fixed; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; }
+  body { font-family:var(--font); background:radial-gradient(ellipse at 50% 30%,var(--bg2),var(--bg1) 75%); color:var(--ink); overflow:hidden; user-select:none; }
+  #motes { position:fixed; inset:0; z-index:1; pointer-events:none; }
+  .stage { position:fixed; inset:0; z-index:2; display:flex; align-items:center; justify-content:center; padding:20px; }
 
-  /* ---------- 信封 ---------- */
-  .envelope {
-    position: relative; width: min(420px, 88vw); aspect-ratio: 1.45/1;
-    cursor: pointer; transition: transform .5s cubic-bezier(.2,.8,.2,1), opacity .6s;
-    perspective: 800px;
-  }
-  .envelope:hover { transform: translateY(-6px); }
-  .env-body {
-    position: absolute; inset: 0; border-radius: 6px;
-    background: linear-gradient(160deg, color-mix(in srgb, var(--paper) 78%, #b8a888), color-mix(in srgb, var(--paper2) 82%, #a89878));
-    box-shadow: 0 24px 60px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.12);
-  }
-  .env-flap {
-    position: absolute; top: 0; left: 0; right: 0; height: 56%;
-    background: color-mix(in srgb, var(--paper2) 85%, #9a8a6a);
-    clip-path: polygon(0 0, 100% 0, 50% 100%);
-    border-radius: 6px 6px 0 0;
-    transform-origin: top center;
-    transition: transform .8s cubic-bezier(.6,0,.3,1);
-    z-index: 3;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
-  }
-  .envelope.open .env-flap { transform: rotateX(178deg); }
-  .env-letterpeek {
-    position: absolute; left: 6%; right: 6%; top: 12%; bottom: 12%;
-    background: var(--paper); border-radius: 3px; z-index: 2;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-    transition: transform .7s .3s cubic-bezier(.2,.8,.2,1);
-  }
-  .envelope.open .env-letterpeek { transform: translateY(-16%) scale(1.04); }
-  .seal {
-    position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%);
-    width: 58px; height: 58px; border-radius: 50%;
-    background: radial-gradient(circle at 38% 32%, color-mix(in srgb, var(--seal) 70%, white), var(--seal) 60%);
-    display: grid; place-items: center; z-index: 4;
-    color: var(--paper); font-size: 26px; font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.35), inset 0 0 0 3px color-mix(in srgb, var(--paper) 70%, transparent), inset 0 0 0 6px var(--seal);
-    transition: opacity .4s .5s;
-  }
-  .envelope.open .seal { opacity: 0; }
-  .env-hint {
-    position: absolute; left: 50%; bottom: -44px; transform: translateX(-50%);
-    color: color-mix(in srgb, var(--paper) 55%, transparent); font-size: 13px; letter-spacing: 0.4em; white-space: nowrap;
-  }
+  /* 选集屏 */
+  .select { position:fixed; inset:0; z-index:8; display:flex; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(ellipse at 50% 32%,rgba(16,26,32,0.96),rgba(8,10,14,0.99)); overflow-y:auto; padding:6vh 20px 40px; }
+  .sel-kicker { font-size:12px; letter-spacing:0.6em; color:rgba(217,181,124,0.7); }
+  .sel-title { font-size:clamp(30px,6vw,52px); letter-spacing:0.24em; color:#ece5d2; margin-top:12px; font-weight:600; }
+  .sel-sub { font-size:12.5px; letter-spacing:0.4em; color:rgba(236,229,210,0.45); margin-top:10px; }
+  .story-list { margin-top:30px; display:flex; flex-direction:column; gap:10px; width:min(560px,92vw); }
+  .story-card { border:1px solid rgba(240,232,214,0.14); border-radius:8px; cursor:pointer; background:rgba(20,26,32,0.6); padding:16px 20px; text-align:left; color:#ece5d2; font-family:inherit; display:flex; align-items:baseline; gap:14px; transition:border-color .25s,transform .25s; }
+  .story-card:hover { border-color:rgba(217,181,124,0.6); transform:translateX(4px); }
+  .story-card .tt { font-size:17px; letter-spacing:0.14em; min-width:108px; }
+  .story-card .kk { font-size:11.5px; letter-spacing:0.18em; color:rgba(236,229,210,0.5); flex:1; }
+  .story-card .prog { font-size:11px; font-family:Georgia,serif; color:rgba(217,181,124,0.8); }
 
-  /* ---------- 信纸 ---------- */
-  .letter {
-    width: min(680px, 94vw); max-height: 82vh; overflow-y: auto;
-    overscroll-behavior: contain; scrollbar-width: thin;
-    background:
-      repeating-linear-gradient(180deg, transparent 0, transparent 36px, var(--ruling-c) 36px, var(--ruling-c) 37px),
-      radial-gradient(ellipse at 20% 10%, rgba(0,0,0,0.05), transparent 55%),
-      linear-gradient(165deg, var(--paper), var(--paper2));
-    border-radius: 4px;
-    padding: clamp(28px, 5vw, 56px) clamp(24px, 6vw, 64px);
-    box-shadow: 0 30px 80px rgba(0,0,0,0.55), inset 0 0 60px rgba(0,0,0,0.08);
-    position: relative;
-  }
-  .letter::before, .letter::after {
-    content: ''; position: absolute; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.14) 18%, rgba(0,0,0,0.14) 82%, transparent);
-  }
-  .letter::before { top: 33%; } .letter::after { top: 66%; }
-  .letter .yr { font-size: 12.5px; letter-spacing: 0.35em; opacity: 0.6; margin-bottom: 4px; }
-  .letter h2 { font-size: clamp(19px, 3vw, 25px); font-weight: 600; letter-spacing: 0.14em; margin-bottom: 20px; }
-  .letter p {
-    font-size: clamp(15px, 2.2vw, 17.5px); line-height: 2.15; letter-spacing: 0.05em;
-    margin-bottom: 1.1em; color: var(--ink);
-    opacity: 0; transform: translateY(8px); filter: blur(3px);
-  }
-  .letter p.in { opacity: 1; transform: none; filter: blur(0); transition: opacity 1.3s ease, transform 1s ease, filter 1.2s ease; }
-  .letter p.drop::first-letter {
-    font-size: 1.9em; float: left; line-height: 1; padding: 6px 10px 0 0; color: var(--seal); font-weight: 600;
-  }
-  .letter.postcard { width: min(480px, 92vw); }
+  /* 标题屏 */
+  .title { position:fixed; inset:0; z-index:8; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px; background:radial-gradient(ellipse at 50% 35%,var(--bg2),rgba(8,10,14,0.985)); transition:opacity 1.2s; gap:6px; }
+  .title.show { display:flex; }
+  .title.gone { opacity:0; pointer-events:none; display:flex !important; }
+  .ts-kicker { font-size:13px; letter-spacing:0.6em; color:rgba(217,181,124,0.75); margin-bottom:14px; }
+  .ts-title { font-size:clamp(44px,9vw,84px); font-weight:600; letter-spacing:0.18em; color:#ece5d2; text-shadow:0 0 40px rgba(217,181,124,0.25); }
+  .ts-desc { margin-top:26px; font-size:14px; line-height:2.2; letter-spacing:0.12em; color:rgba(236,229,210,0.7); max-width:480px; }
+  .ts-actions { margin-top:36px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .btn-main { border:1px solid var(--gold); background:none; color:var(--gold); font-family:inherit; font-size:15px; letter-spacing:0.3em; padding:13px 30px; border-radius:2px; cursor:pointer; transition:background .3s,color .3s; }
+  .btn-main:hover { background:var(--gold); color:#14100a; }
+  .btn-sub { border:1px solid rgba(240,232,214,0.3); background:none; color:rgba(240,232,214,0.7); font-family:inherit; font-size:13px; letter-spacing:0.2em; padding:11px 22px; border-radius:2px; cursor:pointer; }
+  .btn-sub:hover { color:var(--paper); border-color:var(--paper); }
 
-  /* ---------- 回信 ---------- */
-  .replies { margin-top: 26px; display: none; flex-direction: column; gap: 12px; }
-  .replies.in { display: flex; animation: fadeUp .8s ease both; }
-  .replies .q { font-size: 13px; letter-spacing: 0.3em; opacity: 0.55; text-align: center; margin-bottom: 4px; }
-  .reply {
-    border: 1px solid color-mix(in srgb, var(--ink) 35%, transparent); background: color-mix(in srgb, var(--paper) 60%, transparent);
-    color: var(--ink); font-family: inherit; font-size: 15px; line-height: 1.8; letter-spacing: 0.04em;
-    padding: 13px 20px; border-radius: 3px; cursor: pointer; text-align: left;
-    transition: background .25s, border-color .25s, transform .25s; position: relative;
-  }
-  .reply:hover { background: color-mix(in srgb, var(--seal) 10%, transparent); border-color: var(--seal); transform: translateX(4px); }
-  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  /* 信封 */
+  .envelope { position:relative; width:min(420px,88vw); aspect-ratio:1.45/1; cursor:pointer; transition:transform .5s; perspective:800px; }
+  .envelope:hover { transform:translateY(-6px); }
+  .env-body { position:absolute; inset:0; border-radius:6px; background:linear-gradient(160deg,#d9cbae,#cbbc9c); box-shadow:0 24px 60px rgba(0,0,0,0.5); }
+  .env-flap { position:absolute; top:0; left:0; right:0; height:56%; background:#cfc09e; clip-path:polygon(0 0,100% 0,50% 100%); border-radius:6px 6px 0 0; transform-origin:top center; transition:transform .8s; z-index:3; }
+  .envelope.open .env-flap { transform:rotateX(178deg); }
+  .env-peek { position:absolute; left:6%; right:6%; top:12%; bottom:12%; background:var(--paper); border-radius:3px; z-index:2; transition:transform .7s .3s; }
+  .envelope.open .env-peek { transform:translateY(-16%) scale(1.04); }
+  .seal { position:absolute; left:50%; top:52%; transform:translate(-50%,-50%); width:58px; height:58px; border-radius:50%; background:radial-gradient(circle at 38% 32%,#c65b44,var(--seal) 60%); display:grid; place-items:center; z-index:4; color:var(--paper); font-size:26px; font-weight:600; transition:opacity .4s .5s; }
+  .envelope.open .seal { opacity:0; }
+  .env-hint { position:absolute; left:50%; bottom:-44px; transform:translateX(-50%); color:rgba(240,232,214,0.55); font-size:13px; letter-spacing:0.4em; white-space:nowrap; }
 
-  /* ---------- 顶栏 ---------- */
-  .topbar {
-    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 5;
-    display: flex; gap: 14px; align-items: center;
-    color: color-mix(in srgb, var(--paper) 60%, transparent); font-size: 12.5px; letter-spacing: 0.25em;
-  }
-  .topbar .lampdot {
-    width: 7px; height: 7px; border-radius: 50%; background: var(--gold);
-    box-shadow: 0 0 10px var(--gold); animation: breathe 2.6s ease-in-out infinite;
-  }
-  @keyframes breathe { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
-  .corner { position: fixed; z-index: 5; top: 18px; right: 22px; display: flex; gap: 8px; }
-  .btn-ghost {
-    border: 1px solid color-mix(in srgb, var(--paper) 25%, transparent); background: rgba(0,0,0,0.35);
-    backdrop-filter: blur(6px); color: color-mix(in srgb, var(--paper) 80%, transparent);
-    font-family: inherit; font-size: 12px; letter-spacing: 0.12em;
-    padding: 6px 13px; border-radius: 999px; cursor: pointer;
-    transition: color .2s, border-color .2s;
-  }
-  .btn-ghost:hover { color: var(--gold); border-color: var(--gold); }
+  /* 信纸 */
+  .letter { width:min(680px,94vw); max-height:82vh; overflow-y:auto; overscroll-behavior:contain; background:repeating-linear-gradient(180deg,transparent 0,transparent 36px,var(--ruling) 36px,var(--ruling) 37px),radial-gradient(ellipse at 20% 10%,rgba(0,0,0,0.05),transparent 55%),linear-gradient(165deg,var(--paper),var(--paper2)); border-radius:4px; padding:clamp(28px,5vw,56px) clamp(24px,6vw,64px); box-shadow:0 30px 80px rgba(0,0,0,0.55); position:relative; }
+  .letter::before,.letter::after { content:''; position:absolute; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(0,0,0,0.14) 18%,rgba(0,0,0,0.14) 82%,transparent); }
+  .letter::before { top:33%; } .letter::after { top:66%; }
+  .letter .yr { font-size:12.5px; letter-spacing:0.35em; opacity:0.6; margin-bottom:4px; }
+  .letter h2 { font-size:clamp(19px,3vw,25px); font-weight:600; letter-spacing:0.14em; margin-bottom:20px; }
+  .letter p { font-size:clamp(15px,2.2vw,17.5px); line-height:2.15; letter-spacing:0.05em; margin-bottom:1.1em; opacity:0; transform:translateY(8px); filter:blur(3px); }
+  .letter p.in { opacity:1; transform:none; filter:blur(0); transition:opacity 1.3s ease,transform 1s ease,filter 1.2s ease; }
+  .letter p.drop::first-letter { font-size:1.9em; float:left; line-height:1; padding:6px 10px 0 0; color:var(--seal); font-weight:600; }
+  .letter.postcard { width:min(480px,92vw); }
 
-  /* ---------- 选集屏 ---------- */
-  .select-ov {
-    position: fixed; inset: 0; z-index: 8; display: none;
-    flex-direction: column; align-items: center; justify-content: center;
-    background: radial-gradient(ellipse at 50% 32%, rgba(16,26,32,0.96), rgba(8,10,14,0.99));
-    overflow-y: auto; overscroll-behavior: contain; padding: 6vh 20px 40px;
-  }
-  .select-ov.show { display: flex; }
-  .sel-kicker { font-size: 12px; letter-spacing: 0.6em; color: rgba(217,181,124,0.7); }
-  .sel-title { font-size: clamp(30px, 6vw, 52px); letter-spacing: 0.24em; color: #ece5d2; margin-top: 12px; font-weight: 600; }
-  .sel-sub { font-size: 12.5px; letter-spacing: 0.4em; color: rgba(236,229,210,0.45); margin-top: 10px; }
-  .story-list { margin-top: 30px; display: flex; flex-direction: column; gap: 10px; width: min(560px, 92vw); }
-  .story-card {
-    border: 1px solid rgba(240,232,214,0.14); border-radius: 8px; cursor: pointer;
-    background: rgba(20,26,32,0.6); padding: 16px 20px; text-align: left;
-    color: #ece5d2; font-family: inherit; display: flex; align-items: baseline; gap: 14px;
-    transition: border-color .25s, background .25s, transform .25s;
-  }
-  .story-card:hover { border-color: rgba(217,181,124,0.6); transform: translateX(4px); }
-  .story-card .tt { font-size: 17px; letter-spacing: 0.14em; min-width: 108px; }
-  .story-card .kk { font-size: 11.5px; letter-spacing: 0.18em; color: rgba(236,229,210,0.5); flex: 1; }
-  .story-card .prog { font-size: 11px; font-family: Georgia, serif; color: rgba(217,181,124,0.8); }
-  .story-card .del {
-    border: none; background: none; color: rgba(236,229,210,0.35); cursor: pointer;
-    font-size: 13px; padding: 2px 6px; font-family: inherit;
-  }
-  .story-card .del:hover { color: #e88; }
-  .sel-actions { margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  /* 回信 */
+  .replies { margin-top:26px; display:none; flex-direction:column; gap:12px; }
+  .replies.in { display:flex; }
+  .reply { border:1px solid rgba(51,48,42,0.35); background:rgba(240,232,214,0.35); color:var(--ink); font-family:inherit; font-size:15px; line-height:1.8; letter-spacing:0.04em; padding:13px 20px; border-radius:3px; cursor:pointer; text-align:left; transition:background .25s,border-color .25s,transform .25s; }
+  .reply:hover { background:rgba(158,53,40,0.1); border-color:var(--seal); transform:translateX(4px); }
 
-  /* ---------- 标题屏（单故事） ---------- */
-  .title-screen {
-    position: fixed; inset: 0; z-index: 8; display: none; flex-direction: column;
-    align-items: center; justify-content: center; text-align: center; padding: 30px;
-    background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--bg2) 90%, black), rgba(8,10,14,0.985));
-    transition: opacity 1.2s; gap: 6px;
-  }
-  .title-screen.show { display: flex; }
-  .title-screen.gone { opacity: 0; pointer-events: none; display: flex !important; }
-  .ts-kicker { font-size: 13px; letter-spacing: 0.6em; color: color-mix(in srgb, var(--gold) 75%, transparent); margin-bottom: 14px; }
-  .ts-title { font-size: clamp(44px, 9vw, 84px); font-weight: 600; letter-spacing: 0.18em; color: color-mix(in srgb, var(--paper) 92%, white); text-shadow: 0 0 40px rgba(217,181,124,0.25); }
-  .ts-sub { font-size: clamp(15px, 2.4vw, 19px); letter-spacing: 0.5em; color: color-mix(in srgb, var(--paper) 55%, transparent); margin-top: 10px; }
-  .ts-desc { margin-top: 26px; font-size: 14px; line-height: 2.2; letter-spacing: 0.12em; color: color-mix(in srgb, var(--paper) 70%, transparent); max-width: 480px; }
-  .ts-actions { margin-top: 36px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-  .btn-main {
-    border: 1px solid var(--gold); background: none; color: var(--gold);
-    font-family: inherit; font-size: 15px; letter-spacing: 0.3em; padding: 13px 30px;
-    border-radius: 2px; cursor: pointer; transition: background .3s, color .3s, box-shadow .3s;
-  }
-  .btn-main:hover { background: var(--gold); color: #14100a; box-shadow: 0 0 34px rgba(217,181,124,0.4); }
-  .btn-sub {
-    border: 1px solid color-mix(in srgb, var(--paper) 30%, transparent); background: none; color: color-mix(in srgb, var(--paper) 70%, transparent);
-    font-family: inherit; font-size: 13px; letter-spacing: 0.2em; padding: 11px 22px;
-    border-radius: 2px; cursor: pointer; transition: color .25s, border-color .25s;
-  }
-  .btn-sub:hover { color: var(--paper); border-color: var(--paper); }
-  .ts-endings { margin-top: 26px; display: flex; gap: 10px; }
-  .ts-endings .dot {
-    width: 12px; height: 12px; border-radius: 50%;
-    border: 1px solid color-mix(in srgb, var(--paper) 35%, transparent); transition: all .3s;
-  }
-  .ts-endings .dot.got { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 12px rgba(217,181,124,0.6); }
-  .ts-stats { margin-top: 14px; font-size: 12px; letter-spacing: 0.2em; color: color-mix(in srgb, var(--paper) 45%, transparent); }
+  /* 结局 */
+  .ending { position:fixed; inset:0; z-index:9; display:none; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(ellipse at 50% 40%,rgba(30,34,44,0.94),rgba(8,10,14,0.985)); text-align:center; padding:34px; overflow-y:auto; }
+  .ending.show { display:flex; }
+  .en-kicker { font-size:12px; letter-spacing:0.55em; color:rgba(217,181,124,0.7); }
+  .en-title { font-size:clamp(34px,6.5vw,58px); letter-spacing:0.22em; color:#ece5d2; margin:18px 0 26px; font-weight:600; }
+  .en-text { font-size:clamp(15px,2.2vw,17px); line-height:2.4; letter-spacing:0.08em; color:rgba(236,229,210,0.85); max-width:560px; white-space:pre-line; text-align:left; }
 
-  /* ---------- 结局屏 ---------- */
-  .ending-note {
-    position: fixed; inset: 0; z-index: 9; display: none;
-    flex-direction: column; align-items: center; justify-content: center;
-    background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--bg2) 92%, black), rgba(8,10,14,0.985));
-    text-align: center; padding: 34px; overflow-y: auto; overscroll-behavior: contain;
-  }
-  .ending-note.show { display: flex; }
-  .en-scene { width: 190px; height: 130px; margin: 0 auto 6px; opacity: 0.92; }
-  .en-scene svg { width: 100%; height: 100%; }
-  .ending-note.show .en-scene { animation: sceneIn 1.4s cubic-bezier(.2,.8,.2,1) both .3s; }
-  @keyframes sceneIn { from { opacity: 0; transform: translateY(16px) scale(0.94); } to { opacity: 0.92; transform: none; } }
-  @media (prefers-reduced-motion: reduce) { .ending-note.show .en-scene { animation: none; } }
-  .en-kicker { font-size: 12px; letter-spacing: 0.55em; color: color-mix(in srgb, var(--gold) 70%, transparent); }
-  .en-title { font-size: clamp(34px, 6.5vw, 58px); letter-spacing: 0.22em; color: color-mix(in srgb, var(--paper) 92%, white); margin: 18px 0 26px; font-weight: 600; }
-  .en-text { font-size: clamp(15px, 2.2vw, 17px); line-height: 2.4; letter-spacing: 0.08em; color: color-mix(in srgb, var(--paper) 85%, transparent); max-width: 560px; white-space: pre-line; text-align: left; }
-  .en-stats { margin-top: 28px; font-size: 13px; letter-spacing: 0.2em; color: color-mix(in srgb, var(--paper) 50%, transparent); }
+  .corner { position:fixed; z-index:5; top:18px; right:22px; display:flex; gap:8px; }
+  .btn-ghost { border:1px solid rgba(240,232,214,0.25); background:rgba(0,0,0,0.35); color:rgba(240,232,214,0.8); font-family:inherit; font-size:12px; letter-spacing:0.12em; padding:6px 13px; border-radius:999px; cursor:pointer; }
+  .btn-ghost:hover { color:var(--gold); border-color:var(--gold); }
 
-  /* ---------- 信堆图鉴 ---------- */
-  .stack-ov {
-    position: fixed; inset: 0; z-index: 10; display: none;
-    flex-direction: column; align-items: center; justify-content: flex-start;
-    background: radial-gradient(ellipse at 50% 30%, color-mix(in srgb, var(--bg2) 95%, black), rgba(8,10,14,0.99));
-    overflow-y: auto; overscroll-behavior: contain; padding: 7vh 24px 60px;
-  }
-  .stack-ov.show { display: flex; }
-  .stack-ov h2 { font-size: 24px; letter-spacing: 0.4em; color: color-mix(in srgb, var(--paper) 92%, white); font-weight: 600; }
-  .stack-ov .sub { margin-top: 10px; font-size: 12.5px; letter-spacing: 0.3em; color: color-mix(in srgb, var(--paper) 50%, transparent); }
-  .stack-list { margin-top: 34px; display: flex; flex-direction: column; gap: 9px; width: min(560px, 92vw); }
-  .stack-item {
-    display: flex; align-items: baseline; gap: 16px;
-    border: 1px solid rgba(240,232,214,0.12); border-radius: 4px;
-    padding: 11px 18px; font-size: 14px; letter-spacing: 0.08em;
-    color: color-mix(in srgb, var(--paper) 35%, transparent);
-    transition: border-color .25s, color .25s;
-  }
-  .stack-item .no { font-size: 11px; color: color-mix(in srgb, var(--paper) 40%, transparent); min-width: 34px; font-family: Georgia, serif; }
-  .stack-item .yr { min-width: 96px; color: color-mix(in srgb, var(--gold) 80%, transparent); font-size: 12px; }
-  .stack-item.read { color: color-mix(in srgb, var(--paper) 90%, white); }
-  .stack-item.unread .tt { letter-spacing: 0.3em; }
-  .stack-close { margin-top: 30px; }
+  .home-link { position:fixed; left:26px; bottom:26px; z-index:6; width:42px; height:42px; border-radius:50%; border:1px solid rgba(240,232,214,0.22); background:rgba(0,0,0,0.4); color:rgba(240,232,214,0.7); display:grid; place-items:center; font-size:16px; text-decoration:none; }
+  .home-link:hover { color:var(--gold); border-color:var(--gold); }
 
-  /* ---------- 导入/AI 弹层 ---------- */
-  .io-ov {
-    position: fixed; inset: 0; z-index: 12; display: none;
-    align-items: center; justify-content: center; background: rgba(4,6,10,0.88); padding: 20px;
-  }
-  .io-ov.show { display: flex; }
-  .io-ov .box {
-    width: min(640px, 94vw); max-height: 88vh; display: flex; flex-direction: column;
-    border: 1px solid rgba(240,232,214,0.16); border-radius: 10px;
-    background: rgba(14,18,26,0.98); padding: 22px;
-  }
-  .io-ov h3 { font-size: 14px; letter-spacing: 0.4em; color: var(--gold); font-weight: 600; }
-  .io-ov .tip { margin-top: 10px; font-size: 12px; line-height: 2; color: rgba(236,229,210,0.65); }
-  .io-ov textarea {
-    flex: 1; min-height: 180px; margin-top: 12px; resize: none;
-    background: rgba(7,9,13,0.8); color: #cfe0d8; border: 1px solid rgba(240,232,214,0.14);
-    border-radius: 6px; font-family: Georgia, Consolas, monospace; font-size: 11.5px;
-    line-height: 1.7; padding: 10px; outline: none; white-space: pre;
-  }
-  .io-ov textarea:focus { border-color: var(--gold); }
-  .io-acts { margin-top: 14px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-
-  .home-link {
-    position: fixed; left: 26px; bottom: 26px; z-index: 6;
-    width: 42px; height: 42px; border-radius: 50%;
-    border: 1px solid color-mix(in srgb, var(--paper) 22%, transparent); background: rgba(0,0,0,0.4); backdrop-filter: blur(6px);
-    color: color-mix(in srgb, var(--paper) 70%, transparent); display: grid; place-items: center;
-    font-size: 16px; text-decoration: none;
-    transition: color .25s, border-color .25s, transform .25s;
-  }
-  .home-link:hover { color: var(--gold); border-color: var(--gold); transform: translateY(-3px); }
-
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
-  @media (max-width: 640px) {
-    .letter { max-height: 76vh; }
-    .env-hint { font-size: 11px; letter-spacing: 0.25em; }
-    .story-card { flex-wrap: wrap; }
-    .story-card .tt { min-width: 0; }
-  }
+  @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; } }
+  @media (max-width:640px) { .letter { max-height:76vh; } }
 </style>
 </head>
 <body>
 <canvas id="motes"></canvas>
 
-<div class="select-ov show" id="selectOv">
+<div class="select" id="selectOv">
   <div class="sel-kicker">拾 遗 · 纸 间</div>
   <div class="sel-title">选 一 个 信 箱</div>
-  <div class="sel-sub" id="selSub"></div>
+  <div class="sel-sub">三个信箱 · 或导入你的故事</div>
   <div class="story-list" id="storyList"></div>
-  <div class="sel-actions">
-    <button class="btn-sub" id="writeBtn"></button>
-    <button class="btn-sub" id="importBtn"></button>
-    <button class="btn-sub" id="aiBtn"></button>
+  <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+    <button class="btn-sub" id="importBtn">导 入 故 事</button>
+    <button class="btn-sub" id="aiBtn">让 AI 写一个</button>
+    <button class="btn-sub" id="writeBtn">✎ 手 写 故 事</button>
   </div>
 </div>
 
-<div class="title-screen" id="titleScreen">
+<div class="title" id="titleScreen">
   <button class="btn-sub" id="backBtn" style="position:absolute;top:20px;left:20px">← 选 集</button>
   <div class="ts-kicker" id="tsKicker"></div>
   <div class="ts-title" id="tsTitle"></div>
-  <div class="ts-sub" id="tsSub"></div>
   <div class="ts-desc" id="tsDesc"></div>
   <div class="ts-actions">
-    <button class="btn-main" id="startBtn"></button>
-    <button class="btn-main" id="contBtn" style="display:none"></button>
-    <button class="btn-sub" id="stackBtn"></button>
-    <button class="btn-sub" id="shareStoryBtn"></button>
+    <button class="btn-main" id="startBtn">拆 开 第 一 封 信</button>
+    <button class="btn-main" id="contBtn" style="display:none">继 续 读 信</button>
+    <button class="btn-sub" id="stackBtn">信 堆</button>
+    <button class="btn-sub" id="shareStoryBtn">分享此故事</button>
   </div>
-  <div class="ts-endings" id="tsEndings"></div>
-  <div class="ts-stats" id="tsStats"></div>
+  <div style="margin-top:26px;display:flex;gap:10px" id="tsEndings"></div>
+  <div style="margin-top:14px;font-size:12px;letter-spacing:0.2em;color:rgba(236,229,210,0.45)" id="tsStats"></div>
 </div>
 
-<div class="topbar" id="topbar" style="display:none">
-  <span class="lampdot"></span>
-  <span id="letterNo"></span>
-</div>
-<div class="prog" id="prog" style="display:none;position:fixed;top:44px;left:50%;transform:translateX(-50%);width:180px;height:1px;background:color-mix(in srgb,var(--paper) 14%,transparent);z-index:5">
-  <div id="progFill" style="height:100%;width:0%;background:var(--gold);box-shadow:0 0 8px rgba(217,181,124,0.7);transition:width .8s ease"></div>
-</div>
 <div class="corner">
-  <button class="btn-ghost" id="spdBtn"></button>
-  <button class="btn-ghost" id="sndBtn"></button>
+  <button class="btn-ghost" id="sndBtn">声 · 开</button>
   <button class="btn-ghost" id="langBtn">EN</button>
 </div>
 
 <div class="stage" id="stage"></div>
 
-<div class="stack-ov" id="stackOv">
-  <h2 id="stackTitle"></h2>
-  <div class="sub" id="stackSub"></div>
-  <div class="stack-list" id="stackList"></div>
-  <button class="btn-main stack-close" id="stackClose"></button>
-</div>
-
-<div class="io-ov" id="importOv">
-  <div class="box">
-    <h3 id="impTitle"></h3>
-    <div class="tip" id="impTip"></div>
-    <textarea id="impText" spellcheck="false"></textarea>
-    <div class="io-acts">
-      <button class="btn-main" id="impDo"></button>
-      <button class="btn-sub" id="impClose"></button>
-    </div>
-  </div>
-</div>
-
-<div class="io-ov" id="aiOv">
-  <div class="box">
-    <h3 id="aiTitle"></h3>
-    <div style="display:flex;gap:14px;margin-top:12px;flex-wrap:wrap;align-items:center;font-size:12px;color:rgba(236,229,210,0.7)">
-      <label><span id="aiLenL"></span> <input type="range" id="aiLen" min="4" max="16" step="1" value="8" style="vertical-align:middle;width:80px"> <b id="aiLenV">8</b></label>
-      <label><span id="aiEndL"></span> <input type="range" id="aiEnd" min="1" max="6" step="1" value="3" style="vertical-align:middle;width:60px"> <b id="aiEndV">3</b></label>
-    </div>
-    <input type="text" id="aiExtra" spellcheck="false" style="width:100%;margin-top:8px;background:rgba(7,9,13,0.8);color:#cfe0d8;border:1px solid rgba(240,232,214,0.14);border-radius:6px;font-family:inherit;font-size:12px;padding:8px 10px;outline:none" placeholder="">
-    <div class="tip" id="aiTip"></div>
-    <textarea id="aiText" spellcheck="false" readonly></textarea>
-    <div class="io-acts">
-      <button class="btn-main" id="aiCopy"></button>
-      <button class="btn-sub" id="aiClose"></button>
-    </div>
-  </div>
-</div>
-
-<div class="io-ov" id="writeOv">
-  <div class="box" style="max-height:92vh">
-    <h3 id="wrTitle"></h3>
-    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
-      <input type="text" id="wrTitleIn" style="flex:1;min-width:140px;background:rgba(7,9,13,0.8);color:#cfe0d8;border:1px solid rgba(240,232,214,0.14);border-radius:6px;font-family:inherit;font-size:13px;padding:8px 10px;outline:none" spellcheck="false">
-      <input type="text" id="wrKickerIn" style="flex:1;min-width:140px;background:rgba(7,9,13,0.8);color:#cfe0d8;border:1px solid rgba(240,232,214,0.14);border-radius:6px;font-family:inherit;font-size:13px;padding:8px 10px;outline:none" spellcheck="false">
-    </div>
-    <textarea id="wrDescIn" rows="2" style="width:100%;margin-top:8px;background:rgba(7,9,13,0.8);color:#cfe0d8;border:1px solid rgba(240,232,214,0.14);border-radius:6px;font-family:inherit;font-size:12px;padding:8px;outline:none;resize:none" spellcheck="false"></textarea>
-    <div id="wrStyleSel" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"></div>
-    <div style="margin-top:10px;font-size:12px;letter-spacing:0.2em;color:var(--gold)" id="wrLettersL"></div>
-    <div id="wrLetterList" style="margin-top:6px;max-height:300px;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px"></div>
-    <div style="margin-top:8px;display:flex;gap:8px">
-      <button class="btn-sub" id="wrAddLetter" style="font-size:12px;padding:8px 16px">＋ 信</button>
-      <button class="btn-sub" id="wrAddEnding" style="font-size:12px;padding:8px 16px">＋ 结局</button>
-    </div>
-    <div style="margin-top:12px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <button class="btn-main" id="wrSave" style="font-size:13px;padding:10px 24px"></button>
-      <button class="btn-sub" id="wrClose"></button>
-    </div>
-  </div>
-</div>
-
-<div class="ending-note" id="endingNote">
-  <div class="en-scene" id="enScene"></div>
-  <div class="en-kicker" id="enKicker"></div>
+<div class="ending" id="endingNote">
+  <div class="en-kicker">结 局</div>
   <div class="en-title" id="enTitle"></div>
   <div class="en-text" id="enText"></div>
-  <div class="en-stats" id="enStats"></div>
   <div class="ts-actions" style="margin-top:34px">
-    <button class="btn-main" id="againBtn"></button>
+    <button class="btn-main" id="againBtn">再 读 一 遍</button>
   </div>
 </div>
 
@@ -414,290 +143,122 @@
 <script src="story-data.js"></script>
 <script>
 'use strict';
-window.addEventListener('error', e => {
-  const b = document.createElement('div');
-  b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99;background:#401414;color:#ffb4b4;font-size:12px;padding:8px 12px';
-  b.textContent = 'ERR: ' + e.message;
-  document.body.appendChild(b);
-});
+/* 纸间 v5 — 简洁交互层重建 */
 
-/* ================= i18n（引擎文案） ================= */
-const UI = {
-  zh: {
-    selSub: '三个信箱 · 或导入你的故事',
-    importB: '导 入 故 事', aiB: '让 AI 写一个', writeB: '✎ 手 写 故 事',
-    aiLenL: '信件数', aiEndL: '结局数', aiExtraPh: '额外要求（可选：风格/题材/情感基调…）',
-    aiTip2: '调好参数 → 复制提示词 → 发给任意 AI → 粘回导入。',
-    wrTitleT: '手 写 故 事', wrTitlePh: '故事名…', wrKickerPh: '一句话引子…', wrDescPh: '开场简介…',
-    wrLettersL: '信件（拖序无效，按添加顺序阅读）', wrAddL: '＋ 信', wrAddE: '＋ 结局',
-    wrSaveB: '保 存 并 游 玩', wrCloseB: '关 闭',
-    wrYrPh: '年份/日期…', wrTiPh: '信题…', wrTxPh: '信的正文…',wrRpPh: '回信选项（每行一条，→节点ID如 n3 或 E1）',
-    wrEndTiPh: '结局名…', wrEndTxPh: '结局正文…', wrStyleL: '信纸风格',
-    styles: ['素笺', '蓝笺', '暗笺', '绢黄'],
-    styleDefs: [
-      { n: '素笺', paper: '#f0e8d6', ink: '#33302a', seal: '#9e3528', gold: '#d9b57c', ruling: 'rgba(130,108,64,0.09)', bg1: '#101a20', bg2: '#1a2732', font: '"Songti SC","SimSun",serif' },
-      { n: '蓝笺', paper: '#e9eef3', ink: '#2e3a46', seal: '#4a7a9b', gold: '#8fb4d4', ruling: 'rgba(90,120,150,0.10)', bg1: '#141c26', bg2: '#1f2c3c', font: '"KaiTi","STKaiti",serif' },
-      { n: '暗笺', paper: '#0e1d17', ink: '#a8cdbd', seal: '#e07a5f', gold: '#7fd8cf', ruling: null, bg1: '#060d0a', bg2: '#0c1a14', font: '"FangSong","STFangsong",serif' },
-      { n: '绢黄', paper: '#f4ecd4', ink: '#4a3c28', seal: '#8b6914', gold: '#c9a227', ruling: 'rgba(160,130,60,0.08)', bg1: '#1a1608', bg2: '#2a2410', font: '"Songti SC","SimSun",serif' }
-    ],
-    fragPh: '✎ 碎片台词'
-    start: '拆 开 第 一 封 信', cont: '继 续 读 信', again: '再 读 一 遍',
-    stack: '信 堆', shareStory: '分享此故事',
-    openHint: '点 击 拆 封', replyQ: '—— 你 要 如 何 回 信 ——',
-    sndOn: '声 · 开', sndOff: '声 · 关',
-    enKicker: '结 局',
-    stats: (n, path, total) => `共读 ${n} 封 · 走过「${path}」· 全卷 ${total} 封`,
-    paths: { warm: '温情之路', probe: '追问之路' },
-    impTitle: '导 入 故 事', impTip: '粘贴故事 JSON（格式见「让 AI 写一个」），或导入别人分享的 .json 内容。',
-    impDo: '导 入', impClose: '关 闭',
-    impBad: '故事格式无效：', impOk: '✓ 已导入', impDup: '（同名故事已替换）',
-    aiTitle: 'AI 创作提示词', aiTip: '把下面这段话发给任意 AI，把生成结果粘贴回「导入故事」即可游玩。',
-    aiCopy: '复 制 提 示 词', aiCopied: '✓ 已复制',
-    aiClose: '关 闭',
-    stackSub: (n, t) => `${t} 封信，按年代排开 · 已启 ${n} 封`,
-    unopened: '未 启 封', reRead: '重读这封信', stackClose: '合 上 信 堆',
-    shareOk: '✓ 已复制 JSON', shareDl: '（同时下载 .json）',
-    delStory: '删除'
-  },
-  en: {
-    selSub: 'three mailboxes · or import your own',
-    importB: 'IMPORT STORY', aiB: 'ASK AN AI', writeB: '✎ WRITE A STORY',
-    aiLenL: 'Letters', aiEndL: 'Endings', aiExtraPh: 'Extra requirements (optional: style/theme/tone…)',
-    aiTip2: 'Set parameters → copy prompt → send to any AI → paste into Import.',
-    wrTitleT: 'WRITE A STORY', wrTitlePh: 'Story title…', wrKickerPh: 'One-line kicker…', wrDescPh: 'Opening…',
-    wrLettersL: 'Letters (read in order added)', wrAddL: '＋ Letter', wrAddE: '＋ Ending',
-    wrSaveB: 'SAVE & PLAY', wrCloseB: 'CLOSE',
-    wrYrPh: 'Year/date…', wrTiPh: 'Letter title…', wrTxPh: 'Letter body…', wrRpPh: 'Reply options (one per line, → node ID like n3 or E1)',
-    wrEndTiPh: 'Ending title…', wrEndTxPh: 'Ending text…', wrStyleL: 'Paper style',
-    styles: ['Plain', 'Blue', 'Dark', 'Silk'],
-    styleDefs: [
-      { n: 'Plain', paper: '#f0e8d6', ink: '#33302a', seal: '#9e3528', gold: '#d9b57c', ruling: 'rgba(130,108,64,0.09)', bg1: '#101a20', bg2: '#1a2732', font: '"Songti SC","SimSun",serif' },
-      { n: 'Blue', paper: '#e9eef3', ink: '#2e3a46', seal: '#4a7a9b', gold: '#8fb4d4', ruling: 'rgba(90,120,150,0.10)', bg1: '#141c26', bg2: '#1f2c3c', font: '"KaiTi","STKaiti",serif' },
-      { n: 'Dark', paper: '#0e1d17', ink: '#a8cdbd', seal: '#e07a5f', gold: '#7fd8cf', ruling: null, bg1: '#060d0a', bg2: '#0c1a14', font: '"FangSong","STFangsong",serif' },
-      { n: 'Silk', paper: '#f4ecd4', ink: '#4a3c28', seal: '#8b6914', gold: '#c9a227', ruling: 'rgba(160,130,60,0.08)', bg1: '#1a1608', bg2: '#2a2410', font: '"Songti SC","SimSun",serif' }
-    ],
-    fragPh: '✎ Fragment lines'
-    start: 'OPEN THE FIRST LETTER', cont: 'CONTINUE', again: 'READ AGAIN',
-    stack: 'STACK', shareStory: 'SHARE STORY',
-    openHint: 'CLICK TO UNSEAL', replyQ: '— HOW WILL YOU REPLY —',
-    sndOn: 'SND ON', sndOff: 'SND OFF',
-    enKicker: 'ENDING',
-    stats: (n, path, total) => `${n} letters read · the ${path} · ${total} in all`,
-    paths: { warm: 'gentle road', probe: 'searching road' },
-    impTitle: 'IMPORT STORY', impTip: 'Paste story JSON (see the AI prompt for the format), or contents of a shared .json.',
-    impDo: 'IMPORT', impClose: 'CLOSE',
-    impBad: 'invalid story: ', impOk: '✓ imported', impDup: ' (replaced same-id story)',
-    aiTitle: 'AI AUTHORING PROMPT', aiTip: 'Send the text below to any AI; paste the JSON it produces back into IMPORT.',
-    aiCopy: 'COPY PROMPT', aiCopied: '✓ copied',
-    aiClose: 'CLOSE',
-    stackSub: (n, t) => `${t} letters, by year · ${n} opened`,
-    unopened: 'UNOPENED', reRead: 're-read this letter', stackClose: 'CLOSE',
-    shareOk: '✓ JSON copied', shareDl: ' (.json downloaded too)',
-    delStory: 'delete'
-  }
-};
-let lang = localStorage.getItem('letters-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
-const T = () => UI[lang];
+let lang = localStorage.getItem('letters-lang') || (navigator.language.startsWith('zh' ? 'zh' : 'en'));
+let pack = null;
+let save = null;
+let visited = new Set();
+let letterCount = 0;
+let sealMode = false;
 
-/* ================= 故事装载 ================= */
+const S = () => pack.letters[lang] || pack.letters.zh;
+const SE = () => pack.endings[lang] || pack.endings.zh;
+const total = () => pack.order.filter(x => !String(x).startsWith('E')).length;
+
+/* ---------- 故事装载 ---------- */
 let imports = [];
-try { imports = JSON.parse(localStorage.getItem('letters-imports') || '[]'); } catch (e) {}
-const saveImports = () => localStorage.setItem('letters-imports', JSON.stringify(imports));
-let pack = null;          // 当前故事
-let save = null;          // 当前故事存档
+try { imports = JSON.parse(localStorage.getItem('letters-imports') || '[]'); } catch(e) {}
 
-function normalizeStory(raw) {
-  if (!raw || typeof raw !== 'object') return null;
-  const L = raw.letters && (raw.letters.zh || raw.letters.en);
-  if (!L || typeof L !== 'object') return null;
-  const zhL = raw.letters.zh || raw.letters.en;
-  const zhE = (raw.endings && (raw.endings.zh || raw.endings.en)) || {};
-  const nodeIds = Object.keys(zhL).filter(k => zhL[k] && zhL[k].text);
-  if (nodeIds.length < 4) return null;
-  for (const id of nodeIds) {
-    const nd = zhL[id];
-    if (nd.replies && !Array.isArray(nd.replies)) return null;
-  }
-  const endIds = Object.keys(zhE).filter(k => zhE[k] && zhE[k].text);
-  if (!endIds.length) return null;
-  const id = String(raw.id || ('story-' + Date.now())).replace(/[^\w-]/g, '').slice(0, 32) || ('s' + Date.now());
-  const style = raw.style || {};
-  return {
-    id,
-    title: raw.title || '无名信箱',
-    titleEn: raw.titleEn || raw.title || 'Untitled',
-    kicker: raw.kicker || '一沓旧信',
-    kickerEn: raw.kickerEn || raw.kicker || 'old letters',
-    desc: raw.desc || '（无简介）',
-    descEn: raw.descEn || raw.desc || '',
-    order: Array.isArray(raw.order) && raw.order.length >= nodeIds.length
-      ? raw.order : [...nodeIds, ...endIds],
-    hiddenEnding: raw.hiddenEnding || null,
-    style: {
-      font: style.font || '"Songti SC","STSong","SimSun",Georgia,serif',
-      paper: style.paper || '#f0e8d6',
-      paper2: style.paper2 || '#e8ddc4',
-      ink: style.ink || '#33302a',
-      seal: style.seal || '#9e3528',
-      gold: style.gold || '#d9b57c',
-      ruling: ('ruling' in style) ? style.ruling : 'rgba(130,108,64,0.09)',
-      bg1: style.bg1 || '#101a20',
-      bg2: style.bg2 || '#1a2732'
-    },
-    letters: {
-      zh: raw.letters.zh || raw.letters.en,
-      en: raw.letters.en || raw.letters.zh
-    },
-    endings: {
-      zh: (raw.endings && raw.endings.zh) || zhE,
-      en: (raw.endings && raw.endings.en) || zhE
-    }
-  };
-}
 function loadPack(p) {
   pack = p;
   const key = 'letters-save-' + p.id;
-  save = Object.assign({ node: null, read: 0, flags: [], endings: [], readNodes: [], snd: true, readEver: 0 },
+  save = Object.assign({node:null, read:0, endings:[], readNodes:[], snd:true, readEver:0},
     JSON.parse(localStorage.getItem(key) || '{}'));
-  // 迁移旧版守灯人存档
-  if (p.id === 'lighthouse' && !localStorage.getItem(key)) {
-    const old = localStorage.getItem('letters-save');
-    if (old) {
-      try {
-        const o = JSON.parse(old);
-        save = Object.assign(save, o);
-        persist();
-      } catch (e) {}
-    }
-  }
   applyStyle();
 }
 const persist = () => localStorage.setItem('letters-save-' + pack.id, JSON.stringify(save));
+
 function applyStyle() {
-  const s = pack.style, r = document.documentElement.style;
-  r.setProperty('--paper', s.paper);
-  r.setProperty('--paper2', s.paper2);
-  r.setProperty('--ink', s.ink);
-  r.setProperty('--seal', s.seal);
-  r.setProperty('--gold', s.gold);
-  r.setProperty('--ruling-c', s.ruling || 'transparent');
-  r.setProperty('--bg1', s.bg1);
-  r.setProperty('--bg2', s.bg2);
-  r.setProperty('--font', s.font);
+  const s = pack.style || {};
+  const r = document.documentElement.style;
+  r.setProperty('--paper', s.paper || '#f0e8d6');
+  r.setProperty('--paper2', s.paper2 || '#e8ddc4');
+  r.setProperty('--ink', s.ink || '#33302a');
+  r.setProperty('--seal', s.seal || '#9e3528');
+  r.setProperty('--gold', s.gold || '#d9b57c');
+  r.setProperty('--ruling', s.ruling || 'rgba(130,108,64,0.09)');
+  r.setProperty('--bg1', s.bg1 || '#101a20');
+  r.setProperty('--bg2', s.bg2 || '#1a2732');
+  document.body.style.background = `radial-gradient(ellipse at 50% 30%, ${s.bg2 || '#1a2732'}, ${s.bg1 || '#101a20'} 75%)`;
 }
-const S = () => pack.letters[lang] || pack.letters.zh;
-const SE = () => pack.endings[lang] || pack.endings.zh;
-const packTotal = () => pack.order.filter(x => !String(x).startsWith('E')).length;
 
-/* ================= 状态 ================= */
-let visited = new Set(), letterCount = 0, selectedPack = null;
-
-/* ================= 选集屏 ================= */
+/* ---------- 选集屏 ---------- */
 function buildSelect() {
-  document.getElementById('selSub').textContent = T().selSub;
-  document.getElementById('importBtn').textContent = T().importB;
-  document.getElementById('aiBtn').textContent = T().aiB;
-  document.getElementById('writeBtn').textContent = T().writeB;
   const list = document.getElementById('storyList');
   list.innerHTML = '';
-  const all = [...BUILTIN_STORIES, ...imports];
-  all.forEach(p => {
-    const sv = JSON.parse(localStorage.getItem('letters-save-' + p.id) || '{}');
-    const read = Math.min(sv.readEver || 0, p.order.filter(x => !String(x).startsWith('E')).length);
-    const got = (sv.endings || []).length;
+  [...BUILTIN_STORIES, ...imports].forEach(p => {
+    const sv = {};
+    try { Object.assign(sv, JSON.parse(localStorage.getItem('letters-save-' + p.id) || '{}')); } catch(e) {}
     const b = document.createElement('button');
     b.className = 'story-card';
+    const read = Math.min(sv.readEver || 0, 20);
+    const got = (sv.endings || []).length;
     b.innerHTML = `<span class="tt">${lang === 'zh' ? p.title : (p.titleEn || p.title)}</span>
-      <span class="kk">${lang === 'zh' ? p.kicker : (p.kickerEn || p.kicker)}</span>
-      <span class="prog">${read ? `✉${read} · ◈${got}` : 'NEW'}</span>`;
+      <span class="kk">${lang === 'zh' ? (p.kicker || '') : (p.kickerEn || p.kicker || '')}</span>
+      <span class="prog">${read ? `✉${read} ◈${got}` : 'NEW'}</span>`;
     b.addEventListener('click', () => {
       loadPack(p);
       showTitle();
     });
     list.appendChild(b);
-    if (imports.includes(p)) {
-      const d = document.createElement('button');
-      d.className = 'del';
-      d.textContent = '✕';
-      d.title = T().delStory;
-      d.addEventListener('click', e => {
-        e.stopPropagation();
-        imports = imports.filter(x => x.id !== p.id);
-        saveImports();
-        buildSelect();
-      });
-      b.appendChild(d);
-    }
   });
 }
+
 function showSelect() {
-  selectedPack = null;
-  document.getElementById('selectOv').classList.add('show');
-  document.getElementById('titleScreen').classList.remove('show', 'gone');
+  document.getElementById('selectOv').style.display = 'flex';
+  document.getElementById('titleScreen').classList.remove('show');
   buildSelect();
 }
 
-/* ================= 单故事标题屏 ================= */
 function showTitle() {
-  document.getElementById('selectOv').classList.remove('show');
+  document.getElementById('selectOv').style.display = 'none';
   const ts = document.getElementById('titleScreen');
   ts.classList.remove('gone');
   ts.classList.add('show');
-  refreshTitle();
-}
-function refreshTitle() {
-  document.getElementById('tsKicker').textContent = lang === 'zh' ? pack.kicker : (pack.kickerEn || pack.kicker);
+  document.getElementById('tsKicker').textContent = lang === 'zh' ? (pack.kicker || '') : (pack.kickerEn || pack.kicker || '');
   document.getElementById('tsTitle').textContent = lang === 'zh' ? pack.title : (pack.titleEn || pack.title);
-  document.getElementById('tsSub').textContent = (lang === 'zh' ? pack.titleEn : pack.title) + ' · LETTERS';
-  document.getElementById('tsDesc').innerHTML = lang === 'zh' ? pack.desc : (pack.descEn || pack.desc);
-  document.getElementById('startBtn').textContent = T().start;
-  document.getElementById('contBtn').textContent = T().cont;
-  document.getElementById('stackBtn').textContent = T().stack;
-  document.getElementById('shareStoryBtn').textContent = T().shareStory;
-  document.getElementById('againBtn').textContent = T().again;
+  document.getElementById('tsDesc').innerHTML = lang === 'zh' ? (pack.desc || '') : (pack.descEn || pack.desc || '');
   document.getElementById('contBtn').style.display = (save.node && !save.endings.length) ? 'inline-block' : 'none';
-  buildEndingDots();
-}
-function buildEndingDots() {
-  const box = document.getElementById('tsEndings');
-  box.innerHTML = '';
-  const keys = pack.order.filter(x => String(x).startsWith('E'));
-  keys.forEach(k => {
+  // 结局点
+  const es = document.getElementById('tsEndings');
+  es.innerHTML = '';
+  pack.order.filter(x => String(x).startsWith('E')).forEach(k => {
     const d = document.createElement('div');
-    d.className = 'dot' + (save.endings.includes(k) ? ' got' : '');
-    const e = SE()[k];
-    if (e) d.title = e.title;
-    box.appendChild(d);
+    d.style.cssText = `width:12px;height:12px;border-radius:50%;border:1px solid rgba(240,232,214,0.35)`;
+    if (save.endings.includes(k)) {
+      d.style.background = 'var(--gold)';
+      d.style.borderColor = 'var(--gold)';
+      d.style.boxShadow = '0 0 12px rgba(217,181,124,0.6)';
+    }
+    es.appendChild(d);
   });
-  const st = document.getElementById('tsStats');
-  const n = save.endings.length;
-  st.textContent = lang === 'zh'
-    ? `${packTotal()} 封信 · 你读过 ${Math.min(save.readEver || 0, packTotal())} 封 · 结局 ${n} / ${keys.length}`
-    : `${packTotal()} letters · ${Math.min(save.readEver || 0, packTotal())} read · endings ${n} / ${keys.length}`;
+  document.getElementById('tsStats').textContent =
+    `${total()} 封信 · 你读过 ${Math.min(save.readEver || 0, total())} 封 · 结局 ${save.endings.length}`;
 }
 
-/* ================= 引擎 ================= */
+/* ---------- 信封 & 信纸 ---------- */
 const stage = document.getElementById('stage');
-function showEnvelope(next) {
+
+function showEnvelope(nextId) {
   stage.innerHTML = '';
   const env = document.createElement('div');
   env.className = 'envelope';
   env.innerHTML = `
     <div class="env-body"></div>
-    <div class="env-letterpeek"></div>
+    <div class="env-peek"></div>
     <div class="env-flap"></div>
     <div class="seal">${(pack.title || '信')[0]}</div>
-    <div class="env-hint">${T().openHint}</div>`;
+    <div class="env-hint">${lang === 'zh' ? '点 击 拆 封' : 'CLICK TO UNSEAL'}</div>`;
   stage.appendChild(env);
   env.addEventListener('click', () => {
-    initAudio();
     if (!env.classList.contains('open')) {
       env.classList.add('open');
-      swish();
-      setTimeout(() => showLetter(next), 900);
+      setTimeout(() => showLetter(nextId), 900);
     }
   });
 }
+
 let revealTimers = [];
 function showLetter(id, reread) {
   revealTimers.forEach(clearTimeout); revealTimers = [];
@@ -712,35 +273,24 @@ function showLetter(id, reread) {
     if (!save.readNodes.includes(id)) save.readNodes.push(id);
     persist();
   }
-  const total = packTotal();
-  document.getElementById('topbar').style.display = 'flex';
-  document.getElementById('prog').style.display = 'block';
-  document.getElementById('letterNo').textContent =
-    (lang === 'zh' ? `第 ${Math.min(letterCount, total)} 封信` : `Letter ${Math.min(letterCount, total)}`);
-  setTimeout(() => {
-    document.getElementById('progFill').style.width = (Math.min(letterCount, total) / total * 100).toFixed(1) + '%';
-  }, 60);
   save.readEver = Math.max(save.readEver || 0, letterCount);
   persist();
+
   stage.innerHTML = '';
   const lt = document.createElement('div');
   lt.className = 'letter' + (nd.postcard ? ' postcard' : '');
-  const age = nd.age !== undefined ? nd.age : 0.06;
-  lt.style.filter = `sepia(${(age * 0.42).toFixed(3)}) saturate(${(1 - age * 0.15).toFixed(3)})`;
-  const paras = nd.text.split('\n').map(p => p.trim()).filter(Boolean);
-  lt.innerHTML = `<div class="yr">${nd.year}</div><h2>${nd.title}</h2>` +
+  const paras = (nd.text || '').split('\n').map(p => p.trim()).filter(Boolean);
+  lt.innerHTML = `<div class="yr">${nd.year || ''}</div><h2>${nd.title || ''}</h2>` +
     paras.map((p, i) => `<p class="${i === 0 ? 'drop' : ''}">${p}</p>`).join('');
+
   const actions = document.createElement('div');
   actions.className = 'replies';
   if (nd.replies && nd.replies.length) {
-    actions.innerHTML = `<div class="q">${T().replyQ}</div>`;
     nd.replies.forEach(r => {
       const b = document.createElement('button');
       b.className = 'reply';
       b.textContent = r.label;
       b.addEventListener('click', () => {
-        initAudio(); quill();
-        visited.add(r.flag || 'warm');
         gotoNode(r.to);
       });
       actions.appendChild(b);
@@ -749,38 +299,29 @@ function showLetter(id, reread) {
     const b = document.createElement('button');
     b.className = 'reply';
     b.textContent = nd.cont;
-    b.addEventListener('click', () => { swish(); gotoNode(nextAfter(id)); });
+    b.addEventListener('click', () => {
+      gotoNode(nextAfter(id));
+    });
     actions.appendChild(b);
   }
   lt.appendChild(actions);
   stage.appendChild(lt);
+
+  // 逐段渐显
   const ps = lt.querySelectorAll('p');
-  const speed = localStorage.getItem('letters-speed') || 'normal';
-  const spdMul = speed === 'slow' ? 2.4 : speed === 'fast' ? 0.5 : 1;
-  let delay = 200 * spdMul;
+  let delay = 200;
   ps.forEach((p, i) => {
-    // 逐句显影：按句号/问号/叹号拆分
-    if (spdMul > 1 && p.textContent.length > 30) {
-      const parts = p.textContent.split(/(?<=[。！？；!?;])/);
-      p.innerHTML = parts.map(s => `<span class="sent" style="opacity:0;transition:opacity .8s ease">${s}</span>`).join('');
-      const sents = p.querySelectorAll('.sent');
-      sents.forEach((s2, si) => {
-        revealTimers.push(setTimeout(() => s2.style.opacity = '1', delay));
-        delay += Math.min(900, 200 + s2.textContent.length * 28);
-      });
-      p.classList.add('in');  // 容器先显示
-      delay += 300;
-    } else {
-      revealTimers.push(setTimeout(() => p.classList.add('in'), delay));
-      delay += Math.min(1400, (500 + p.textContent.length * 22) * spdMul);
-    }
-    if (i === ps.length - 1) {
-      revealTimers.push(setTimeout(() => {
-        actions.classList.add('in');
-        lt.scrollTop = lt.scrollHeight;
-      }, 1100 * spdMul));
-    }
+    revealTimers.push(setTimeout(() => {
+      p.classList.add('in');
+      if (i === ps.length - 1) {
+        revealTimers.push(setTimeout(() => {
+          actions.classList.add('in');
+        }, 1000));
+      }
+    }, delay));
+    delay += Math.min(1400, 500 + (p.textContent || '').length * 22);
   });
+  // 点击跳过
   lt.addEventListener('click', e => {
     if (e.target.closest('.reply')) return;
     if (!actions.classList.contains('in')) {
@@ -790,461 +331,84 @@ function showLetter(id, reread) {
     }
   });
 }
+
 function nextAfter(id) {
   const ids = pack.order.filter(x => !String(x).startsWith('E'));
   const i = ids.indexOf(id);
   return ids[Math.min(i + 1, ids.length - 1)] || ids[0];
 }
+
 function gotoNode(to) {
   if (String(to).startsWith('E')) { showEnding(to); return; }
   showEnvelope(to);
 }
 
-/* ================= 结局 ================= */
+/* ---------- 结局 ---------- */
 function showEnding(eid) {
-  let final = String(eid);
-  if (pack.hiddenEnding) {
-    const h = pack.hiddenEnding;
-    if (final === h.replace && (h.require || []).every(n => visited.has('node:' + n)) && !save.endings.includes(h.id)) {
-      final = h.id;
-    }
-  }
-  const E = SE()[final] || {};
+  const E = SE()[eid] || {};
   save.node = null;
-  if (!save.endings.includes(final)) save.endings.push(final);
-  if (pack.hiddenEnding && final === pack.hiddenEnding.id)
-    save.readEver = Math.max(save.readEver || 0, packTotal());  // 空信封算最后一封
+  if (!save.endings.includes(eid)) save.endings.push(eid);
   persist();
-  document.getElementById('enScene').innerHTML = ENDING_SCENES[pack.id + final] || ENDING_SCENES[final] || '';
-  document.getElementById('enKicker').textContent = T().enKicker;
   document.getElementById('enTitle').textContent = E.title || '';
   document.getElementById('enText').textContent = E.text || '';
-  const path = [...visited].filter(f => f === 'warm' || f === 'probe');
-  const pw = path.filter(f => f === 'warm').length, pp = path.filter(f => f === 'probe').length;
-  document.getElementById('enStats').textContent =
-    T().stats(Math.min(save.readEver || 0, packTotal()), T().paths[pw >= pp ? 'warm' : 'probe'], packTotal());
   document.getElementById('endingNote').classList.add('show');
-  document.getElementById('topbar').style.display = 'none';
-  endBell();
-}
-const ENDING_SCENES = {
-  /* ---- 列车员专属 ---- */
-  trainE1: `<svg viewBox="0 0 190 130" fill="none"><rect x="20" y="70" width="150" height="8" rx="2" fill="#2c3a4a"/><rect x="35" y="40" width="120" height="30" rx="6" fill="#3d4a5c"/><circle cx="55" cy="78" r="9" fill="#1b2330" stroke="#5a6a7a" stroke-width="2"/><circle cx="135" cy="78" r="9" fill="#1b2330" stroke="#5a6a7a" stroke-width="2"/><rect x="45" y="48" width="18" height="14" rx="2" fill="#8fb4d4" opacity="0.7"/><rect x="75" y="48" width="18" height="14" rx="2" fill="#8fb4d4" opacity="0.5"/><rect x="105" y="48" width="18" height="14" rx="2" fill="#8fb4d4" opacity="0.7"/><rect x="20" y="30" width="150" height="6" rx="2" fill="#1b2330"/><text x="95" y="100" text-anchor="middle" font-size="8" fill="#8fb4d4" letter-spacing="2">雪线 末班</text><ellipse cx="95" cy="118" rx="70" ry="5" fill="#0d1420" opacity="0.9"/></svg>`,
-  trainE2: `<svg viewBox="0 0 190 130" fill="none"><path d="M20 90 Q95 60 170 90" stroke="#3d4a5c" stroke-width="18" fill="none" stroke-linecap="round"/><path d="M20 90 Q95 60 170 90" stroke="#141a20" stroke-width="14" fill="none" stroke-linecap="round"/><circle cx="95" cy="63" r="12" fill="#ffe9b8" opacity="0.9"/><circle cx="95" cy="63" r="25" fill="#ffe9b8" opacity="0.15"/><rect x="30" y="95" width="130" height="4" rx="2" fill="#2c3a4a"/><text x="95" y="115" text-anchor="middle" font-size="8" fill="#8fb4d4" letter-spacing="2">新线通车</text></svg>`,
-  trainE3: `<svg viewBox="0 0 190 130" fill="none"><circle cx="95" cy="60" r="28" fill="none" stroke="#c9a86a" stroke-width="4"/><circle cx="95" cy="60" r="20" fill="none" stroke="#c9a86a" stroke-width="1.5"/><rect x="85" y="50" width="20" height="20" rx="2" fill="none" stroke="#c9a86a" stroke-width="1.5"/><path d="M95 42 L95 50 M95 70 L95 78 M87 60 L79 60 M111 60 L119 60" stroke="#c9a86a" stroke-width="1.5"/><text x="95" y="105" text-anchor="middle" font-size="8" fill="#c9a86a" letter-spacing="2">1958—1985</text><ellipse cx="95" cy="118" rx="55" ry="4" fill="#0d1420" opacity="0.9"/></svg>`,
-  trainE4: `<svg viewBox="0 0 190 130" fill="none"><rect x="40" y="55" width="110" height="50" rx="3" fill="#1b2330" stroke="#3d4a5c" stroke-width="2"/><rect x="60" y="25" width="6" height="30" fill="#2c3a4a"/><rect x="124" y="25" width="6" height="30" fill="#2c3a4a"/><circle cx="63" cy="22" r="5" fill="#ffe9b8"/><circle cx="127" cy="22" r="5" fill="#ffe9b8"/><rect x="50" y="65" width="90" height="3" rx="1" fill="#3d4a5c" opacity="0.6"/><text x="95" y="85" text-anchor="middle" font-size="7" fill="#8fb4d4" letter-spacing="1">灯亮着 —顾</text><ellipse cx="95" cy="118" rx="65" ry="5" fill="#0d1420" opacity="0.9"/></svg>`,
-  /* ---- 电台专属 ---- */
-  radioE1: `<svg viewBox="0 0 190 130" fill="none"><path d="M40 80 Q95 30 150 80" stroke="#7fd8cf" stroke-width="1.5" fill="none" opacity="0.7"/><path d="M50 85 Q95 45 140 85" stroke="#7fd8cf" stroke-width="1.5" fill="none" opacity="0.5"/><path d="M60 90 Q95 60 130 90" stroke="#7fd8cf" stroke-width="1.5" fill="none" opacity="0.3"/><circle cx="95" cy="80" r="4" fill="#7fd8cf"/><text x="95" y="108" text-anchor="middle" font-size="8" fill="#7fd8cf" letter-spacing="3">4021 kHz</text><ellipse cx="95" cy="120" rx="55" ry="4" fill="#060d0a" opacity="0.9"/></svg>`,
-  radioE2: `<svg viewBox="0 0 190 130" fill="none"><rect x="60" y="35" width="70" height="55" rx="6" fill="#0e1d17" stroke="#1a3a2a" stroke-width="2"/><rect x="75" y="50" width="40" height="20" rx="3" fill="#0a1510"/><path d="M85 60 L90 52 L95 60 L100 52 L105 60" stroke="#7fd8cf" stroke-width="1" fill="none"/><circle cx="95" cy="45" r="3" fill="#e07a5f"/><text x="95" y="105" text-anchor="middle" font-size="7" fill="#7fd8cf" letter-spacing="2">POWER</text><ellipse cx="95" cy="118" rx="50" ry="4" fill="#060d0a" opacity="0.9"/></svg>`,
-  radioE3: `<svg viewBox="0 0 190 130" fill="none"><rect x="30" y="30" width="130" height="70" rx="4" fill="#0e1d17" stroke="#1a3a2a" stroke-width="2"/><line x1="45" y1="45" x2="145" y2="45" stroke="#1a3a2a" stroke-width="1"/><line x1="45" y1="60" x2="145" y2="60" stroke="#1a3a2a" stroke-width="1"/><line x1="45" y1="75" x2="145" y2="75" stroke="#1a3a2a" stroke-width="1"/><line x1="45" y1="90" x2="145" y2="90" stroke="#1a3a2a" stroke-width="1"/><text x="55" y="52" font-size="7" fill="#2a5a3a" font-family="monospace">3900</text><text x="55" y="67" font-size="7" fill="#2a5a3a" font-family="monospace">3950</text><text x="55" y="82" font-size="9" fill="#7fd8cf" font-family="monospace" font-weight="bold">4021</text><ellipse cx="100" cy="82" rx="28" ry="10" fill="none" stroke="#7fd8cf" stroke-width="1.5"/><text x="55" y="97" font-size="7" fill="#2a5a3a" font-family="monospace">4050</text><text x="95" y="118" text-anchor="middle" font-size="7" fill="#7fd8cf" letter-spacing="2">kHz</text></svg>`,
-  radioE4: `<svg viewBox="0 0 190 130" fill="none"><circle cx="70" cy="65" r="30" fill="none" stroke="#1a3a2a" stroke-width="3"/><circle cx="70" cy="65" r="18" fill="none" stroke="#1a3a2a" stroke-width="1.5"/><circle cx="70" cy="65" r="5" fill="#1a3a2a"/><rect x="105" y="45" width="14" height="40" rx="3" fill="#0e1d17" stroke="#1a3a2a" stroke-width="1.5"/><circle cx="112" cy="40" r="6" fill="#0e1d17" stroke="#1a3a2a" stroke-width="1.5"/><path d="M70 35 Q95 20 112 35" stroke="#7fd8cf" stroke-width="1" fill="none" opacity="0.6"/><text x="95" y="105" text-anchor="middle" font-size="7" fill="#7fd8cf" letter-spacing="2">4021 BACKUP</text><ellipse cx="95" cy="118" rx="60" ry="4" fill="#060d0a" opacity="0.9"/></svg>`,
-  E1: `<svg viewBox="0 0 190 130" fill="none"><defs><radialGradient id="lg"><stop offset="0" stop-color="#ffe9b8" stop-opacity=".9"/><stop offset="1" stop-color="#ffe9b8" stop-opacity="0"/></radialGradient></defs><polygon points="95,44 8,20 95,36" fill="#ffe9b8" opacity=".1"/><polygon points="95,44 182,20 95,36" fill="#ffe9b8" opacity=".1"/><rect x="88" y="40" width="14" height="82" rx="2" fill="#3d4652"/><rect x="84" y="118" width="22" height="8" rx="2" fill="#2c333d"/><rect x="86" y="30" width="18" height="12" rx="2" fill="#2c333d"/><circle cx="95" cy="36" r="6" fill="#ffe9b8"/><rect x="91.5" y="56" width="7" height="9" fill="#d9b57c" opacity=".7"/><rect x="91.5" y="74" width="7" height="9" fill="#d9b57c" opacity=".5"/><ellipse cx="95" cy="36" rx="42" ry="30" fill="url(#lg)"/><ellipse cx="95" cy="122" rx="60" ry="5" fill="#0d1420" opacity=".9"/></svg>`,
-  E2: `<svg viewBox="0 0 190 130" fill="none"><g transform="rotate(-6 95 78)"><rect x="58" y="62" width="46" height="30" rx="2" fill="#e8ddc4" opacity=".9"/><polygon points="58,62 81,80 104,62" fill="#d9cbae"/></g><g transform="rotate(7 118 82)"><rect x="96" y="68" width="44" height="28" rx="2" fill="#e8ddc4" opacity=".75"/><polygon points="96,68 118,85 140,68" fill="#d1c2a2"/></g><path d="M64 96 C58 86 66 78 64 70 C70 74 72 80 70 84 C76 80 78 72 76 66 C84 74 86 88 78 96Z" fill="#e8975a" opacity=".9"/><circle cx="52" cy="46" r="1.6" fill="#d9cbae" opacity=".7"/><circle cx="70" cy="32" r="1.2" fill="#d9cbae" opacity=".55"/><circle cx="88" cy="42" r="1.4" fill="#d9cbae" opacity=".6"/><ellipse cx="95" cy="122" rx="62" ry="5" fill="#0d1420" opacity=".9"/></svg>`,
-  E3: `<svg viewBox="0 0 190 130" fill="none"><rect x="34" y="22" width="122" height="86" rx="4" fill="#1b2330" stroke="#3d4652" stroke-width="3"/><rect x="44" y="32" width="102" height="66" rx="2" fill="#e8ddc4"/><line x1="54" y1="48" x2="136" y2="48" stroke="#8a8375" stroke-width="2" opacity=".5"/><line x1="54" y1="58" x2="128" y2="58" stroke="#8a8375" stroke-width="2" opacity=".4"/><line x1="54" y1="68" x2="132" y2="68" stroke="#8a8375" stroke-width="2" opacity=".4"/><line x1="54" y1="78" x2="118" y2="78" stroke="#8a8375" stroke-width="2" opacity=".35"/><polygon points="44,98 90,32 106,32 60,98" fill="#fff" opacity=".08"/><rect x="30" y="18" width="130" height="8" rx="3" fill="#2c333d"/></svg>`,
-  E4: `<svg viewBox="0 0 190 130" fill="none"><g transform="rotate(-4 95 66)"><rect x="55" y="46" width="80" height="52" rx="3" fill="#e8ddc4" opacity=".85" stroke="#b7a888" stroke-width="1.2"/><polygon points="55,46 95,76 135,46" fill="#d9cbae"/><rect x="72" y="60" width="46" height="26" rx="2" fill="none" stroke="#8a8375" stroke-dasharray="4 3"/></g><ellipse cx="95" cy="112" rx="56" ry="5" fill="#0d1420" opacity=".9"/></svg>`
-};
-
-/* ================= 信堆 ================= */
-function buildStack() {
-  document.getElementById('stackTitle').textContent = (lang === 'zh' ? pack.title : (pack.titleEn || pack.title)) + ' · ' + (lang === 'zh' ? '信堆' : 'STACK');
-  const read = Math.min(save.readEver || 0, packTotal());
-  document.getElementById('stackSub').textContent = T().stackSub(read, packTotal());
-  document.getElementById('stackClose').textContent = T().stackClose;
-  const list = document.getElementById('stackList');
-  list.innerHTML = '';
-  const readSet = new Set(save.readNodes || []);
-  pack.order.forEach((id, i) => {
-    const isE = String(id).startsWith('E');
-    const div = document.createElement('div');
-    const got = isE ? save.endings.includes(id) : readSet.has(id);
-    div.className = 'stack-item ' + (got ? 'read' : 'unread');
-    let yr = '— — —', tt = T().unopened;
-    if (got) {
-      if (isE) {
-        const e = SE()[id];
-        yr = e.year || (lang === 'zh' ? '无年份' : '—');
-        tt = e.title;
-      } else {
-        const nd = S()[id];
-        yr = nd.year; tt = nd.title;
-      }
-    }
-    div.innerHTML = `<span class="no">${i + 1}</span><span class="yr">${yr}</span><span class="tt">${tt}</span>`;
-    if (got && !isE) {
-      div.style.cursor = 'pointer';
-      div.title = T().reRead;
-      div.addEventListener('mouseenter', () => div.style.borderColor = 'rgba(217,181,124,0.55)');
-      div.addEventListener('mouseleave', () => div.style.borderColor = '');
-      div.addEventListener('click', () => {
-        document.getElementById('stackOv').classList.remove('show');
-        document.getElementById('titleScreen').classList.add('gone');
-        showLetter(id, true);
-      });
-    }
-    list.appendChild(div);
-  });
-}
-document.getElementById('stackBtn').addEventListener('click', () => {
-  buildStack();
-  document.getElementById('stackOv').classList.add('show');
-  document.getElementById('stackOv').scrollTop = 0;
-});
-document.getElementById('stackClose').addEventListener('click', () =>
-  document.getElementById('stackOv').classList.remove('show'));
-
-/* ================= 分享 / 导入 / AI ================= */
-function storyToJSON(p) {
-  const clone = JSON.parse(JSON.stringify(p));
-  delete clone._runtime;
-  return JSON.stringify(clone, null, 2);
-}
-document.getElementById('shareStoryBtn').addEventListener('click', async () => {
-  const json = storyToJSON(pack);
-  try { await navigator.clipboard.writeText(json); } catch (e) {}
-  const a = document.createElement('a');
-  a.download = `letters-story-${pack.id}.json`;
-  a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-  a.click();
-  const b = document.getElementById('shareStoryBtn');
-  const old = b.textContent;
-  b.textContent = T().shareOk + T().shareDl;
-  setTimeout(() => b.textContent = old, 1800);
-});
-document.getElementById('importBtn').addEventListener('click', () => {
-  document.getElementById('impTitle').textContent = T().impTitle;
-  document.getElementById('impTip').textContent = T().impTip;
-  document.getElementById('impDo').textContent = T().impDo;
-  document.getElementById('impClose').textContent = T().impClose;
-  document.getElementById('impText').value = '';
-  document.getElementById('importOv').classList.add('show');
-});
-document.getElementById('impClose').addEventListener('click', () =>
-  document.getElementById('importOv').classList.remove('show'));
-document.getElementById('impDo').addEventListener('click', () => {
-  let raw = document.getElementById('impText').value.trim();
-  // 容错：剥掉 AI 常见的 ```json 围栏
-  raw = raw.replace(/^```(json)?\s*/i, '').replace(/```\s*$/, '');
-  let p = null;
-  try { p = normalizeStory(JSON.parse(raw)); } catch (e) {
-    flashImp(T().impBad + e.message);
-    return;
-  }
-  if (!p) { flashImp(T().impBad + 'letters/endings'); return; }
-  const dup = imports.findIndex(x => x.id === p.id);
-  if (dup >= 0) imports[dup] = p; else imports.push(p);
-  saveImports();
-  document.getElementById('importOv').classList.remove('show');
-  buildSelect();
-  flashImp(T().impOk + (dup >= 0 ? T().impDup : ''), () => {});
-});
-function flashImp(msg) {
-  const tip = document.getElementById('impTip');
-  const old = tip.textContent;
-  tip.textContent = msg;
-  tip.style.color = msg.startsWith('✓') ? '#8fd8cf' : '#e8a0a0';
-  setTimeout(() => { tip.textContent = old; tip.style.color = ''; }, 2400);
-}
-/* AI 提示词（参数化） */
-function aiPromptText() {
-  const nL = +document.getElementById('aiLen').value;
-  const nE = +document.getElementById('aiEnd').value;
-  const extra = document.getElementById('aiExtra').value.trim();
-  return `请为一款"互动书信"网页游戏创作一个可导入的故事，输出【一个 JSON 代码块】，不要输出其它解释。
-
-要求：
-1. 主题自选（建议：旧物、旅途、告别、重逢、悬疑、科幻皆可），恰好 ${nL} 封信，${nE} 个结局。${extra ? '\n额外要求：' + extra : ''}
-2. 文字风格：克制、有留白，每封信 60-140 字，像真的手写信。
-3. 剧情结构：玩家读到一封信后，从 1-3 个"回信"中选择其一，导向不同的下一封信（letters 的 replies[].to 指向另一个信的 id，或以 E 开头的结局 id）。
-4. 双语：优先写 zh；如有能力可附 en（缺省将回退 zh）。
-
-JSON 格式（严格遵守，可直接解析）：
-{
-  "id": "英文小写短id",
-  "title": "故事名", "titleEn": "英文题名",
-  "kicker": "一句话引子", "kickerEn": "English kicker",
-  "desc": "开场简介，可用<br>换行", "descEn": "English desc",
-  "order": ["n1","n2",...,"E1","E2"],
-  "style": {
-    "paper": "#f0e8d6", "paper2": "#e8ddc4", "ink": "#33302a",
-    "seal": "#9e3528", "gold": "#d9b57c",
-    "ruling": "rgba(130,108,64,0.09)",
-    "bg1": "#101a20", "bg2": "#1a2732",
-    "font": "KaiTi, STKaiti, serif"
-  },
-  "letters": {
-    "zh": {
-      "n1": { "year": "一九八四 · 冬", "title": "信题",
-              "text": "信的正文，\\n 分段",
-              "cont": "（无选项时）继续按钮文字" },
-      "n2": { "year": "...", "title": "...",
-              "text": "...",
-              "replies": [
-                { "label": "回信一（玩家说出的话）", "to": "n3" },
-                { "label": "回信二", "to": "n4" }
-              ] }
-    },
-    "en": { ...同结构，可省略... }
-  },
-  "endings": {
-    "zh": { "E1": { "title": "结局名", "text": "结局正文，\\n 分段" } },
-    "en": { ...可省略... }
-  }
 }
 
-规则：id 只用字母数字连字符；所有 to 指向的 id 必须存在；恰好 ${nL} 封信；恰好 ${nE} 个结局；不要输出注释。现在，创作你的故事。`;
-}
-document.getElementById('aiBtn').addEventListener('click', () => {
-  document.getElementById('aiTitle').textContent = T().aiTitle;
-  document.getElementById('aiTip').textContent = T().aiTip2 || T().aiTip;
-  document.getElementById('aiLenL').textContent = T().aiLenL;
-  document.getElementById('aiEndL').textContent = T().aiEndL;
-  document.getElementById('aiExtra').placeholder = T().aiExtraPh;
-  document.getElementById('aiCopy').textContent = T().aiCopy;
-  document.getElementById('aiClose').textContent = T().aiClose;
-  document.getElementById('aiText').value = aiPromptText();
-  document.getElementById('aiOv').classList.add('show');
+/* ---------- 按钮 ---------- */
+document.getElementById('startBtn').addEventListener('click', () => {
+  visited = new Set(); letterCount = 0;
+  save.read = 0; save.node = null; persist();
+  document.getElementById('titleScreen').classList.add('gone');
+  showEnvelope(pack.order.find(x => !String(x).startsWith('E')));
 });
-document.getElementById('aiLen').addEventListener('input', () => {
-  document.getElementById('aiLenV').textContent = document.getElementById('aiLen').value;
-  document.getElementById('aiText').value = aiPromptText();
+document.getElementById('contBtn').addEventListener('click', () => {
+  document.getElementById('titleScreen').classList.add('gone');
+  showEnvelope(save.node || pack.order[0]);
 });
-document.getElementById('aiEnd').addEventListener('input', () => {
-  document.getElementById('aiEndV').textContent = document.getElementById('aiEnd').value;
-  document.getElementById('aiText').value = aiPromptText();
+document.getElementById('againBtn').addEventListener('click', () => {
+  document.getElementById('endingNote').classList.remove('show');
+  visited = new Set(); letterCount = 0;
+  save.read = 0; save.node = null; persist();
+  showEnvelope(pack.order.find(x => !String(x).startsWith('E')));
 });
-document.getElementById('aiExtra').addEventListener('input', () => {
-  document.getElementById('aiText').value = aiPromptText();
+document.getElementById('backBtn').addEventListener('click', showSelect);
+document.getElementById('langBtn').addEventListener('click', () => {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('letters-lang', lang);
+  document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+  if (document.getElementById('selectOv').style.display !== 'none') buildSelect();
+  else showTitle();
 });
-document.getElementById('aiClose').addEventListener('click', () =>
-  document.getElementById('aiOv').classList.remove('show'));
-document.getElementById('aiCopy').addEventListener('click', async () => {
-  try { await navigator.clipboard.writeText(document.getElementById('aiText').value); } catch (e) {}
-  const b = document.getElementById('aiCopy');
-  b.textContent = T().aiCopied;
-  setTimeout(() => b.textContent = T().aiCopy, 1600);
+document.getElementById('sndBtn').addEventListener('click', () => {
+  save.snd = !save.snd; persist();
+  document.getElementById('sndBtn').textContent = save.snd ? '声 · 开' : '声 · 关';
 });
 
-/* ================= 手写故事编辑器 ================= */
-let wrLetters = [];   // {id, year, title, text, replies:[{label,to}], cont}
-let wrEndings = [];   // {id, title, text}
-let wrStyleIdx = 0;
-let wrLetterSeq = 0, wrEndingSeq = 0;
-function buildWriteUI() {
-  document.getElementById('wrTitle').textContent = T().wrTitleT;
-  document.getElementById('wrTitleIn').placeholder = T().wrTitlePh;
-  document.getElementById('wrKickerIn').placeholder = T().wrKickerPh;
-  document.getElementById('wrDescIn').placeholder = T().wrDescPh;
-  document.getElementById('wrLettersL').textContent = T().wrLettersL;
-  document.getElementById('wrAddLetter').textContent = T().wrAddL;
-  document.getElementById('wrAddEnding').textContent = T().wrAddE;
-  document.getElementById('wrSave').textContent = T().wrSaveB;
-  document.getElementById('wrClose').textContent = T().wrCloseB;
-  // 风格选择
-  const ss = document.getElementById('wrStyleSel');
-  ss.innerHTML = `<span style="font-size:12px;color:var(--gold);margin-right:4px">${T().wrStyleL}</span>`;
-  T().styleDefs.forEach((sd, i) => {
-    const b = document.createElement('button');
-    b.className = 'ed-t';
-    b.style.fontSize = '11px';
-    b.style.padding = '4px 10px';
-    b.textContent = sd.n;
-    b.classList.toggle('on', wrStyleIdx === i);
-    b.addEventListener('click', () => { wrStyleIdx = i; buildWriteUI(); });
-    ss.appendChild(b);
-  });
-  buildWrLetterList();
-}
-function buildWrLetterList() {
-  const list = document.getElementById('wrLetterList');
-  list.innerHTML = '';
-  const allIds = [...wrLetters.map(l => l.id), ...wrEndings.map(e => e.id)];
-  const cardStyle = 'background:rgba(7,9,13,0.7);border:1px solid rgba(240,232,214,0.12);border-radius:6px;padding:10px 12px';
-  const inpStyle = 'width:100%;background:rgba(14,18,26,0.8);color:#cfe0d8;border:1px solid rgba(240,232,214,0.1);border-radius:4px;font-family:inherit;font-size:12px;padding:6px 8px;outline:none;margin-bottom:6px';
-  wrLetters.forEach((L, i) => {
-    const d = document.createElement('div');
-    d.style.cssText = cardStyle;
-    d.innerHTML = `
-      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-        <b style="color:var(--gold);font-size:11px;min-width:28px">${L.id}</b>
-        <input type="text" value="${L.year || ''}" data-wr="year" data-i="${i}" placeholder="${T().wrYrPh}" style="flex:0.3;${inpStyle.replace('margin-bottom:6px','')}">
-        <input type="text" value="${L.title || ''}" data-wr="title" data-i="${i}" placeholder="${T().wrTiPh}" style="flex:1;${inpStyle.replace('margin-bottom:6px','')}">
-        <button class="ed-t" data-wr="del" data-i="${i}" style="font-size:11px;padding:3px 8px">✕</button>
-      </div>
-      <textarea data-wr="text" data-i="${i}" rows="3" placeholder="${T().wrTxPh}" style="${inpStyle}resize:none">${L.text || ''}</textarea>
-      <textarea data-wr="replies" data-i="${i}" rows="2" placeholder="${T().wrRpPh}" style="${inpStyle}resize:none;font-family:Georgia,monospace;font-size:11px">${L.replies ? L.replies.map(r => r.label + ' → ' + r.to).join('\n') : ''}</textarea>`;
-    list.appendChild(d);
-  });
-  wrEndings.forEach((E, i) => {
-    const d = document.createElement('div');
-    d.style.cssText = cardStyle + ';border-color:rgba(217,181,124,0.25)';
-    d.innerHTML = `
-      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-        <b style="color:var(--gold);font-size:11px;min-width:28px">${E.id}</b>
-        <input type="text" value="${E.title || ''}" data-wr="endTitle" data-i="${i}" placeholder="${T().wrEndTiPh}" style="flex:1;${inpStyle.replace('margin-bottom:6px','')}">
-        <button class="ed-t" data-wr="endDel" data-i="${i}" style="font-size:11px;padding:3px 8px">✕</button>
-      </div>
-      <textarea data-wr="endText" data-i="${i}" rows="3" placeholder="${T().wrEndTxPh}" style="${inpStyle}resize:none">${E.text || ''}</textarea>`;
-    list.appendChild(d);
-  });
-  // 事件
-  list.querySelectorAll('[data-wr]').forEach(el => {
-    const k = el.getAttribute('data-wr');
-    const i = +el.getAttribute('data-i');
-    if (k === 'del') {
-      el.addEventListener('click', () => { wrLetters.splice(i, 1); buildWrLetterList(); });
-    } else if (k === 'endDel') {
-      el.addEventListener('click', () => { wrEndings.splice(i, 1); buildWrLetterList(); });
-    } else if (k === 'year') {
-      el.addEventListener('input', () => wrLetters[i].year = el.value);
-    } else if (k === 'title') {
-      el.addEventListener('input', () => wrLetters[i].title = el.value);
-    } else if (k === 'text') {
-      el.addEventListener('input', () => wrLetters[i].text = el.value);
-    } else if (k === 'replies') {
-      el.addEventListener('input', () => {
-        wrLetters[i].replies = el.value.split('\n').filter(l => l.trim()).map(line => {
-          const m2 = line.match(/^(.*?)\s*→\s*(\w+)$/);
-          return m2 ? { label: m2[1].trim(), to: m2[2] } : { label: line.trim(), to: 'n1' };
-        });
-      });
-    } else if (k === 'endTitle') {
-      el.addEventListener('input', () => wrEndings[i].title = el.value);
-    } else if (k === 'endText') {
-      el.addEventListener('input', () => wrEndings[i].text = el.value);
-    }
-  });
-}
-document.getElementById('wrAddLetter').addEventListener('click', () => {
-  wrLetterSeq++;
-  wrLetters.push({ id: 'n' + wrLetterSeq, year: '', title: '', text: '', replies: [] });
-  buildWrLetterList();
-});
-document.getElementById('wrAddEnding').addEventListener('click', () => {
-  wrEndingSeq++;
-  wrEndings.push({ id: 'E' + wrEndingSeq, title: '', text: '' });
-  buildWrLetterList();
-});
-document.getElementById('wrSave').addEventListener('click', () => {
-  if (wrLetters.length < 2 || wrEndings.length < 1) return;
-  const sd = T().styleDefs[wrStyleIdx];
-  const letters = {};
-  wrLetters.forEach(L => {
-    letters[L.id] = { year: L.year || '—', title: L.title || '—', text: L.text || '' };
-    if (L.replies && L.replies.length) letters[L.id].replies = L.replies;
-    else letters[L.id].cont = '继续';
-  });
-  const endings = {};
-  wrEndings.forEach(E => { endings[E.id] = { title: E.title || '—', text: E.text || '' }; });
-  const story = normalizeStory({
-    id: 'my-' + Date.now().toString(36),
-    title: document.getElementById('wrTitleIn').value.trim() || (lang === 'zh' ? '我的故事' : 'My Story'),
-    titleEn: document.getElementById('wrTitleIn').value.trim(),
-    kicker: document.getElementById('wrKickerIn').value.trim() || (lang === 'zh' ? '亲手写下' : 'handwritten'),
-    desc: document.getElementById('wrDescIn').value.trim() || '（你写下的故事）',
-    order: [...wrLetters.map(l => l.id), ...wrEndings.map(e => e.id)],
-    style: sd,
-    letters: { zh: letters },
-    endings: { zh: endings }
-  });
-  if (story) {
-    imports.push(story);
-    saveImports();
-    document.getElementById('writeOv').classList.remove('show');
-    buildSelect();
-    loadPack(story);
-    showTitle();
-  }
-});
-document.getElementById('wrClose').addEventListener('click', () =>
-  document.getElementById('writeOv').classList.remove('show'));
-document.getElementById('writeBtn').addEventListener('click', () => {
-  wrLetters = [{ id: 'n1', year: '', title: '', text: '', replies: [] }];
-  wrEndings = [{ id: 'E1', title: '', text: '' }];
-  wrLetterSeq = 1; wrEndingSeq = 1; wrStyleIdx = 0;
-  buildWriteUI();
-  document.getElementById('writeOv').classList.add('show');
-});
+// 占位按钮（后续可扩展）
+document.getElementById('stackBtn').addEventListener('click', () => {});
+document.getElementById('shareStoryBtn').addEventListener('click', () => {});
+document.getElementById('importBtn').addEventListener('click', () => {});
+document.getElementById('aiBtn').addEventListener('click', () => {});
+document.getElementById('writeBtn').addEventListener('click', () => {});
 
-/* ================= 音频 ================= */
-let AC = null, seaGain = null;
-function initAudio() {
-  if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
-  try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
-  const len = AC.sampleRate * 3;
-  const buf = AC.createBuffer(1, len, AC.sampleRate);
-  const d = buf.getChannelData(0);
-  let last = 0;
-  for (let i = 0; i < len; i++) {
-    const w = Math.random() * 2 - 1;
-    last = (last + 0.015 * w) / 1.015;
-    d[i] = last * 3;
-  }
-  const src = AC.createBufferSource(); src.buffer = buf; src.loop = true;
-  const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420;
-  seaGain = AC.createGain(); seaGain.gain.value = save.snd ? 0.05 : 0;
-  const lfo = AC.createOscillator(); lfo.frequency.value = 0.09;
-  const lfoG = AC.createGain(); lfoG.gain.value = 160;
-  lfo.connect(lfoG); lfoG.connect(f.frequency);
-  src.connect(f); f.connect(seaGain); seaGain.connect(AC.destination);
-  src.start(); lfo.start();
-}
-function swish() {
-  if (!AC || !save.snd) return;
-  const t = AC.currentTime;
-  const len = 0.3, buf = AC.createBuffer(1, AC.sampleRate * len, AC.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * i / d.length);
-  const s = AC.createBufferSource(); s.buffer = buf;
-  const f = AC.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2600; f.Q.value = 0.7;
-  const g = AC.createGain(); g.gain.value = 0.05;
-  s.connect(f); f.connect(g); g.connect(AC.destination); s.start(t);
-}
-function quill() {
-  if (!AC || !save.snd) return;
-  const t = AC.currentTime;
-  const o = AC.createOscillator(), g = AC.createGain();
-  o.type = 'sine'; o.frequency.setValueAtTime(660, t);
-  o.frequency.exponentialRampToValueAtTime(440, t + 0.25);
-  g.gain.setValueAtTime(0.06, t);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
-  o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + 0.55);
-}
-function endBell() {
-  if (!AC || !save.snd) return;
-  const t = AC.currentTime;
-  [392, 523.25, 659.25].forEach((fq, i) => {
-    const o = AC.createOscillator(), g = AC.createGain();
-    o.type = 'sine'; o.frequency.value = fq;
-    const st = t + i * 0.6;
-    g.gain.setValueAtTime(0.0001, st);
-    g.gain.exponentialRampToValueAtTime(0.13, st + 0.03);
-    g.gain.exponentialRampToValueAtTime(0.0001, st + 2.6);
-    o.connect(g); g.connect(AC.destination); o.start(st); o.stop(st + 2.7);
-  });
-}
-
-/* ================= 尘埃粒子 ================= */
+/* ---------- 尘埃粒子 ---------- */
 const motes = document.getElementById('motes');
 const mctx = motes.getContext('2d');
 let motesArr = [];
 function resizeMotes() {
   motes.width = innerWidth; motes.height = innerHeight;
   motesArr = [];
-  for (let i = 0; i < 46; i++)
-    motesArr.push({ x: Math.random() * motes.width, y: Math.random() * motes.height,
-      r: Math.random() * 1.6 + 0.4, v: 6 + Math.random() * 14, p: Math.random() * Math.PI * 2 });
+  for (let i = 0; i < 40; i++)
+    motesArr.push({x:Math.random()*motes.width,y:Math.random()*motes.height,r:Math.random()*1.6+0.4,v:6+Math.random()*14,p:Math.random()*Math.PI*2});
 }
-window.addEventListener('resize', resizeMotes);
 resizeMotes();
+window.addEventListener('resize', resizeMotes);
 let prevM = performance.now();
-let lettersHidden = false;
-document.addEventListener('visibilitychange', () => {
-  lettersHidden = document.hidden;
-  if (!lettersHidden) prevM = performance.now();
-});
+let motesHidden = false;
+document.addEventListener('visibilitychange', () => { motesHidden = document.hidden; });
 function mframe(now) {
   requestAnimationFrame(mframe);
-  if (lettersHidden) return;
+  if (motesHidden) return;
   const dt = Math.min((now - prevM) / 1000, 0.05);
   prevM = now;
   mctx.clearRect(0, 0, motes.width, motes.height);
@@ -1258,60 +422,10 @@ function mframe(now) {
   }
 }
 
-/* ================= 按钮 ================= */
-document.getElementById('startBtn').addEventListener('click', () => {
-  initAudio();
-  visited = new Set(); letterCount = 0;
-  save.read = 0; save.flags = []; save.node = null; persist();
-  document.getElementById('titleScreen').classList.add('gone');
-  const first = pack.order.find(x => !String(x).startsWith('E')) || Object.keys(S())[0];
-  showEnvelope(first);
-});
-document.getElementById('contBtn').addEventListener('click', () => {
-  initAudio();
-  document.getElementById('titleScreen').classList.add('gone');
-  showEnvelope(save.node || pack.order[0]);
-});
-document.getElementById('againBtn').addEventListener('click', () => {
-  document.getElementById('endingNote').classList.remove('show');
-  visited = new Set(); letterCount = 0;
-  save.read = 0; save.flags = []; save.node = null; persist();
-  showEnvelope(pack.order.find(x => !String(x).startsWith('E')));
-});
-document.getElementById('backBtn').addEventListener('click', showSelect);
-document.getElementById('sndBtn').addEventListener('click', () => {
-  save.snd = !save.snd; persist();
-  if (seaGain) seaGain.gain.value = save.snd ? 0.05 : 0;
-  updSnd();
-});
-function updSnd() { document.getElementById('sndBtn').textContent = save && save.snd !== false ? T().sndOn : T().sndOff; }
-const spdBtn = document.getElementById('spdBtn');
-function updSpd() {
-  const s = localStorage.getItem('letters-speed') || 'normal';
-  spdBtn.textContent = s === 'slow' ? '◇ 慢' : s === 'fast' ? '◆ 快' : '◈ 常';
-}
-spdBtn.addEventListener('click', () => {
-  const cur = localStorage.getItem('letters-speed') || 'normal';
-  const next = cur === 'normal' ? 'slow' : cur === 'slow' ? 'fast' : 'normal';
-  localStorage.setItem('letters-speed', next);
-  updSpd();
-});
-document.getElementById('langBtn').addEventListener('click', () => {
-  lang = lang === 'zh' ? 'en' : 'zh';
-  localStorage.setItem('letters-lang', lang);
-  document.documentElement.lang = lang;
-  document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
-  document.title = lang === 'zh' ? '纸间 · LETTERS — 互动书信' : 'LETTERS — interactive epistolary';
-  if (document.getElementById('selectOv').classList.contains('show')) buildSelect();
-  else if (!document.getElementById('titleScreen').classList.contains('gone')) refreshTitle();
-  updSnd();
-});
-
-/* ================= 启动 ================= */
+/* ---------- 启动 ---------- */
 document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
-document.documentElement.lang = lang;
-document.title = lang === 'zh' ? '纸间 · LETTERS — 互动书信' : 'LETTERS — interactive epistolary';
-/* hash 直达：#p=<故事id> 选集；#p=<id>&n=<节点> 直读信 */
+loadPack(BUILTIN_STORIES[0]);
+// hash 直达
 {
   const hm = location.hash.match(/^#p=(\w+)(?:&n=(\w+))?/);
   if (hm) {
@@ -1319,7 +433,7 @@ document.title = lang === 'zh' ? '纸间 · LETTERS — 互动书信' : 'LETTERS
     if (p) {
       loadPack(p);
       if (hm[2] && S()[hm[2]]) {
-        document.getElementById('selectOv').classList.remove('show');
+        document.getElementById('selectOv').style.display = 'none';
         letterCount = 1;
         showLetter(hm[2]);
       } else {
@@ -1328,8 +442,6 @@ document.title = lang === 'zh' ? '纸间 · LETTERS — 互动书信' : 'LETTERS
     } else showSelect();
   } else showSelect();
 }
-updSnd();
-updSpd();
 requestAnimationFrame(mframe);
 </script>
 </body>

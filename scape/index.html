@@ -127,6 +127,12 @@
 <a class="home-link" href="../index.html" title="拾遗 · 序">序</a>
 <script>
 'use strict';
+window.addEventListener('error', e => {
+  const b = document.createElement('div');
+  b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99;background:#401414;color:#ffb4b4;font-size:12px;padding:8px 12px';
+  b.textContent = 'ERR: ' + e.message;
+  document.body.appendChild(b);
+});
 /* ================================================================
    造境 · SCAPE v6 — 程序化声景
    v5 画面基座 + 十声道（夜虫/雷/鸟鸣/远钟音频与视觉补全）

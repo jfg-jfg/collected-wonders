@@ -730,19 +730,6 @@ function validateLevel(g, w, h) {
 }
 
 /* 生成并通过验证的关卡（失败自动重试） */
-function genValidated(w, h, baseSeed) {
-  for (let attempt = 0; attempt < 20; attempt++) {
-    const rng = mulberry32(baseSeed + attempt * 7919);
-    const g = genChamberMaze(w, h, rng);
-    const fin = finishLevel(g);
-    const val = validateLevel(fin.map, w, h);
-    if (val.valid) return fin;
-  }
-  // 20 次都失败：放宽条件用最后一次
-  const rng = mulberry32(baseSeed);
-  return finishLevel(genChamberMaze(w, h, rng));
-}
-
 function buildLevels() {
   const specs = [
     { w: 15, h: 11, seed: 1101, style: 'pillars' },  // 一 · 深井：柱阵

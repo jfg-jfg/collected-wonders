@@ -164,7 +164,7 @@ const T = () => I18N[lang];
 
 /* ============ WebGL ============ */
 const canvas = document.getElementById('gl');
-const gl = canvas.getContext('webgl2', { antialias: false });
+const gl = canvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });
 if (!gl) { document.getElementById('errbox').style.display = 'block'; document.getElementById('errbox').textContent = 'WebGL2 unavailable'; throw new Error('no webgl2'); }
 
 const VERT = `#version 300 es
@@ -393,9 +393,11 @@ function render() {
   gl.uniform1f(U.uPhase, phaseT);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   lastIter = iter;
+  lastRenderT = performance.now();
   updateCoords();
 }
 let lastIter = 0;
+let lastRenderT = 0;
 
 /* ============ HUD ============ */
 const coordsEl = document.getElementById('coords');
@@ -787,6 +789,8 @@ function frame(now) {
       requestRender();
     }
   }
+  // 空闲补帧：按需渲染下，长闲置后缓冲可能被回收（截图/标签页恢复时看到黑帧）
+  if (now - lastRenderT > 800) render();
 }
 
 /* ============ 启动 ============ */
@@ -807,6 +811,14 @@ if (jm) {
   target.x = 0; target.y = 0; target.s = 1.6;
 }
 render();
+// #dbg: 无头自检——读取像素证据写入 DOM（不影响正常使用）
+if (location.hash.includes('dbg')) {
+  const px = new Uint8Array(4 * 100);
+  gl.readPixels(Math.floor(canvas.width/2)-5, Math.floor(canvas.height/2)-5, 10, 10, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  let sum = 0; for (let i = 0; i < px.length; i++) sum += px[i];
+  const el = document.getElementById('coords');
+  el.innerHTML = `DBG sum=${sum} err=${gl.getError()} c=${canvas.width}x${canvas.height} ` + el.innerHTML;
+}
 requestAnimationFrame(frame);
 </script>
 </body>

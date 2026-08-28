@@ -1,10 +1,11 @@
-/* 独立验证脚本：从 echo/index.html 提取关卡生成代码并验证 */
+/* 独立验证脚本：从 echo/index.html 提取关卡生成代码并复验全部内置关卡
+   （与页面内 buildLevels 同源同种子，双保险） */
 import { readFileSync } from 'fs';
 const code = readFileSync('echo/index.html', 'utf8');
 
 function extract(name) {
   const start = code.indexOf(`function ${name}`);
-  if (start < 0) return null;
+  if (start < 0) throw new Error(`function ${name} not found in echo/index.html`);
   let depth = 0, end = start;
   for (let i = start; i < code.length; i++) {
     if (code[i] === '{') depth++;
@@ -13,33 +14,35 @@ function extract(name) {
   return code.slice(start, end);
 }
 
-const fns = ['mulberry32', 'genChamberMaze', 'bfsDist', 'validateLevel', 'finishLevel']
-  .map(extract).filter(Boolean).join('\n');
-const make = new Function(fns + '; return { mulberry32, genChamberMaze, bfsDist, validateLevel, finishLevel };')();
-const { mulberry32, genChamberMaze, validateLevel, finishLevel } = make;
+const names = ['mulberry32', 'genLevel', 'bfsDist', 'validateLevel', 'finishLevel', 'buildLevels'];
+const src = names.map(extract).join('\n');
+const make = new Function(src + '; return { mulberry32, genLevel, validateLevel, finishLevel, buildLevels };')();
+const { buildLevels, validateLevel } = make;
 
 const specs = [
-  { w: 13, h: 9,  seed: 1101 }, { w: 15, h: 11, seed: 2202 },
-  { w: 17, h: 13, seed: 3303 }, { w: 19, h: 13, seed: 4404 },
-  { w: 21, h: 15, seed: 5505 }, { w: 21, h: 15, seed: 6606 },
-  { w: 15, h: 11, seed: 7707 }, { w: 17, h: 13, seed: 8808 },
-  { w: 19, h: 15, seed: 9909 }
+  { w: 15, h: 11 }, { w: 17, h: 13 }, { w: 19, h: 13 },
+  { w: 21, h: 15 }, { w: 23, h: 17 }, { w: 23, h: 17 },
+  { w: 19, h: 13 }, { w: 21, h: 15 }, { w: 23, h: 17 }
 ];
 
+const LEVELS = buildLevels();
 let allValid = true;
-specs.forEach(({ w, h, seed }, li) => {
-  let result = null;
-  for (let a = 0; a < 20; a++) {
-    const rng = mulberry32(seed + a * 7919);
-    const g = genChamberMaze(w, h, rng);
-    const fin = finishLevel(g);
-    const val = validateLevel(fin.map, w, h);
-    if (val.valid) { result = { val, attempt: a }; break; }
-    if (a === 19) result = { val, attempt: a };
-  }
-  const v = result.val;
+LEVELS.forEach((fin, li) => {
+  const { w, h } = specs[li];
+  const v = validateLevel(fin.map, w, h);
   const ok = v.valid ? '✓' : '✗ ' + v.issues.join('; ');
-  console.log(`L${li + 1} (${w}x${h}): path=${v.pathLen} junc=${v.junctions} niche=${v.niches} maxCorr=${v.maxCorridor} ${ok}${result.attempt > 0 ? ' (retry ' + result.attempt + ')' : ''}`);
+  console.log(`L${li + 1} (${w}x${h}): path=${v.pathLen} junc=${v.junctions} niche=${v.niches} maxCorr=${v.maxCorridor} ${ok}`);
   if (!v.valid) allValid = false;
 });
+
+/* 额外：随机种子压力测试 —— 生成器对任意种子也应稳定出可玩关卡（放宽 20 次重试上限即页面行为） */
+let stressFail = 0;
+for (let s = 1; s <= 40; s++) {
+  const rng = make.mulberry32(s * 131);
+  const styles = ['pillars','comb','rooms','random','spiral','streets'];
+  const g = make.genLevel(19, 13, rng, styles[s % 6]);
+  const fin = make.finishLevel(g);
+  if (!validateLevel(fin.map, 19, 13).valid) stressFail++;
+}
+console.log(`随机压力：40 样本 ${stressFail} 个未过（页面内会自动换种子重试）`);
 console.log(allValid ? '\n全部通过 ✓' : '\n有失败 ✗');

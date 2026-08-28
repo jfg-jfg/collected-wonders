@@ -50,10 +50,13 @@
   /* ---------- 覆盖层 ---------- */
   .overlay {
     position: fixed; inset: 0; z-index: 10;
-    display: none; flex-direction: column; align-items: center; justify-content: center;
+    display: none; flex-direction: column; align-items: center; justify-content: flex-start;
     background: radial-gradient(ellipse at 50% 42%, rgba(20,26,38,0.88), rgba(7,9,13,0.97));
     text-align: center; padding: 30px; overflow-y: auto; overscroll-behavior: contain;
   }
+  /* 安全居中：内容超高时顶边不裁、可回滚（替代 justify-content:center 的 flex 溢出缺陷） */
+  .overlay > :first-child { margin-top: auto; }
+  .overlay > :last-child { margin-bottom: auto; }
   .overlay.show { display: flex; }
   .ov-title { font-size: clamp(40px, 8vw, 76px); font-weight: 600; letter-spacing: 0.22em; color: var(--pale); text-shadow: 0 0 34px rgba(157,176,201,0.45); }
   .ov-title .en { display: block; font-size: 0.28em; letter-spacing: 0.55em; color: var(--ember); margin-top: 10px; font-style: italic; }
@@ -2216,6 +2219,15 @@ window.addEventListener('keyup', () => moveCooldown = 0);
 let touchStart = null;
 cv.addEventListener('pointerdown', e => {
   if (editor.on) return;
+  touchStart = [e.clientX, e.clientY];
+});
+/* 拖行连走：按住不放拖动，每滑过 26px 走一步（移动端核心操作） */
+cv.addEventListener('pointermove', e => {
+  if (!touchStart || editor.on || state !== 'play') return;
+  const dx = e.clientX - touchStart[0], dy = e.clientY - touchStart[1];
+  if (Math.hypot(dx, dy) < 26) return;
+  if (Math.abs(dx) > Math.abs(dy)) tryMove(Math.sign(dx), 0);
+  else tryMove(0, Math.sign(dy));
   touchStart = [e.clientX, e.clientY];
 });
 cv.addEventListener('pointerup', e => {

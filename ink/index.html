@@ -226,10 +226,13 @@
     .masthead h1 { font-size: 24px; }
     .topright { top: 14px; right: 14px; }
     .toolbar { padding: 8px 8px 7px; gap: 6px; bottom: 10px; border-radius: 12px; }
-    .row { gap: 8px; }
-    .grp { gap: 4px; }
-    .grp .lbl { font-size: 10.5px; letter-spacing: 0.12em; }
-    .chip { font-size: 11px; padding: 4px 8px; letter-spacing: 0.04em; }
+    /* 每组独占一行、组内横向滑动，替代 8 行堆叠占满画布 */
+    .row { gap: 6px; flex-wrap: wrap; }
+    .grp { gap: 4px; flex-wrap: nowrap; flex: 0 0 auto; width: 100%; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+    .grp::-webkit-scrollbar { display: none; }
+    .vsep { display: none; }
+    .grp .lbl { font-size: 10.5px; letter-spacing: 0.12em; position: sticky; left: 0; background: rgba(246,242,231,0.92); padding-right: 6px; z-index: 1; }
+    .chip { font-size: 11px; padding: 4px 8px; letter-spacing: 0.04em; flex: 0 0 auto; }
     .pig { width: 20px; height: 20px; }
     .ctrl label { font-size: 10.5px; letter-spacing: 0.12em; }
     .ctrl input[type=range] { width: 70px; }
@@ -1867,6 +1870,11 @@ document.getElementById('helpBtn').addEventListener('click', () => helpPanel.cla
 /* ---------------- 启动 ---------------- */
 applyI18n();
 if (ecoMode) { applyQuality(); const eb2 = document.getElementById('ecoBtn'); if (eb2) eb2.classList.add('on'); }
+else if (Math.min(screen.width, screen.height) < 700 && localStorage.getItem('ink-eco') === null && !location.hash.includes('bench')) {
+  // 小屏首访自动极速（不落库；用户手动切换才持久）
+  setEco(true);
+  try { localStorage.removeItem('ink-eco'); } catch (e) {}
+}
 updSizeVal();
 updateUndoBtn();
 updSealUpBtn();

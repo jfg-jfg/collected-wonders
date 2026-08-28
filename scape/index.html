@@ -641,6 +641,37 @@ function draw(dt) {
       ctx.lineWidth = i % 2 ? 1.2 : 1.4;
       ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 45, y - 2.5, x + 100, y); ctx.stroke();
     }
+    // 白鹤礁灯塔（夜）：与回声/纸间同一座
+    const lhA = clamp((0.35 - L) / 0.3, 0, 1);
+    if (lhA > 0.02) {
+      const lx = W * 0.8, ly = hor;
+      ctx.fillStyle = 'rgba(10,12,18,0.92)';
+      ctx.fillRect(lx - 4, ly - 26, 8, 27);
+      ctx.beginPath();
+      ctx.moveTo(lx - 7, ly - 26); ctx.lineTo(lx + 7, ly - 26); ctx.lineTo(lx, ly - 35);
+      ctx.closePath(); ctx.fill();
+      const pulse = 0.55 + 0.45 * Math.sin(frameTime * 2.2);
+      const lampA = lhA * pulse;
+      const lg2 = ctx.createRadialGradient(lx, ly - 29, 0, lx, ly - 29, 26);
+      lg2.addColorStop(0, `rgba(255,224,150,${(0.85 * lampA).toFixed(3)})`);
+      lg2.addColorStop(1, 'rgba(255,224,150,0)');
+      ctx.fillStyle = lg2;
+      ctx.fillRect(lx - 26, ly - 55, 52, 52);
+      const ang = (frameTime * 0.55) % (Math.PI * 2);
+      const beamLen = W * 0.5;
+      for (const dir of [ang, ang + Math.PI]) {
+        const bx = Math.cos(dir) * beamLen, by = Math.sin(dir) * beamLen * 0.5;
+        const bg2 = ctx.createLinearGradient(lx, ly - 29, lx + bx, ly - 29 + by);
+        bg2.addColorStop(0, `rgba(255,230,170,${(0.3 * lampA).toFixed(3)})`);
+        bg2.addColorStop(1, 'rgba(255,230,170,0)');
+        ctx.fillStyle = bg2;
+        ctx.beginPath();
+        ctx.moveTo(lx, ly - 29);
+        ctx.lineTo(lx + bx + by * 0.09, ly - 29 + by - bx * 0.09);
+        ctx.lineTo(lx + bx - by * 0.09, ly - 29 + by + bx * 0.09);
+        ctx.closePath(); ctx.fill();
+      }
+    }
   }
 
   // 主题：城

@@ -1286,7 +1286,7 @@ function showLevelCard() {
     : ['一', '二', '三', '四', '五', '六', '七', '八', '九'][li] + ' / 九';
   lc.innerHTML = `<div class="no">${no}</div><div class="nm">${nm.split(' · ')[isDaily || endless ? 0 : 1] || nm}</div><div class="sb">${sb}</div>`;
   lc.classList.add('show');
-  setTimeout(() => lc.classList.remove('show'), 2400);
+  setTimeout(() => lc.classList.remove('show'), 3600);
 }
 
 function layout() {

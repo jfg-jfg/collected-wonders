@@ -1056,9 +1056,9 @@ sleepBtn.addEventListener('click', () => {
 
 /* 音画录制（webm） */
 const recBtn = document.getElementById('recBtn');
-let recorder = null, recChunks = [];
+let recorder = null, recChunks = [], recMime = '';
 function pickMime() {
-  const list = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  const list = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'];
   for (const m of list) if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m;
   return '';
 }
@@ -1074,12 +1074,14 @@ recBtn.addEventListener('click', () => {
   const mime = pickMime();
   try { recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined); }
   catch (e) { toast(T('录制启动失败', 'Recorder failed')); recorder = null; return; }
+  recMime = mime;
   recChunks = [];
   recorder.ondataavailable = e => { if (e.data && e.data.size) recChunks.push(e.data); };
   recorder.onstop = () => {
-    const blob = new Blob(recChunks, { type: 'video/webm' });
+    const type = recMime || 'video/webm';
+    const blob = new Blob(recChunks, { type });
     const a = document.createElement('a');
-    a.download = `scape-${Date.now()}.webm`;
+    a.download = `scape-${Date.now()}.` + (type.includes('mp4') ? 'mp4' : 'webm');
     a.href = URL.createObjectURL(blob);
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);

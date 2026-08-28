@@ -62,6 +62,7 @@
     transition: color .2s, background .2s, border-color .2s;
   }
   .btn-ghost:hover { background: var(--ink); color: var(--paper); }
+  .btn.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
   #langBtn { min-width: 58px; text-align: center; }
 
   /* ---------- 工具栏 ---------- */
@@ -301,6 +302,7 @@
     </div>
     <button class="chip on" id="frameBtn" data-i18n="frame"></button>
     <div class="vsep"></div>
+    <button class="btn" id="ecoBtn" data-i18n="eco" title="低算力模式"></button>
     <button class="btn" id="undoBtn" data-i18n="undo"></button>
     <button class="btn" id="washBtn" data-i18n="wash"></button>
     <button class="btn" id="sealBtn" data-i18n="seal"></button>
@@ -356,7 +358,7 @@ const I18N = {
     hColor: '循环墨色', hWash: '洗纸 / 保存作品',
     hAutoK: '存档', hAuto: '画作自动存于本机，刷新可续',
     brush: '笔宽', density: '墨浓',
-    undo: '撤销', wash: '洗纸', seal: '印章', sealUp: '印面', sealReset: '复原印', save: '保存', album: '画册',
+    undo: '撤销', wash: '洗纸', eco: '极速', seal: '印章', sealUp: '印面', sealReset: '复原印', save: '保存', album: '画册',
     hZoomK: '检视', hZoom: '滚轮缩放 · Shift拖移 · 双指捏合 · 0 复位',
     albumTitle: '画 册 · 八 页', albumSave: '存 入 本 页', albumClose: '合 上', albumEmpty: '＋',
     albumScroll: '导 出 长 卷', scrollTitle: '拾 遗 · 墨 册',
@@ -381,7 +383,7 @@ const I18N = {
     hColor: 'cycle ink color', hWash: 'wash paper / save artwork',
     hAutoK: 'Archive', hAuto: 'auto-saved locally — refresh to resume',
     brush: 'Brush', density: 'Ink',
-    undo: 'Undo', wash: 'Wash', seal: 'Seal', sealUp: 'Seal Img', sealReset: 'Reset Seal', save: 'Save', album: 'Album',
+    undo: 'Undo', wash: 'Wash', eco: 'ECO', seal: 'Seal', sealUp: 'Seal Img', sealReset: 'Reset Seal', save: 'Save', album: 'Album',
     hZoomK: 'View', hZoom: 'wheel zoom · Shift-drag pan · pinch · 0 reset',
     albumTitle: 'ALBUM · EIGHT PAGES', albumSave: 'SAVE TO THIS PAGE', albumClose: 'CLOSE', albumEmpty: '＋',
     albumScroll: 'EXPORT SCROLL', scrollTitle: '拾 遗 · 墨 册',
@@ -747,11 +749,15 @@ function simDims(base) {
 }
 /* 自适应染料分辨率：小屏（手机）降载，大屏保持 1024 */
 let DYE_RES = Math.min(1024, Math.max(560, Math.round(Math.min(screen.width, screen.height) * 1.4)));
+const DYE_RES_AUTO = DYE_RES;
 let SIM_RES = 112, PRESSURE_ITERS = 12;
-/* 动态降质：帧时间超阈值时逐步降低 */
+/* 动态降质：帧时间超阈值时逐步降低（极速模式下锁定） */
 let qualityLevel = 2;  // 2=高 1=中 0=低
+let ecoMode = false;   // 极速：模拟减载 + 染料减半 + 关闲时落墨 + 静置隔帧
+try { ecoMode = localStorage.getItem('ink-eco') === '1'; } catch (e) {}
 let frameTimes = [];
 function updateQuality(dt) {
+  if (ecoMode) { frameTimes = []; return; }
   frameTimes.push(dt);
   if (frameTimes.length < 30) return;
   const avg = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length;
@@ -766,7 +772,9 @@ function updateQuality(dt) {
   }
 }
 function applyQuality() {
-  switch (qualityLevel) {
+  if (ecoMode) {
+    PRESSURE_ITERS = 4; SIM_RES = 56;
+  } else switch (qualityLevel) {
     case 2: PRESSURE_ITERS = 12; SIM_RES = 112; break;
     case 1: PRESSURE_ITERS = 8;  SIM_RES = 96;  break;
     case 0: PRESSURE_ITERS = 5;  SIM_RES = 72;  break;
@@ -778,9 +786,30 @@ function applyQuality() {
   curl = createFBO(sw, sh);
   pressure = createDoubleFBO(sw, sh);
 }
+/* 染料分辨率切换：旧画面经 progCopy 降采样保留 */
+function resizeDye(res) {
+  const [dw, dh] = simDims(res);
+  if (dye.width === dw && dye.height === dh) return;
+  const old = dye;
+  dye = createDoubleFBO(dw, dh);
+  if (old) {
+    gl.useProgram(progCopy.p);
+    gl.uniform1i(progCopy.uni.uTex, old.read.attach(0));
+    blit(dye.write); dye.swap();
+  }
+}
+function setEco(on) {
+  ecoMode = on;
+  try { localStorage.setItem('ink-eco', on ? '1' : '0'); } catch (e) {}
+  applyQuality();
+  resizeDye(on ? 384 : DYE_RES_AUTO);
+  resize();  // 极速下 DPR 钳至 1（高分屏显示像素减 4 倍）
+  const b = document.getElementById('ecoBtn');
+  if (b) b.classList.toggle('on', on);
+}
 let dye, velocity, divergence, curl, pressure;
 {
-  const [dw, dh] = simDims(DYE_RES);
+  const [dw, dh] = simDims(ecoMode ? 384 : DYE_RES);
   const [sw, sh] = simDims(SIM_RES);
   dye = createDoubleFBO(dw, dh);
   velocity = createDoubleFBO(sw, sh);
@@ -790,6 +819,11 @@ let dye, velocity, divergence, curl, pressure;
 }
 
 /* ---------------- 程序 ---------------- */
+const FRAG_COPY = `#version 300 es
+precision highp float; precision highp sampler2D;
+in vec2 vUv; out vec4 fragColor;
+uniform sampler2D uTex;
+void main () { fragColor = texture(uTex, vUv); }`;
 const progClear      = program(VERT, FRAG_CLEAR);
 const progSplat      = program(VERT, FRAG_SPLAT);
 const progAdvect     = program(VERT, FRAG_ADVECT);
@@ -799,6 +833,7 @@ const progDivergence = program(VERT, FRAG_DIVERGENCE);
 const progPressure   = program(VERT, FRAG_PRESSURE);
 const progGradient   = program(VERT, FRAG_GRADIENT);
 const progDisplay    = program(VERT, FRAG_DISPLAY);
+const progCopy       = program(VERT, FRAG_COPY);
 
 /* ---------------- 宣纸纹理 ---------------- */
 const _noiseCache = new Map();
@@ -1582,7 +1617,7 @@ const REDUCED_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let nextDrop = 0;
 let autoStroke = null;
 function idleDrop(now, dt) {
-  if (!config.idleDrop || REDUCED_MOTION) return;
+  if (ecoMode || !config.idleDrop || REDUCED_MOTION) { autoStroke = null; return; }
   if (now - lastInteract < 8000) { autoStroke = null; return; }
   if (autoStroke) {
     const st = autoStroke;
@@ -1622,8 +1657,8 @@ function step(dt) {
   gl.disable(gl.BLEND);
   updateQuality(dt);
 
-  // 低配跳过涡度约束（两趟全屏 pass）
-  if (qualityLevel > 0) {
+  // 低配/极速跳过涡度约束（两趟全屏 pass）
+  if (!ecoMode && qualityLevel > 0) {
     gl.useProgram(progCurl.p);
     gl.uniform2f(progCurl.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);
     gl.uniform1i(progCurl.uni.uVelocity, velocity.read.attach(0));
@@ -1710,13 +1745,44 @@ function frame(now) {
   if (hidden) return;   // 页面不可见时跳过渲染与模拟
   const dt = Math.min((now - prevTime) / 1000, 0.033);
   prevTime = now;
+  // #bench：注入负载并统计帧耗（自动 vs 极速），结果写入 DOM 供无头读取
+  if (benchOut) {
+    splat(0.2 + Math.random() * 0.6, 0.3 + Math.random() * 0.4,
+      (Math.random() - 0.5) * 80 * dt, (Math.random() - 0.5) * 80 * dt,
+      0.6 * dt, 1.0, 0);
+    benchSum += dt * 1000; benchN2++;
+    if (benchN2 >= 60) {
+      if (benchPhase === 0) {
+        benchA = benchSum / benchN2;
+        benchOut.textContent = `BENCH auto=${benchA.toFixed(1)}ms — eco…`;
+        benchPhase = 1; benchN2 = 0; benchSum = 0;
+        setEco(true);
+      } else {
+        benchOut.textContent = `BENCH auto=${benchA.toFixed(1)}ms eco=${(benchSum / benchN2).toFixed(1)}ms`;
+        benchOut = null;
+      }
+    }
+  }
   idleDrop(now, dt);
+  // 极速 + 静置：隔帧跳过模拟与绘制（慢扩散减半负载；preserveDrawingBuffer 保持画面）
+  frameNo++;
+  if (ecoMode && !benchOut && !autoStroke && washFrames <= 0 &&
+      now - lastInteract > 6000 && (frameNo & 1)) return;
   renderFrame(dt, false);
+}
+/* bench 状态 */
+const benchOn = location.hash.includes('bench');
+let benchOut = null, benchPhase = 0, benchN2 = 0, benchSum = 0, benchA = 0, frameNo = 0;
+if (benchOn) {
+  benchOut = document.createElement('div');
+  benchOut.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:99;background:#20242c;color:#fff;font:12px monospace;padding:6px 12px;border-radius:6px';
+  benchOut.textContent = 'BENCH auto…';
+  document.body.appendChild(benchOut);
 }
 
 /* ---------------- resize ---------------- */
 function resize() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const dpr = Math.min(window.devicePixelRatio || 1, ecoMode ? 1 : 2);
   const w = Math.round(canvas.clientWidth * dpr);
   const h = Math.round(canvas.clientHeight * dpr);
   if (canvas.width !== w || canvas.height !== h) {
@@ -1773,6 +1839,7 @@ function updSizeVal() {
 brushSizeEl.addEventListener('input', () => { brushSize = +brushSizeEl.value; updSizeVal(); });
 inkDensityEl.addEventListener('input', () => inkDensity = +inkDensityEl.value);
 
+document.getElementById('ecoBtn').addEventListener('click', () => setEco(!ecoMode));
 document.getElementById('undoBtn').addEventListener('click', undo);
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
@@ -1799,6 +1866,7 @@ document.getElementById('helpBtn').addEventListener('click', () => helpPanel.cla
 
 /* ---------------- 启动 ---------------- */
 applyI18n();
+if (ecoMode) { applyQuality(); const eb2 = document.getElementById('ecoBtn'); if (eb2) eb2.classList.add('on'); }
 updSizeVal();
 updateUndoBtn();
 updSealUpBtn();

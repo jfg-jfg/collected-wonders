@@ -2324,7 +2324,8 @@ function frame(now) {
     moveGhosts(dt);
     if (moveCooldown > 0) moveCooldown -= dt;
   }
-  render(dt);
+  // 仅游玩/编辑时渲染：菜单与结算浮层不透明，其后逐帧重绘纯耗电
+  if (state === 'play' || state === 'edit') render(dt);
 }
 
 /* ================= 启动 ================= */

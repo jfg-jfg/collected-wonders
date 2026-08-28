@@ -26,11 +26,14 @@
   .sel-title { font-size:clamp(30px,6vw,52px); letter-spacing:0.24em; color:#ece5d2; margin-top:12px; font-weight:600; }
   .sel-sub { font-size:12.5px; letter-spacing:0.4em; color:rgba(236,229,210,0.45); margin-top:10px; }
   .story-list { margin-top:30px; display:flex; flex-direction:column; gap:10px; width:min(560px,92vw); }
-  .story-card { border:1px solid rgba(240,232,214,0.14); border-radius:8px; cursor:pointer; background:rgba(20,26,32,0.6); padding:16px 20px; text-align:left; color:#ece5d2; font-family:inherit; display:flex; align-items:baseline; gap:14px; transition:border-color .25s,transform .25s; }
+  .cardwrap { position:relative; }
+  .story-card { width:100%; border:1px solid rgba(240,232,214,0.14); border-radius:8px; cursor:pointer; background:rgba(20,26,32,0.6); padding:16px 20px; text-align:left; color:#ece5d2; font-family:inherit; display:flex; align-items:baseline; gap:14px; transition:border-color .25s,transform .25s; }
   .story-card:hover { border-color:rgba(217,181,124,0.6); transform:translateX(4px); }
   .story-card .tt { font-size:17px; letter-spacing:0.14em; min-width:108px; }
   .story-card .kk { font-size:11.5px; letter-spacing:0.18em; color:rgba(236,229,210,0.5); flex:1; }
   .story-card .prog { font-size:11px; font-family:Georgia,serif; color:rgba(217,181,124,0.8); }
+  .card-del { position:absolute; right:-8px; top:-8px; width:24px; height:24px; border-radius:50%; border:1px solid rgba(240,232,214,0.25); background:rgba(10,12,16,0.95); color:rgba(240,232,214,0.6); font-size:12px; line-height:1; cursor:pointer; display:grid; place-items:center; }
+  .card-del:hover { color:#ff9b8a; border-color:#ff9b8a; }
 
   /* 标题屏 */
   .title { position:fixed; inset:0; z-index:8; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px; background:radial-gradient(ellipse at 50% 35%,var(--bg2),rgba(8,10,14,0.985)); transition:opacity 1.2s; gap:6px; }
@@ -58,7 +61,7 @@
   .env-hint { position:absolute; left:50%; bottom:-44px; transform:translateX(-50%); color:rgba(240,232,214,0.55); font-size:13px; letter-spacing:0.4em; white-space:nowrap; }
 
   /* 信纸 */
-  .letter { width:min(680px,94vw); max-height:82vh; overflow-y:auto; overscroll-behavior:contain; background:repeating-linear-gradient(180deg,transparent 0,transparent 36px,var(--ruling) 36px,var(--ruling) 37px),radial-gradient(ellipse at 20% 10%,rgba(0,0,0,0.05),transparent 55%),linear-gradient(165deg,var(--paper),var(--paper2)); border-radius:4px; padding:clamp(28px,5vw,56px) clamp(24px,6vw,64px); box-shadow:0 30px 80px rgba(0,0,0,0.55); position:relative; }
+  .letter { width:min(680px,94vw); max-height:82vh; overflow-y:auto; overscroll-behavior:contain; background:repeating-linear-gradient(180deg,transparent 0,transparent 36px,var(--ruling) 36px,var(--ruling) 37px),radial-gradient(ellipse at 20% 10%,rgba(0,0,0,0.05),transparent 55%),linear-gradient(165deg,var(--paper),var(--paper2)); border-radius:4px; padding:clamp(28px,5vw,56px) clamp(24px,6vw,64px); box-shadow:0 30px 80px rgba(0,0,0,0.55); position:relative; font-family:var(--font); }
   .letter::before,.letter::after { content:''; position:absolute; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(0,0,0,0.14) 18%,rgba(0,0,0,0.14) 82%,transparent); }
   .letter::before { top:33%; } .letter::after { top:66%; }
   .letter .yr { font-size:12.5px; letter-spacing:0.35em; opacity:0.6; margin-bottom:4px; }
@@ -67,12 +70,18 @@
   .letter p.in { opacity:1; transform:none; filter:blur(0); transition:opacity 1.3s ease,transform 1s ease,filter 1.2s ease; }
   .letter p.drop::first-letter { font-size:1.9em; float:left; line-height:1; padding:6px 10px 0 0; color:var(--seal); font-weight:600; }
   .letter.postcard { width:min(480px,92vw); }
+  .age-tint { position:absolute; inset:0; border-radius:4px; pointer-events:none; background:radial-gradient(ellipse at 50% 42%,rgba(122,92,44,0.10),rgba(84,58,24,0.34)); mix-blend-mode:multiply; }
+  .stamp { position:absolute; top:20px; right:24px; width:52px; height:62px; border-radius:2px; background:linear-gradient(160deg,rgba(217,181,124,0.25),rgba(158,53,40,0.18)); border:1px dashed rgba(51,48,42,0.5); display:grid; place-items:center; transform:rotate(3deg); }
+  .stamp::before { content:''; position:absolute; inset:4px; border:1px solid rgba(51,48,42,0.35); }
+  .stamp span { font-size:11px; letter-spacing:0.1em; color:var(--seal); opacity:0.85; }
 
   /* 回信 */
   .replies { margin-top:26px; display:none; flex-direction:column; gap:12px; }
   .replies.in { display:flex; }
   .reply { border:1px solid rgba(51,48,42,0.35); background:rgba(240,232,214,0.35); color:var(--ink); font-family:inherit; font-size:15px; line-height:1.8; letter-spacing:0.04em; padding:13px 20px; border-radius:3px; cursor:pointer; text-align:left; transition:background .25s,border-color .25s,transform .25s; }
   .reply:hover { background:rgba(158,53,40,0.1); border-color:var(--seal); transform:translateX(4px); }
+  .replies.frozen .reply { cursor:default; opacity:0.55; }
+  .replies.frozen .reply:hover { background:rgba(240,232,214,0.35); border-color:rgba(51,48,42,0.35); transform:none; }
 
   /* 结局 */
   .ending { position:fixed; inset:0; z-index:9; display:none; flex-direction:column; align-items:center; justify-content:center; background:radial-gradient(ellipse at 50% 40%,rgba(30,34,44,0.94),rgba(8,10,14,0.985)); text-align:center; padding:34px; overflow-y:auto; }
@@ -81,9 +90,62 @@
   .en-title { font-size:clamp(34px,6.5vw,58px); letter-spacing:0.22em; color:#ece5d2; margin:18px 0 26px; font-weight:600; }
   .en-text { font-size:clamp(15px,2.2vw,17px); line-height:2.4; letter-spacing:0.08em; color:rgba(236,229,210,0.85); max-width:560px; white-space:pre-line; text-align:left; }
 
+  /* ---------- 通用弹层 ---------- */
+  .modal { position:fixed; inset:0; z-index:12; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(5,8,11,0.72); backdrop-filter:blur(4px); }
+  .modal.show { display:flex; }
+  .sheet { width:min(680px,94vw); max-height:86vh; overflow-y:auto; overscroll-behavior:contain; background:linear-gradient(170deg,#17222c,#101820); border:1px solid rgba(217,181,124,0.28); border-radius:10px; padding:26px 28px 30px; color:#ece5d2; box-shadow:0 30px 90px rgba(0,0,0,0.7); }
+  .sheet h3 { font-size:19px; letter-spacing:0.3em; font-weight:600; color:var(--gold); margin-bottom:6px; }
+  .sheet .hint { font-size:12.5px; letter-spacing:0.12em; line-height:1.9; color:rgba(236,229,210,0.55); margin-bottom:16px; }
+  .sheet textarea, .sheet input[type=text] { width:100%; background:rgba(240,232,214,0.07); border:1px solid rgba(240,232,214,0.18); border-radius:6px; color:#ece5d2; font-family:inherit; font-size:14px; line-height:1.8; letter-spacing:0.04em; padding:10px 12px; resize:vertical; }
+  .sheet textarea:focus, .sheet input:focus { outline:none; border-color:var(--gold); }
+  .sheet textarea.mono { font-family:Consolas,Menlo,monospace; font-size:12px; line-height:1.6; }
+  .sheet label { display:block; font-size:12px; letter-spacing:0.22em; color:rgba(217,181,124,0.8); margin:14px 0 6px; }
+  .sheet .row { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+  .sheet .row .btn-sub { flex:0 0 auto; }
+  .sheet .ok { color:#9fd8a8; }
+  .sheet .err { color:#ff9b8a; font-size:12.5px; line-height:1.8; white-space:pre-line; margin-top:10px; }
+  .sheet select { background:#17222c; color:#ece5d2; border:1px solid rgba(240,232,214,0.25); border-radius:6px; font-family:inherit; font-size:13.5px; padding:7px 10px; }
+  .sheet input[type=range] { width:130px; accent-color:var(--gold); }
+  .sheet .inline { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .sheet .inline .val { font-size:15px; color:var(--gold); min-width:2ch; text-align:center; font-family:Georgia,serif; }
+  .close-x { position:sticky; top:0; float:right; margin:-8px -8px 0 0; width:30px; height:30px; border-radius:50%; border:1px solid rgba(240,232,214,0.25); background:rgba(10,12,16,0.9); color:rgba(240,232,214,0.7); font-size:14px; cursor:pointer; }
+  .close-x:hover { color:var(--gold); border-color:var(--gold); }
+
+  /* 重读信堆 */
+  .stack-item { display:flex; gap:14px; align-items:baseline; width:100%; text-align:left; background:rgba(240,232,214,0.06); border:1px solid rgba(240,232,214,0.14); border-radius:6px; color:#ece5d2; font-family:inherit; padding:12px 16px; cursor:pointer; margin-bottom:8px; transition:border-color .2s,transform .2s; }
+  .stack-item:hover { border-color:var(--gold); transform:translateX(4px); }
+  .stack-item .sy { font-size:11.5px; letter-spacing:0.14em; color:rgba(217,181,124,0.75); min-width:9em; }
+  .stack-item .st { font-size:15px; letter-spacing:0.1em; flex:1; }
+
+  /* 编辑器 */
+  .ed-sec { margin-top:20px; border-top:1px dashed rgba(240,232,214,0.14); padding-top:16px; }
+  .ed-sec > .sec-t { font-size:13px; letter-spacing:0.3em; color:var(--gold); margin-bottom:4px; }
+  .ed-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .ed-grid .full { grid-column:1 / -1; }
+  @media (max-width:560px){ .ed-grid { grid-template-columns:1fr; } }
+  .ed-card { background:rgba(240,232,214,0.05); border:1px solid rgba(240,232,214,0.14); border-radius:8px; padding:12px 14px; margin-top:12px; }
+  .ed-card .head { display:flex; gap:8px; align-items:center; }
+  .ed-card .head .idx { font-size:12px; color:var(--gold); letter-spacing:0.1em; white-space:nowrap; }
+  .ed-card .head input { flex:1; min-width:0; }
+  .ed-card .head .year { max-width:8.5em; }
+  .ed-del { width:26px; height:26px; border-radius:50%; border:1px solid rgba(240,232,214,0.22); background:none; color:rgba(240,232,214,0.55); cursor:pointer; font-size:12px; flex:0 0 auto; }
+  .ed-del:hover { color:#ff9b8a; border-color:#ff9b8a; }
+  .ed-reply { display:flex; gap:8px; margin-top:8px; align-items:center; }
+  .ed-reply input.rlab { flex:1; min-width:0; }
+  .ed-reply select { max-width:9em; }
+  .ed-add { margin-top:10px; border:1px dashed rgba(217,181,124,0.45); background:none; color:var(--gold); font-family:inherit; font-size:12.5px; letter-spacing:0.2em; padding:8px 16px; border-radius:6px; cursor:pointer; }
+  .ed-add:hover { background:rgba(217,181,124,0.12); }
+  .stylechips { display:flex; gap:8px; flex-wrap:wrap; }
+  .schip { border:1px solid rgba(240,232,214,0.22); background:none; color:rgba(236,229,210,0.75); font-family:inherit; font-size:12.5px; letter-spacing:0.16em; padding:8px 14px; border-radius:999px; cursor:pointer; }
+  .schip.on { border-color:var(--gold); color:var(--gold); background:rgba(217,181,124,0.1); }
+
   .corner { position:fixed; z-index:5; top:18px; right:22px; display:flex; gap:8px; }
   .btn-ghost { border:1px solid rgba(240,232,214,0.25); background:rgba(0,0,0,0.35); color:rgba(240,232,214,0.8); font-family:inherit; font-size:12px; letter-spacing:0.12em; padding:6px 13px; border-radius:999px; cursor:pointer; }
   .btn-ghost:hover { color:var(--gold); border-color:var(--gold); }
+
+  /* 提示条 */
+  .toast { position:fixed; left:50%; bottom:36px; transform:translate(-50%,20px); z-index:30; background:rgba(14,20,26,0.95); border:1px solid var(--gold); color:var(--gold); font-size:13.5px; letter-spacing:0.2em; padding:11px 26px; border-radius:999px; opacity:0; transition:opacity .3s,transform .3s; pointer-events:none; }
+  .toast.show { opacity:1; transform:translate(-50%,0); }
 
   .home-link { position:fixed; left:26px; bottom:26px; z-index:6; width:42px; height:42px; border-radius:50%; border:1px solid rgba(240,232,214,0.22); background:rgba(0,0,0,0.4); color:rgba(240,232,214,0.7); display:grid; place-items:center; font-size:16px; text-decoration:none; }
   .home-link:hover { color:var(--gold); border-color:var(--gold); }
@@ -135,26 +197,35 @@
   <div class="en-text" id="enText"></div>
   <div class="ts-actions" style="margin-top:34px">
     <button class="btn-main" id="againBtn">再 读 一 遍</button>
+    <button class="btn-sub" id="endBackBtn" style="display:none">← 信 箱</button>
   </div>
 </div>
+
+<div class="modal" id="modalOv"><div class="sheet" id="modalSheet"></div></div>
+<div class="toast" id="toast"></div>
 
 <a class="home-link" href="../index.html" title="拾遗 · 序">序</a>
 
 <script src="story-data.js"></script>
 <script>
 'use strict';
-/* 纸间 v5 — 简洁交互层重建 */
+/* ================================================================
+   纸间 · LETTERS v6
+   v5 交互核心 + 信堆重读 / 分享 / 导入 / AI 提示词 / 手写编辑器
+   + 隐藏结局 + 逐故事字体 + 纸张做旧 + WebAudio 纸声
+   ================================================================ */
 
-let lang = localStorage.getItem('letters-lang') || (navigator.language.startsWith('zh' ? 'zh' : 'en'));
+let lang = localStorage.getItem('letters-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+const T = (z, e) => lang === 'zh' ? z : e;
 let pack = null;
 let save = null;
 let visited = new Set();
 let letterCount = 0;
-let sealMode = false;
 
 const S = () => pack.letters[lang] || pack.letters.zh;
 const SE = () => pack.endings[lang] || pack.endings.zh;
 const total = () => pack.order.filter(x => !String(x).startsWith('E')).length;
+const totalEndings = () => pack.order.filter(x => String(x).startsWith('E')).length;
 
 /* ---------- 故事装载 ---------- */
 let imports = [];
@@ -166,8 +237,11 @@ function loadPack(p) {
   save = Object.assign({node:null, read:0, endings:[], readNodes:[], snd:true, readEver:0},
     JSON.parse(localStorage.getItem(key) || '{}'));
   applyStyle();
+  const sb = document.getElementById('sndBtn');
+  sb.textContent = save.snd ? T('声 · 开', 'SND · ON') : T('声 · 关', 'SND · OFF');
 }
 const persist = () => localStorage.setItem('letters-save-' + pack.id, JSON.stringify(save));
+const persistImports = () => localStorage.setItem('letters-imports', JSON.stringify(imports));
 
 function applyStyle() {
   const s = pack.style || {};
@@ -177,19 +251,129 @@ function applyStyle() {
   r.setProperty('--ink', s.ink || '#33302a');
   r.setProperty('--seal', s.seal || '#9e3528');
   r.setProperty('--gold', s.gold || '#d9b57c');
-  r.setProperty('--ruling', s.ruling || 'rgba(130,108,64,0.09)');
+  r.setProperty('--ruling', s.ruling == null ? 'transparent' : (s.ruling || 'rgba(130,108,64,0.09)'));
   r.setProperty('--bg1', s.bg1 || '#101a20');
   r.setProperty('--bg2', s.bg2 || '#1a2732');
+  r.setProperty('--font', s.font || '"Songti SC","STSong","SimSun","Noto Serif SC",Georgia,serif');
   document.body.style.background = `radial-gradient(ellipse at 50% 30%, ${s.bg2 || '#1a2732'}, ${s.bg1 || '#101a20'} 75%)`;
 }
+
+/* ---------- 音效（WebAudio 合成） ---------- */
+let ACtx = null;
+function ac() {
+  if (!ACtx) { try { ACtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return null; } }
+  if (ACtx.state === 'suspended') ACtx.resume();
+  return ACtx;
+}
+function noiseBurst(c, dur, type, freq, q, gain, when) {
+  const len = Math.max(1, Math.floor(c.sampleRate * dur));
+  const buf = c.createBuffer(1, len, c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  const src = c.createBufferSource(); src.buffer = buf;
+  const f = c.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+  const g = c.createGain();
+  const t0 = c.currentTime + (when || 0);
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(gain, t0 + dur * 0.18);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  src.connect(f); f.connect(g); g.connect(c.destination);
+  src.start(t0); src.stop(t0 + dur + 0.05);
+}
+function sndOpen() {  /* 拆封：火漆裂 + 纸张摩挲 */
+  if (!save || !save.snd) return;
+  const c = ac(); if (!c) return;
+  noiseBurst(c, 0.06, 'highpass', 2600, 0.6, 0.10, 0);
+  noiseBurst(c, 0.45, 'bandpass', 1400, 0.5, 0.05, 0.12);
+}
+function sndPage() {  /* 展信：纸声 */
+  if (!save || !save.snd) return;
+  const c = ac(); if (!c) return;
+  noiseBurst(c, 0.35, 'bandpass', 2200, 0.4, 0.035, 0);
+}
+function sndSeal() {  /* 选择回信：轻叩 */
+  if (!save || !save.snd) return;
+  const c = ac(); if (!c) return;
+  noiseBurst(c, 0.05, 'lowpass', 700, 1, 0.09, 0);
+}
+function sndChime() { /* 结局：双音钟 */
+  if (!save || !save.snd) return;
+  const c = ac(); if (!c) return;
+  [[523.25, 0], [784, 0.28]].forEach(([fq, dl]) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.value = fq;
+    const t0 = c.currentTime + dl;
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(0.06, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 2.6);
+    o.connect(g); g.connect(c.destination);
+    o.start(t0); o.stop(t0 + 2.8);
+  });
+}
+
+/* ---------- 通用弹层 / 提示 ---------- */
+const modalOv = document.getElementById('modalOv');
+const modalSheet = document.getElementById('modalSheet');
+function openModal(html) {
+  modalSheet.innerHTML = html;
+  modalOv.classList.add('show');
+}
+function closeModal() { modalOv.classList.remove('show'); modalSheet.innerHTML = ''; }
+modalOv.addEventListener('click', e => { if (e.target === modalOv) closeModal(); });
+
+let toastTimer = null;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+function copyText(txt, okMsg) {
+  const done = () => toast(okMsg || T('已复制', 'Copied'));
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt, done));
+  } else fallbackCopy(txt, done);
+}
+function fallbackCopy(txt, done) {
+  const ta = document.createElement('textarea');
+  ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); done(); } catch(e) { toast(T('复制失败，请手动选择', 'Copy failed')); }
+  document.body.removeChild(ta);
+}
+/* data-p 路径读写（编辑器用） */
+function getPath(obj, path) {
+  return path.split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
+}
+function setPath(obj, path, val) {
+  const ks = path.split('.');
+  let o = obj;
+  for (let i = 0; i < ks.length - 1; i++) {
+    if (o[ks[i]] == null) o[ks[i]] = /^\d+$/.test(ks[i + 1]) ? [] : {};
+    o = o[ks[i]];
+  }
+  o[ks[ks.length - 1]] = val;
+}
+modalSheet.addEventListener('input', e => {
+  const p = e.target.dataset.p;
+  if (p && ED) setPath(ED, p, e.target.value);
+});
+modalSheet.addEventListener('change', e => {
+  const p = e.target.dataset.p;
+  if (p && ED) setPath(ED, p, e.target.value);
+});
 
 /* ---------- 选集屏 ---------- */
 function buildSelect() {
   const list = document.getElementById('storyList');
   list.innerHTML = '';
+  const builtinIds = new Set(BUILTIN_STORIES.map(p => p.id));
   [...BUILTIN_STORIES, ...imports].forEach(p => {
     const sv = {};
     try { Object.assign(sv, JSON.parse(localStorage.getItem('letters-save-' + p.id) || '{}')); } catch(e) {}
+    const wrap = document.createElement('div');
+    wrap.className = 'cardwrap';
     const b = document.createElement('button');
     b.className = 'story-card';
     const read = Math.min(sv.readEver || 0, 20);
@@ -198,14 +382,29 @@ function buildSelect() {
       <span class="kk">${lang === 'zh' ? (p.kicker || '') : (p.kickerEn || p.kicker || '')}</span>
       <span class="prog">${read ? `✉${read} ◈${got}` : 'NEW'}</span>`;
     b.addEventListener('click', () => {
+      fromEditor = false;
       loadPack(p);
       showTitle();
     });
-    list.appendChild(b);
+    wrap.appendChild(b);
+    if (!builtinIds.has(p.id)) {
+      const del = document.createElement('button');
+      del.className = 'card-del'; del.textContent = '✕'; del.title = T('移除此故事', 'Remove');
+      del.addEventListener('click', e => {
+        e.stopPropagation();
+        imports = imports.filter(x => x.id !== p.id);
+        persistImports();
+        toast(T('已移除', 'Removed'));
+        buildSelect();
+      });
+      wrap.appendChild(del);
+    }
+    list.appendChild(wrap);
   });
 }
 
 function showSelect() {
+  fromEditor = false;
   document.getElementById('selectOv').style.display = 'flex';
   document.getElementById('titleScreen').classList.remove('show');
   buildSelect();
@@ -219,7 +418,8 @@ function showTitle() {
   document.getElementById('tsKicker').textContent = lang === 'zh' ? (pack.kicker || '') : (pack.kickerEn || pack.kicker || '');
   document.getElementById('tsTitle').textContent = lang === 'zh' ? pack.title : (pack.titleEn || pack.title);
   document.getElementById('tsDesc').innerHTML = lang === 'zh' ? (pack.desc || '') : (pack.descEn || pack.desc || '');
-  document.getElementById('contBtn').style.display = (save.node && !save.endings.length) ? 'inline-block' : 'none';
+  document.getElementById('contBtn').style.display = save.node ? 'inline-block' : 'none';
+  document.getElementById('backBtn').textContent = fromEditor ? T('← 返回编辑', '← EDITOR') : T('← 选 集', '← STORIES');
   // 结局点
   const es = document.getElementById('tsEndings');
   es.innerHTML = '';
@@ -234,7 +434,8 @@ function showTitle() {
     es.appendChild(d);
   });
   document.getElementById('tsStats').textContent =
-    `${total()} 封信 · 你读过 ${Math.min(save.readEver || 0, total())} 封 · 结局 ${save.endings.length}`;
+    T(`${total()} 封信 · 你读过 ${Math.min(save.readEver || 0, total())} 封 · 结局 ${save.endings.length}/${totalEndings()}`,
+      `${total()} letters · read ${Math.min(save.readEver || 0, total())} · endings ${save.endings.length}/${totalEndings()}`);
 }
 
 /* ---------- 信封 & 信纸 ---------- */
@@ -249,11 +450,12 @@ function showEnvelope(nextId) {
     <div class="env-peek"></div>
     <div class="env-flap"></div>
     <div class="seal">${(pack.title || '信')[0]}</div>
-    <div class="env-hint">${lang === 'zh' ? '点 击 拆 封' : 'CLICK TO UNSEAL'}</div>`;
+    <div class="env-hint">${T('点 击 拆 封', 'CLICK TO UNSEAL')}</div>`;
   stage.appendChild(env);
   env.addEventListener('click', () => {
     if (!env.classList.contains('open')) {
       env.classList.add('open');
+      sndOpen();
       setTimeout(() => showLetter(nextId), 900);
     }
   });
@@ -282,30 +484,41 @@ function showLetter(id, reread) {
   const paras = (nd.text || '').split('\n').map(p => p.trim()).filter(Boolean);
   lt.innerHTML = `<div class="yr">${nd.year || ''}</div><h2>${nd.title || ''}</h2>` +
     paras.map((p, i) => `<p class="${i === 0 ? 'drop' : ''}">${p}</p>`).join('');
+  if (nd.postcard) {
+    const st = document.createElement('div');
+    st.className = 'stamp';
+    st.innerHTML = `<span>${(nd.year || '✉').slice(0, 6)}</span>`;
+    lt.appendChild(st);
+  }
+  if (nd.age) {
+    const tint = document.createElement('div');
+    tint.className = 'age-tint';
+    tint.style.opacity = Math.min(0.85, nd.age).toFixed(2);
+    lt.appendChild(tint);
+  }
 
   const actions = document.createElement('div');
-  actions.className = 'replies';
+  actions.className = 'replies' + (reread ? ' frozen' : '');
   if (nd.replies && nd.replies.length) {
     nd.replies.forEach(r => {
       const b = document.createElement('button');
       b.className = 'reply';
       b.textContent = r.label;
-      b.addEventListener('click', () => {
-        gotoNode(r.to);
-      });
+      if (reread) { b.disabled = true; b.title = T('重读模式', 'reread'); }
+      else b.addEventListener('click', () => { sndSeal(); gotoNode(r.to); });
       actions.appendChild(b);
     });
   } else if (nd.cont) {
     const b = document.createElement('button');
     b.className = 'reply';
     b.textContent = nd.cont;
-    b.addEventListener('click', () => {
-      gotoNode(nextAfter(id));
-    });
+    if (reread) { b.disabled = true; }
+    else b.addEventListener('click', () => { sndSeal(); gotoNode(nextAfter(id)); });
     actions.appendChild(b);
   }
   lt.appendChild(actions);
   stage.appendChild(lt);
+  sndPage();
 
   // 逐段渐显
   const ps = lt.querySelectorAll('p');
@@ -339,7 +552,14 @@ function nextAfter(id) {
 }
 
 function gotoNode(to) {
-  if (String(to).startsWith('E')) { showEnding(to); return; }
+  if (String(to).startsWith('E')) {
+    // 隐藏结局：满足条件时替换常规结局
+    const h = pack.hiddenEnding;
+    if (h && h.replace === to && (h.require || []).every(id => visited.has('node:' + id))) {
+      to = h.id;
+    }
+    showEnding(to); return;
+  }
   showEnvelope(to);
 }
 
@@ -351,7 +571,545 @@ function showEnding(eid) {
   persist();
   document.getElementById('enTitle').textContent = E.title || '';
   document.getElementById('enText').textContent = E.text || '';
+  document.getElementById('endBackBtn').style.display = fromEditor ? 'inline-block' : 'none';
   document.getElementById('endingNote').classList.add('show');
+  sndChime();
+}
+
+/* ---------- 信堆（重读） ---------- */
+function openStack() {
+  const ids = (save.readNodes || []).filter(id => S()[id]);
+  if (!ids.length) {
+    toast(T('信堆还空着——先拆开一封信吧', 'The stack is empty — open a letter first'));
+    return;
+  }
+  let rows = '';
+  ids.forEach(id => {
+    const nd = S()[id];
+    rows += `<button class="stack-item" data-re="${id}">
+      <span class="sy">${(nd.year || '').slice(0, 14)}</span>
+      <span class="st">${nd.title || id}</span></button>`;
+  });
+  openModal(`
+    <button class="close-x" onclick="closeModal()">✕</button>
+    <h3>${T('信 堆', 'THE STACK')}</h3>
+    <div class="hint">${T('你已经拆开过的信。点击可以重读（重读不会影响剧情）。', 'Letters you have opened. Tap to reread — rereading never changes the story.')}</div>
+    ${rows}`);
+  modalSheet.querySelectorAll('[data-re]').forEach(b => {
+    b.addEventListener('click', () => {
+      closeModal();
+      document.getElementById('endingNote').classList.remove('show');
+      document.getElementById('titleScreen').classList.add('gone');
+      showLetter(b.dataset.re, true);
+    });
+  });
+}
+
+/* ---------- 分享 ---------- */
+function shareStory() {
+  const isBuiltin = BUILTIN_STORIES.some(p => p.id === pack.id);
+  const link = location.href.split('#')[0] + '#p=' + pack.id;
+  let jsonBox = '';
+  if (!isBuiltin) {
+    const json = JSON.stringify(pack);
+    jsonBox = `
+      <label>${T('故事数据（对方在「导入故事」中粘贴）', 'STORY DATA (paste into "Import")')}</label>
+      <textarea class="mono" rows="4" readonly>${json.replace(/</g, '&lt;')}</textarea>
+      <div class="row"><button class="btn-sub" onclick="copyTextRaw(this)" data-src="json">${T('复制故事数据', 'Copy story data')}</button></div>`;
+  }
+  openModal(`
+    <button class="close-x" onclick="closeModal()">✕</button>
+    <h3>${T('分 享', 'SHARE')}</h3>
+    <div class="hint">${isBuiltin
+      ? T('复制下方链接，对方打开即可直达这个故事。', 'Copy the link — it opens straight to this story.')
+      : T('复制链接直达；或复制故事数据，让对方在「导入故事」里粘贴。', 'Copy the link, or copy the story data for the other side to import.')}</div>
+    <label>${T('直达链接', 'DEEP LINK')}</label>
+    <textarea class="mono" rows="2" readonly>${link}</textarea>
+    <div class="row">
+      <button class="btn-sub" onclick="copyTextRaw(this)" data-src="link">${T('复制链接', 'Copy link')}</button>
+    </div>
+    ${jsonBox}`);
+  const ta = modalSheet.querySelector('textarea');
+  if (ta) { ta.addEventListener('focus', () => ta.select()); }
+}
+function copyTextRaw(btn) {
+  const src = btn.dataset.src;
+  if (src === 'link') {
+    const link = location.href.split('#')[0] + '#p=' + pack.id;
+    copyText(link, T('链接已复制', 'Link copied'));
+  } else {
+    copyText(JSON.stringify(pack), T('故事数据已复制', 'Story data copied'));
+  }
+}
+
+/* ---------- 导入 ---------- */
+function validatePack(p) {
+  const errs = [];
+  if (!p || typeof p !== 'object') return [T('不是有效的 JSON 对象', 'Not a valid JSON object')];
+  if (!p.id || !/^[a-zA-Z0-9_-]{1,32}$/.test(String(p.id))) errs.push(T('id 需为 1–32 位字母/数字', 'id must be 1–32 alphanumerics'));
+  if (!p.title) errs.push(T('缺少标题 title', 'Missing title'));
+  if (!Array.isArray(p.order) || !p.order.length) errs.push(T('缺少阅读顺序 order 数组', 'Missing order array'));
+  if (!p.letters || !p.letters.zh || !Object.keys(p.letters.zh).length) errs.push(T('缺少 letters.zh（中文信件）', 'Missing letters.zh'));
+  if (!p.endings || !p.endings.zh || !Object.keys(p.endings.zh).length) errs.push(T('缺少 endings.zh（结局）', 'Missing endings.zh'));
+  if (errs.length) return errs;
+  const nodes = p.letters.zh, ends = p.endings.zh;
+  const known = new Set([...Object.keys(nodes), ...Object.keys(ends)]);
+  const lettersInOrder = p.order.filter(x => !String(x).startsWith('E'));
+  if (!lettersInOrder.length) errs.push(T('order 中没有任何信件节点', 'order contains no letter nodes'));
+  p.order.forEach(k => { if (!known.has(k)) errs.push(T(`order 引用了不存在的节点：${k}`, `order references missing node: ${k}`)); });
+  Object.entries(nodes).forEach(([k, n]) => {
+    if (!n.text) errs.push(T(`信件 ${k} 没有正文`, `Letter ${k} has no text`));
+    (n.replies || []).forEach((r, i) => {
+      if (!r.label) errs.push(T(`${k} 的回信 ${i + 1} 缺少文字`, `Reply ${i + 1} of ${k} has no label`));
+      if (!known.has(r.to)) errs.push(T(`${k} 的回信「${(r.label || '').slice(0, 8)}…」指向不存在的节点 ${r.to}`, `A reply in ${k} points to missing node ${r.to}`));
+    });
+  });
+  return errs;
+}
+function openImport() {
+  openModal(`
+    <button class="close-x" onclick="closeModal()">✕</button>
+    <h3>${T('导 入 故 事', 'IMPORT')}</h3>
+    <div class="hint">${T('把故事 JSON 粘贴到下面（可由 AI 生成、手写编辑器导出、或朋友分享）。也支持选择 .json 文件。',
+      'Paste a story JSON below (from AI, the editor, or a friend). A .json file works too.')}</div>
+    <textarea id="impTa" rows="9" class="mono" placeholder='{"id":"my-story","title":"…","order":["n1","E1"],"letters":{"zh":{…}},"endings":{"zh":{…}}}'></textarea>
+    <div class="err" id="impErr" style="display:none"></div>
+    <div class="row">
+      <button class="btn-sub" id="impGo" style="border-color:var(--gold);color:var(--gold)">${T('校 验 并 导 入', 'VALIDATE & IMPORT')}</button>
+      <button class="btn-sub" id="impFile">${T('选择文件…', 'Choose file…')}</button>
+      <input type="file" id="impFileIn" accept=".json,application/json" style="display:none">
+    </div>`);
+  const ta = modalSheet.querySelector('#impTa');
+  const err = modalSheet.querySelector('#impErr');
+  modalSheet.querySelector('#impFile').addEventListener('click', () => modalSheet.querySelector('#impFileIn').click());
+  modalSheet.querySelector('#impFileIn').addEventListener('change', function() {
+    const f = this.files[0];
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => { ta.value = rd.result; toast(T('文件已读入，点「校验并导入」', 'File loaded — now validate')); };
+    rd.readAsText(f);
+  });
+  modalSheet.querySelector('#impGo').addEventListener('click', () => {
+    err.style.display = 'none';
+    let p;
+    try { p = JSON.parse(ta.value); }
+    catch(e) { err.textContent = T('JSON 解析失败：', 'JSON parse error: ') + e.message; err.style.display = 'block'; return; }
+    // 容错：AI 常把 JSON 包在 ```json ``` 里
+    if (p && !p.letters && typeof ta.value === 'string') {
+      const m = ta.value.match(/\{[\s\S]*\}/);
+      if (m) { try { p = JSON.parse(m[0]); } catch(e) {} }
+    }
+    const errs2 = validatePack(p);
+    if (errs2.length) { err.textContent = errs2.join('\n'); err.style.display = 'block'; return; }
+    let id = String(p.id), n = 2;
+    const allIds = new Set([...BUILTIN_STORIES.map(x => x.id), ...imports.map(x => x.id)]);
+    while (allIds.has(id)) { id = p.id + '-' + n++; }
+    p.id = id;
+    imports = imports.filter(x => x.id !== id);
+    imports.push(p);
+    persistImports();
+    closeModal();
+    toast(T(`已导入「${p.title}」`, `Imported "${p.titleEn || p.title}"`));
+    showSelect();
+  });
+}
+
+/* ---------- AI 提示词 ---------- */
+function openAI() {
+  const SCHEMA_EX = `{
+  "id": "my-story",
+  "title": "故事名", "titleEn": "Story Title",
+  "kicker": "一句话引子", "kickerEn": "ONE-LINE KICKER",
+  "desc": "标题页简介，可用<br>换行", "descEn": "...",
+  "style": {
+    "font": "\\"KaiTi\\",\\"STKaiti\\",serif",
+    "paper": "#e9eef3", "paper2": "#dce5ec",
+    "ink": "#2e3a46", "seal": "#4a7a9b", "gold": "#8fb4d4",
+    "ruling": "rgba(90,120,150,0.10)", "bg1": "#141c26", "bg2": "#1f2c3c"
+  },
+  "order": ["n1","n2","n3","E1","E2"],
+  "letters": {
+    "zh": {
+      "n1": { "year": "一九八四 · 冬", "title": "信的标题",
+        "text": "正文，\\n分段。第一封信结尾请给玩家设定来信人的疑问。",
+        "replies": [ { "label": "回信选项一（温和）", "flag": "warm", "to": "n2" },
+                     { "label": "回信选项二（追问）", "flag": "probe", "to": "n3" } ] },
+      "n2": { "year": "…", "title": "…", "text": "…", "replies": [ { "label": "…", "to": "E1" } ] }
+    },
+    "en": { "n1": { ... } }
+  },
+  "endings": { "zh": { "E1": { "title": "结局名", "text": "结局正文，\\n空一行分段。" } },
+               "en": { "E1": { ... } } }
+}`;
+  openModal(`
+    <button class="close-x" onclick="closeModal()">✕</button>
+    <h3>${T('让 A I 写 一 个', 'ASK AN AI')}</h3>
+    <div class="hint">${T('按你的想法定制，生成一段提示词。把它发给任意 AI（Claude / ChatGPT / 文心…），把 AI 回复的 JSON 粘贴到「导入故事」即可。',
+      'Tune the options, generate a prompt, send it to any AI, then paste the JSON it returns into "Import".')}</div>
+    <label>${T('题材 / 场景（必填）', 'PREMISE (required)')}</label>
+    <input type="text" id="aiTheme" placeholder="${T('例：末班地铁上发现的十年前的日记 / 守着即将闭馆的天文馆的馆长……', 'e.g. a diary found on the last metro / the last curator of a closing planetarium…')}">
+    <div class="ed-grid">
+      <div>
+        <label>${T('信件数', 'LETTERS')}</label>
+        <div class="inline"><input type="range" id="aiLen" min="4" max="14" value="8"><span class="val" id="aiLenV">8</span></div>
+      </div>
+      <div>
+        <label>${T('结局数', 'ENDINGS')}</label>
+        <div class="inline"><input type="range" id="aiEnd" min="2" max="5" value="3"><span class="val" id="aiEndV">3</span></div>
+      </div>
+      <div>
+        <label>${T('笔调', 'TONE')}</label>
+        <select id="aiTone">
+          <option>${T('深情 · 克制', 'tender · restrained')}</option>
+          <option>${T('悬疑 · 层层揭开', 'suspense · peeling back')}</option>
+          <option>${T('温暖 · 治愈', 'warm · healing')}</option>
+          <option>${T('冷峻 · 留白', 'austere · elliptical')}</option>
+          <option>${T('童话 · 轻盈', 'fable · weightless')}</option>
+        </select>
+      </div>
+      <div>
+        <label>${T('通信关系', 'CORRESPONDENTS')}</label>
+        <select id="aiRel">
+          <option>${T('读者与早已离去的人', 'reader & someone long gone')}</option>
+          <option>${T('一对被迫分离的旧友', 'two friends apart')}</option>
+          <option>${T('陌生笔友（互不知身份）', 'anonymous pen-pals')}</option>
+          <option>${T('人与一台旧机器', 'a person & an old machine')}</option>
+          <option>${T('人与多年后的自己', 'oneself, years apart')}</option>
+        </select>
+      </div>
+    </div>
+    <label>${T('补充要求（可选）', 'EXTRA (optional)')}</label>
+    <input type="text" id="aiExtra" placeholder="${T('例：结局要有回环 / 信里夹着一件小物……', 'e.g. a circular ending / a small object enclosed…')}">
+    <div class="row">
+      <button class="btn-sub" id="aiGen" style="border-color:var(--gold);color:var(--gold)">${T('生 成 提 示 词', 'GENERATE PROMPT')}</button>
+    </div>
+    <div id="aiOut" style="display:none">
+      <label>${T('提示词（复制发给 AI）', 'PROMPT (copy to an AI)')}</label>
+      <textarea id="aiTa" rows="10" class="mono" readonly></textarea>
+      <div class="row">
+        <button class="btn-sub" onclick="copyText(document.getElementById('aiTa').value)">${T('复制提示词', 'Copy prompt')}</button>
+        <button class="btn-sub" onclick="closeModal();openImport()">${T('我拿到 JSON 了，去导入 →', 'Got JSON — import →')}</button>
+      </div>
+    </div>`);
+  const lenR = modalSheet.querySelector('#aiLen'), endR = modalSheet.querySelector('#aiEnd');
+  const sync = () => {
+    modalSheet.querySelector('#aiLenV').textContent = lenR.value;
+    modalSheet.querySelector('#aiEndV').textContent = endR.value;
+  };
+  lenR.addEventListener('input', sync); endR.addEventListener('input', sync);
+  modalSheet.querySelector('#aiGen').addEventListener('click', () => {
+    const theme = modalSheet.querySelector('#aiTheme').value.trim();
+    if (!theme) { toast(T('先填一个题材', 'Give a premise first')); return; }
+    const L = +lenR.value, E = +endR.value;
+    const tone = modalSheet.querySelector('#aiTone').value;
+    const rel = modalSheet.querySelector('#aiRel').value;
+    const extra = modalSheet.querySelector('#aiExtra').value.trim();
+    const zh = lang === 'zh';
+    const prompt = zh ?
+`你在为一个网页互动书信游戏《纸间》写一个可玩的故事。请严格遵守以下要求，只输出一个 JSON 对象（不要 markdown 代码块、不要任何解释文字）。
+
+【故事设定】
+- 题材：${theme}
+- 通信关系：${rel}
+- 笔调：${tone}
+${extra ? '- 补充要求：' + extra + '\n' : ''}
+【篇幅】
+- 恰好 ${L} 封信（节点 id 依次为 n1…n${L}）
+- 恰好 ${E} 个结局（id 依次为 E1…E${E}）
+
+【写作规则】
+1. 每封信 120–260 字，段与段之间用 \\n 分隔；信件按时间递进，逐步揭开一件事的真相。
+2. 除最后一二封信外，每封信给 2–3 个回信选项：label 是玩家写的话（20–40字，口吻要像回信而不是选项），to 指向后续信件或结局；不同选项通向不同分支，玩家的选择应该真正影响看到的内容。
+3. 结局由最后一封信的回信选项直接指向（to: "E1" 等）；每个结局 100–200 字，彼此气质不同，没有好坏之分。
+4. 可以为个别信件加 "postcard": true（明信片样式）、"age": 0.3（纸张泛黄程度 0–0.6）。
+5. style 中的配色要贴合题材自定（paper 纸色 / ink 墨色 / seal 印章红 / gold 强调色），font 用本机字体名。
+6. 中英双语都要写（letters.zh 与 letters.en、endings.zh 与 endings.en，titleEn/kickerEn/descEn 同步）。英文不要逐字直译，要像本来就用英文写成的一样自然。
+
+【JSON 结构（必须完全一致的字段名）】
+${SCHEMA_EX}` :
+`You are writing a playable story for LETTERS, an interactive web letter game. Follow the rules exactly and output ONLY one JSON object (no markdown fences, no commentary).
+
+【Story】
+- Premise: ${theme}
+- Correspondents: ${rel}
+- Tone: ${tone}
+${extra ? '- Extra: ' + extra + '\n' : ''}
+【Length】
+- Exactly ${L} letters (node ids n1…n${L})
+- Exactly ${E} endings (ids E1…E${E})
+
+【Rules】
+1. Each letter 80–160 English words, paragraphs via \\n; letters advance in time, revealing one truth gradually.
+2. Every letter except the last one or two offers 2–3 reply choices: label = what the player writes (a sentence, not a label); to = a later letter or an ending. Choices must genuinely branch the story.
+3. Endings are pointed to by the last letters' replies (to: "E1" …). Each ending 60–130 words, distinct in mood; no "good vs bad".
+4. Optional per-letter flags: "postcard": true, "age": 0.3 (yellowing 0–0.6).
+5. style colors must fit the premise; font uses common local font names.
+6. Both zh and en must be written (letters.zh/letters.en, endings.zh/endings.en, plus titleEn/kickerEn/descEn). The English must read as if written in English first.
+
+【JSON schema (exact field names)】
+${SCHEMA_EX}`;
+    modalSheet.querySelector('#aiOut').style.display = 'block';
+    modalSheet.querySelector('#aiTa').value = prompt;
+    toast(T('提示词已生成', 'Prompt ready'));
+  });
+}
+
+/* ---------- 手写故事编辑器 ---------- */
+let ED = null;
+let fromEditor = false;
+
+const STYLE_PRESETS = [
+  { name: T('旧纸 · 宋体', 'Aged · Song'), style: {
+    font: '"Songti SC","STSong","SimSun","Noto Serif SC",Georgia,serif',
+    paper: '#f0e8d6', paper2: '#e8ddc4', ink: '#33302a', seal: '#9e3528', gold: '#d9b57c',
+    ruling: 'rgba(130,108,64,0.09)', bg1: '#101a20', bg2: '#1a2732' } },
+  { name: T('雪国 · 楷体', 'Snow · Kai'), style: {
+    font: '"KaiTi","STKaiti","Songti SC","SimSun",serif',
+    paper: '#e9eef3', paper2: '#dce5ec', ink: '#2e3a46', seal: '#4a7a9b', gold: '#8fb4d4',
+    ruling: 'rgba(90,120,150,0.10)', bg1: '#141c26', bg2: '#1f2c3c' } },
+  { name: T('深夜 · 仿宋', 'Night · Fangsong'), style: {
+    font: '"FangSong","STFangsong","SimSun","Noto Serif SC",serif',
+    paper: '#0e1d17', paper2: '#0a1611', ink: '#a8cdbd', seal: '#e07a5f', gold: '#7fd8cf',
+    ruling: null, bg1: '#060d0a', bg2: '#0c1a14' } },
+  { name: T('素白 · 黑体', 'Plain · Sans'), style: {
+    font: '"Microsoft YaHei","PingFang SC","Helvetica Neue",Arial,sans-serif',
+    paper: '#f4f4f1', paper2: '#e9e9e4', ink: '#2b2b2b', seal: '#c0392b', gold: '#b8a26b',
+    ruling: 'rgba(80,80,70,0.08)', bg1: '#1c1c1a', bg2: '#2a2a26' } }
+];
+
+function edNewDraft() {
+  return {
+    title: '', kicker: '', desc: '', styleIdx: 0,
+    nodes: [{ year: '', title: '', text: '', replies: [{ label: '', to: 'E1' }] }],
+    endings: [{ title: '', text: '' }]
+  };
+}
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+
+function edToOptions(cur, selfIdx) {
+  let out = '';
+  ED.nodes.forEach((n, i) => {
+    if (i === selfIdx) return;
+    out += `<option value="${i + 1}" ${String(cur) === String(i + 1) ? 'selected' : ''}>${T('第', '#')}${i + 1}${T('封', '')} · ${esc((n.title || T('未命名', 'untitled')).slice(0, 8))}</option>`;
+  });
+  ED.endings.forEach((e2, i) => {
+    out += `<option value="E${i + 1}" ${String(cur) === 'E' + (i + 1) ? 'selected' : ''}>${T('结局', 'Ending')} ${i + 1} · ${esc((e2.title || '').slice(0, 8))}</option>`;
+  });
+  return out;
+}
+
+function renderEditor() {
+  const chips = STYLE_PRESETS.map((p, i) =>
+    `<button class="schip ${i === ED.styleIdx ? 'on' : ''}" onclick="edStyle(${i})">${p.name}</button>`).join('');
+  const nodeCards = ED.nodes.map((n, i) => `
+    <div class="ed-card">
+      <div class="head">
+        <span class="idx">${T('第', '#')}${i + 1}${T('封', '')}</span>
+        <input type="text" data-p="nodes.${i}.year" value="${esc(n.year)}" placeholder="${T('年份/时间', 'year')}">
+        <input type="text" data-p="nodes.${i}.title" value="${esc(n.title)}" placeholder="${T('标题', 'title')}">
+        <button class="ed-del" onclick="edDelNode(${i})" title="${T('删除此信', 'delete')}">✕</button>
+      </div>
+      <textarea rows="4" data-p="nodes.${i}.text" placeholder="${T('信的正文。用回车分段。', 'Body. Blank lines split paragraphs.')}">${esc(n.text)}</textarea>
+      <div style="margin-top:10px">
+        ${(n.replies || []).map((r, j) => `
+          <div class="ed-reply">
+            <input type="text" class="rlab" data-p="nodes.${i}.replies.${j}.label" value="${esc(r.label)}" placeholder="${T('回信选项（玩家说的话）', 'reply the player sends')}">
+            <select data-p="nodes.${i}.replies.${j}.to">${edToOptions(r.to, i)}</select>
+            <button class="ed-del" onclick="edDelReply(${i},${j})">✕</button>
+          </div>`).join('')}
+        <button class="ed-add" onclick="edAddReply(${i})">＋ ${T('回信选项', 'reply option')}</button>
+        <div class="hint" style="margin:8px 0 0">${T('没有回信选项的信会显示「继续」按钮，自动接下一封。', 'A letter with no replies gets a "continue" button to the next letter.')}</div>
+      </div>
+    </div>`).join('');
+  const endCards = ED.endings.map((e2, i) => `
+    <div class="ed-card">
+      <div class="head">
+        <span class="idx">${T('结局', 'ENDING')} ${i + 1}</span>
+        <input type="text" data-p="endings.${i}.title" value="${esc(e2.title)}" placeholder="${T('结局标题', 'ending title')}">
+        <button class="ed-del" onclick="edDelEnd(${i})">✕</button>
+      </div>
+      <textarea rows="3" data-p="endings.${i}.text" placeholder="${T('结局正文', 'ending body')}">${esc(e2.text)}</textarea>
+    </div>`).join('');
+
+  openModal(`
+    <button class="close-x" onclick="edClose()">✕</button>
+    <h3>✎ ${T('手 写 故 事', 'WRITE A STORY')}</h3>
+    <div class="hint">${T('写你自己的信箱。保存后出现在选集列表，可分享、可试玩。中途想改，随时回来。',
+      'Build your own mailbox. It appears in the story list; share or replay anytime.')}</div>
+
+    <div class="ed-sec">
+      <div class="sec-t">${T('一 · 故事信息', '1 · STORY')}</div>
+      <div class="ed-grid">
+        <input type="text" data-p="title" value="${esc(ED.title)}" placeholder="${T('故事名（必填）', 'Title (required)')}">
+        <input type="text" data-p="kicker" value="${esc(ED.kicker)}" placeholder="${T('一句话引子', 'kicker')}">
+        <input type="text" class="full" data-p="desc" value="${esc(ED.desc)}" placeholder="${T('标题页简介', 'intro on title screen')}">
+      </div>
+    </div>
+
+    <div class="ed-sec">
+      <div class="sec-t">${T('二 · 纸与笔', '2 · PAPER & PEN')}</div>
+      <div class="stylechips">${chips}</div>
+    </div>
+
+    <div class="ed-sec">
+      <div class="sec-t">${T('三 · 信件', '3 · LETTERS')}</div>
+      ${nodeCards}
+      <button class="ed-add" onclick="edAddNode()">＋ ${T('添加一封信', 'add a letter')}</button>
+    </div>
+
+    <div class="ed-sec">
+      <div class="sec-t">${T('四 · 结局', '4 · ENDINGS')}</div>
+      ${endCards}
+      <button class="ed-add" onclick="edAddEnd()">＋ ${T('添加结局', 'add an ending')}</button>
+    </div>
+
+    <div class="ed-sec">
+      <div class="sec-t">${T('五 · 收尾', '5 · FINISH')}</div>
+      <div class="row">
+        <button class="btn-sub" style="border-color:var(--gold);color:var(--gold)" onclick="edSave()">${T('保存到信箱', 'SAVE TO LIST')}</button>
+        <button class="btn-sub" onclick="edCopy()">${T('复制 JSON', 'Copy JSON')}</button>
+        <button class="btn-sub" onclick="edPreview()">${T('试 读', 'PREVIEW')}</button>
+        <button class="btn-sub" onclick="edRemix()">${T('改编当前故事', 'Remix current')}</button>
+      </div>
+      <div class="err" id="edErr" style="display:none"></div>
+    </div>`);
+  const ta0 = modalSheet.querySelector('textarea');
+  if (ta0) ta0.addEventListener('focus', function() { this.select(); });
+}
+function openEditor(draft) {
+  ED = draft || edNewDraft();
+  fromEditor = true;
+  renderEditor();
+}
+function edClose() {
+  closeModal();
+  fromEditor = false;
+  showSelect();
+}
+function edStyle(i) { ED.styleIdx = i; renderEditor(); }
+function edAddNode() {
+  ED.nodes.push({ year: '', title: '', text: '', replies: [{ label: '', to: 'E1' }] });
+  renderEditor();
+  modalSheet.scrollTop = modalSheet.scrollHeight;
+}
+function edDelNode(i) {
+  if (ED.nodes.length <= 1) { toast(T('至少要有一封信', 'Keep at least one letter')); return; }
+  ED.nodes.splice(i, 1);
+  renderEditor();
+}
+function edAddReply(i) {
+  ED.nodes[i].replies = ED.nodes[i].replies || [];
+  ED.nodes[i].replies.push({ label: '', to: 'E1' });
+  renderEditor();
+}
+function edDelReply(i, j) { ED.nodes[i].replies.splice(j, 1); renderEditor(); }
+function edAddEnd() {
+  if (ED.endings.length >= 6) { toast(T('最多 6 个结局', 'Max 6 endings')); return; }
+  ED.endings.push({ title: '', text: '' });
+  renderEditor();
+}
+function edDelEnd(i) {
+  if (ED.endings.length <= 1) { toast(T('至少要有一个结局', 'Keep at least one ending')); return; }
+  ED.endings.splice(i, 1);
+  renderEditor();
+}
+function edBuild() {
+  const st = STYLE_PRESETS[ED.styleIdx].style;
+  const lettersZh = {}, endingsZh = {};
+  ED.nodes.forEach((n, i) => {
+    const id = 'n' + (i + 1);
+    const node = { year: n.year || '', title: n.title || '', text: n.text || '' };
+    const reps = (n.replies || []).filter(r => r.label.trim());
+    if (reps.length) node.replies = reps.map(r => ({
+      label: r.label,
+      to: /^[0-9]+$/.test(r.to) ? 'n' + r.to : r.to   // 下拉序号 → 节点 id
+    }));
+    else node.cont = T('拆开下一封信', 'Open the next letter');
+    lettersZh[id] = node;
+  });
+  ED.endings.forEach((e2, i) => {
+    endingsZh['E' + (i + 1)] = { title: e2.title || (T('结局', 'Ending') + ' ' + (i + 1)), text: e2.text || '…' };
+  });
+  return {
+    id: 'my-' + Date.now().toString(36),
+    title: ED.title.trim() || T('我的故事', 'My Story'),
+    kicker: ED.kicker.trim(),
+    desc: ED.desc.trim(),
+    style: st,
+    order: [...ED.nodes.map((_, i) => 'n' + (i + 1)), ...ED.endings.map((_, i) => 'E' + (i + 1))],
+    letters: { zh: lettersZh },
+    endings: { zh: endingsZh }
+  };
+}
+function edValidate(p) {
+  const errs = [];
+  if (!ED.title.trim()) errs.push(T('故事名还没填', 'Missing title'));
+  const lettersZh = p.letters.zh;
+  Object.entries(lettersZh).forEach(([k, n]) => {
+    if (!n.text.trim()) errs.push(T(`${k} 还是空的`, `${k} is empty`));
+    (n.replies || []).forEach(r => {
+      const to = /^[0-9]+$/.test(r.to) ? 'n' + r.to : r.to;
+      const ok = (to[0] === 'n' ? !!lettersZh[to] : !!p.endings.zh[to]);
+      if (!ok) errs.push(T(`${k} 的回信「${r.label.slice(0, 10)}…」指向不存在的节点`, `A reply in ${k} points nowhere`));
+    });
+  });
+  ED.endings.forEach((e2, i) => { if (!e2.text.trim()) errs.push(T(`结局 ${i + 1} 还是空的`, `Ending ${i + 1} is empty`)); });
+  return errs;
+}
+function edSave() {
+  const p = edBuild();
+  const errs = edValidate(p);
+  const errEl = modalSheet.querySelector('#edErr');
+  if (errs.length) { errEl.textContent = errs.join('\n'); errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+  // 同名替换（重复保存）
+  const prev = imports.findIndex(x => x.edKey === ED.edKey);
+  if (prev >= 0 && ED.edKey) { p.id = imports[prev].id; imports[prev] = p; }
+  else { p.edKey = ED.edKey = 'ed-' + Date.now().toString(36); imports.push(p); }
+  persistImports();
+  closeModal();
+  toast(T(`「${p.title}」已放入信箱`, `"${p.title}" saved`));
+  showSelect();
+}
+function edCopy() {
+  const p = edBuild();
+  const errs = edValidate(p);
+  if (errs.length) { const errEl = modalSheet.querySelector('#edErr'); errEl.textContent = errs.join('\n'); errEl.style.display = 'block'; return; }
+  copyText(JSON.stringify(p, null, 1), T('故事 JSON 已复制', 'Story JSON copied'));
+}
+function edPreview() {
+  const p = edBuild();
+  const errs = edValidate(p);
+  if (errs.length) { const errEl = modalSheet.querySelector('#edErr'); errEl.textContent = errs.join('\n'); errEl.style.display = 'block'; return; }
+  closeModal();
+  fromEditor = true;
+  document.getElementById('selectOv').style.display = 'none';
+  loadPack(p);
+  showTitle();
+  toast(T('试读模式 · 「← 返回编辑」可回来', 'Preview · use "← EDITOR" to come back'));
+}
+function edRemix() {
+  // 以当前打开的故事为底稿（取 zh 层）
+  const lettersZh = pack.letters.zh, endingsZh = pack.endings.zh;
+  const nodes = pack.order.filter(x => !String(x).startsWith('E')).map(k => {
+    const n = lettersZh[k] || {};
+    return {
+      year: n.year || '', title: n.title || '', text: n.text || '',
+      replies: (n.replies || []).map(r => ({ label: r.label, to: r.to }))
+    };
+  });
+  const endings = pack.order.filter(x => String(x).startsWith('E')).map(k => {
+    const e2 = endingsZh[k] || {};
+    return { title: e2.title || '', text: e2.text || '' };
+  });
+  let styleIdx = 0;
+  STYLE_PRESETS.forEach((p2, i) => { if (pack.style && p2.style.paper === pack.style.paper) styleIdx = i; });
+  ED = {
+    title: pack.title + T(' · 改', ' · remix'), kicker: pack.kicker || '', desc: (pack.desc || '').replace(/<br>/g, ' '),
+    styleIdx, nodes: nodes.length ? nodes : edNewDraft().nodes, endings: endings.length ? endings : edNewDraft().endings
+  };
+  renderEditor();
+  toast(T('已载入底稿，随便改', 'Draft loaded — remix away'));
 }
 
 /* ---------- 按钮 ---------- */
@@ -371,25 +1129,39 @@ document.getElementById('againBtn').addEventListener('click', () => {
   save.read = 0; save.node = null; persist();
   showEnvelope(pack.order.find(x => !String(x).startsWith('E')));
 });
-document.getElementById('backBtn').addEventListener('click', showSelect);
+document.getElementById('endBackBtn').addEventListener('click', () => {
+  document.getElementById('endingNote').classList.remove('show');
+  if (fromEditor && ED) { loadPack(edBuild()); showTitle(); }
+  else showSelect();
+});
+document.getElementById('backBtn').addEventListener('click', () => {
+  if (fromEditor && ED) openEditor(ED);
+  else showSelect();
+});
 document.getElementById('langBtn').addEventListener('click', () => {
   lang = lang === 'zh' ? 'en' : 'zh';
   localStorage.setItem('letters-lang', lang);
   document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+  if (modalOv.classList.contains('show')) return; // 弹层内容由当前操作重建即可
   if (document.getElementById('selectOv').style.display !== 'none') buildSelect();
   else showTitle();
 });
 document.getElementById('sndBtn').addEventListener('click', () => {
   save.snd = !save.snd; persist();
-  document.getElementById('sndBtn').textContent = save.snd ? '声 · 开' : '声 · 关';
+  document.getElementById('sndBtn').textContent = save.snd ? T('声 · 开', 'SND · ON') : T('声 · 关', 'SND · OFF');
+  if (save.snd) sndSeal();
 });
+document.getElementById('stackBtn').addEventListener('click', openStack);
+document.getElementById('shareStoryBtn').addEventListener('click', shareStory);
+document.getElementById('importBtn').addEventListener('click', openImport);
+document.getElementById('aiBtn').addEventListener('click', openAI);
+document.getElementById('writeBtn').addEventListener('click', () => openEditor());
 
-// 占位按钮（后续可扩展）
-document.getElementById('stackBtn').addEventListener('click', () => {});
-document.getElementById('shareStoryBtn').addEventListener('click', () => {});
-document.getElementById('importBtn').addEventListener('click', () => {});
-document.getElementById('aiBtn').addEventListener('click', () => {});
-document.getElementById('writeBtn').addEventListener('click', () => {});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (modalOv.classList.contains('show')) { if (ED && fromEditor) return; closeModal(); }
+  }
+});
 
 /* ---------- 尘埃粒子 ---------- */
 const motes = document.getElementById('motes');
@@ -425,9 +1197,10 @@ function mframe(now) {
 /* ---------- 启动 ---------- */
 document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
 loadPack(BUILTIN_STORIES[0]);
-// hash 直达
+// hash 直达：#p=<id> 或 #p=<id>&n=<node>；#dbg=editor/ai/import/stack 供自检
 {
   const hm = location.hash.match(/^#p=(\w+)(?:&n=(\w+))?/);
+  const dm = location.hash.match(/dbg=(\w+)/);
   if (hm) {
     const p = [...BUILTIN_STORIES, ...imports].find(x => x.id === hm[1]);
     if (p) {
@@ -440,6 +1213,14 @@ loadPack(BUILTIN_STORIES[0]);
         showTitle();
       }
     } else showSelect();
+  } else if (dm) {
+    showSelect();
+    loadPack(BUILTIN_STORIES[0]);
+    if (dm[1] === 'editor') openEditor();
+    else if (dm[1] === 'ai') openAI();
+    else if (dm[1] === 'import') openImport();
+    else if (dm[1] === 'stack') openStack();
+    else if (dm[1] === 'share') shareStory();
   } else showSelect();
 }
 requestAnimationFrame(mframe);

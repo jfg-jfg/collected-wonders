@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#101a20">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23101a20'/%3E%3Crect x='10' y='20' width='44' height='27' rx='2' fill='%23d9cbae'/%3E%3Cpath d='M10 20 L32 38 L54 20' fill='none' stroke='%23a89a78' stroke-width='2'/%3E%3Ccircle cx='32' cy='36' r='7' fill='%239e3528'/%3E%3C/svg%3E">
 <title>纸间 · LETTERS — 互动书信</title>
 <style>
   html { color-scheme: dark; }
@@ -434,6 +435,7 @@ function showTitle() {
   pack.order.filter(x => String(x).startsWith('E')).forEach(k => {
     const d = document.createElement('div');
     d.style.cssText = `width:12px;height:12px;border-radius:50%;border:1px solid rgba(240,232,214,0.35)`;
+    d.title = save.endings.includes(k) ? ((SE()[k] || {}).title || k) : T('尚未抵达的结局', 'an ending not yet reached');
     if (save.endings.includes(k)) {
       d.style.background = 'var(--gold)';
       d.style.borderColor = 'var(--gold)';
@@ -1168,6 +1170,12 @@ document.getElementById('writeBtn').addEventListener('click', () => openEditor()
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (modalOv.classList.contains('show')) { if (ED && fromEditor) return; closeModal(); }
+  } else if ((e.key === 'Enter' || e.key === ' ') && e.target === document.body) {
+    // 键盘拆信
+    const env = stage.querySelector('.envelope:not(.open)');
+    const overlayed = modalOv.classList.contains('show') ||
+      document.getElementById('endingNote').classList.contains('show');
+    if (env && !overlayed) { e.preventDefault(); env.click(); }
   }
 });
 

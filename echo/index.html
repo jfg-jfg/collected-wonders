@@ -914,28 +914,28 @@ const FRAGS = {
     '「第一夜：井水涨了三寸。有人在水下敲墙，节奏像摇篮曲。」',
     '「第三年：我们不再数星星。我们数船——它们再也不来了。」',
     '「第七年：搬来的人走了，留下的门全朝着海。他们说黑暗比风暴仁慈。」',
-    '「孩子问我：回声是谁在说话？我说：是我们走过的路，替我们记得。」',
+    '「第十一年：孩子问我：回声是谁在说话？我说：是我们走过的路，替我们记得。」',
     '「第十九年：巨殿的石柱上刻满了名字。我数到最后一个，是我自己的。」',
+    '「第二十三年：钟楼的齿轮卡住了一封信。信封上写着——给还活着的人。」',
+    '「第二十七年：沉街的窗台上，鞋还成双摆着。有人到最后一刻，仍在等另一个人回来穿鞋。」',
     '「第三十一年：灯还亮着。我不知道是谁在添油。我不敢下去看。」',
-    '「钟楼的齿轮卡住了一封信。信封上写着：给还活着的人。」',
-    '「沉街的窗台上，鞋还成双摆着。有些人在最后一刻仍在等另一个人穿鞋。」',
     '「最后一夜：门开了。门外不是海，是光。我听见有人在光里叫我的名字——是我的声音。」',
-    '「灯室的钥匙挂在门后第三颗钉子上。我闭着眼也够得到——在这座城里，手比眼睛可靠。」',
-    '「油路又堵了。老塔的旧病。我提着马灯下机房，来回四分钟。四分钟，够埋葬很多东西——也够救回一个年轻人。」',
+    '「灯室：钥匙挂在门后第三颗钉子上，我闭着眼也够得到。在这座城里，手比眼睛可靠。」',
+    '「油路：又堵了，老塔的旧病。我提着马灯下机房，来回四分钟。四分钟，够埋葬很多东西——也够救回一个年轻人。」',
     '「如果有一天你读到这里：替我把灯点亮一次，十分钟就够。让它最后亮一次，像有人在。——周远」'
   ],
   en: [
     '"Night one: the well water rose three inches. Someone knocking from below, in lullaby rhythm."',
     '"Year three: we stopped counting stars. We counted ships — they stopped coming."',
     '"Year seven: the newcomers left, doors facing the sea. They said darkness is kinder than storms."',
-    '"A child asked: who speaks in echoes? I said: the roads we walked, remembering for us."',
+    '"Year eleven: a child asked me — who speaks in echoes? I said: the roads we walked, remembering for us."',
     '"Year nineteen: the great hall pillars covered in names. I counted to the last one. It was mine."',
+    '"Year twenty-three: a letter wedged in the clockwork. The envelope reads — to whoever is still alive."',
+    '"Year twenty-seven: on the drowned street, shoes still paired on windowsills. Some, in the last moment, still waited for someone to come home and put them on."',
     '"Year thirty-one: the lamp is still lit. I don\'t know who tends it. I\'m afraid to go down and look."',
-    '"A letter wedged in the clockwork. The envelope reads: to whoever is still alive."',
-    '"On the drowned street, shoes still paired on windowsills. Some, in the last moment, still waited for someone to put them on."',
     '"The last night: the gate opened. Beyond it not the sea, but light. I heard someone call my name in the light — it was my own voice."',
-    '"The lamp-room key hangs on the third nail behind the door. I can reach it with my eyes closed — in this city, hands are truer than eyes."',
-    '"The oil line choked again. An old tower\'s old ailment. I took the storm lantern down to the engine room — four minutes, there and back. Four minutes is long enough to bury many things, and long enough to save one young man."',
+    '"The lamp room: the key hangs on the third nail behind the door; I can reach it with my eyes closed. In this city, hands are truer than eyes."',
+    '"The oil line: choked again — an old tower\'s old ailment. I took the storm lantern down to the engine room, four minutes, there and back. Four minutes is long enough to bury many things, and long enough to save one young man."',
     '"If you ever read this far: light the lamp once for me. Ten minutes is enough. Let it burn one last time, as if someone were here. — Zhou Yuan"'
   ]
 };
@@ -2254,6 +2254,12 @@ document.getElementById('nextBtn').addEventListener('click', () => {
 });
 document.getElementById('againBtn').addEventListener('click', () => { save.frags = []; persist(); loadLevel(0); });
 document.getElementById('menuBtn').addEventListener('click', () => {
+  // 造井试玩中「回廊」= 返回编辑器（草稿原地保留），而非主菜单
+  if (isCustom && customFrom === 'editor') {
+    isCustom = false;
+    edEnter(editor.map.length ? { rows: editor.map.map(r => r.join('')), frags: edFragTexts } : null);
+    return;
+  }
   state = 'menu'; hideAll();
   document.getElementById('hud').style.display = 'none';
   document.getElementById('topbar').style.display = 'none';

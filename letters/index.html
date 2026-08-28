@@ -160,7 +160,7 @@
 <div class="select" id="selectOv">
   <div class="sel-kicker">拾 遗 · 纸 间</div>
   <div class="sel-title">选 一 个 信 箱</div>
-  <div class="sel-sub">三个信箱 · 或导入你的故事</div>
+  <div class="sel-sub" id="selSub"></div>
   <div class="story-list" id="storyList"></div>
   <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
     <button class="btn-sub" id="importBtn">导 入 故 事</button>
@@ -374,6 +374,8 @@ modalSheet.addEventListener('change', e => {
 function buildSelect() {
   const list = document.getElementById('storyList');
   list.innerHTML = '';
+  document.getElementById('selSub').textContent =
+    T(`${BUILTIN_STORIES.length} 个信箱 · 或导入你的故事`, `${BUILTIN_STORIES.length} MAILBOXES · or import your own`);
   const builtinIds = new Set(BUILTIN_STORIES.map(p => p.id));
   [...BUILTIN_STORIES, ...imports].forEach(p => {
     const sv = {};
@@ -519,7 +521,7 @@ function showLetter(id, reread) {
     b.className = 'reply';
     b.textContent = nd.cont;
     if (reread) { b.disabled = true; }
-    else b.addEventListener('click', () => { sndSeal(); gotoNode(nextAfter(id)); });
+    else b.addEventListener('click', () => { sndSeal(); gotoNode(nd.contTo || nextAfter(id)); });
     actions.appendChild(b);
   }
   lt.appendChild(actions);

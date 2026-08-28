@@ -19,7 +19,7 @@ const STORY_LIGHTHOUSE = {
   },
   letters: {
     zh: {
-      n1: { year: '无年份', title: '致后来的旅人', text: `如果你读到这里，说明灯塔还没有拆掉，而你恰好推开了这扇门。\n我叫周远，在此守灯三十一年。人们说我死在第三十一年的那个风暴夜——他们说得对，也不对。\n桌上的信封按了年份。拆开之前，点一盏灯吧。守灯人的规矩：读信时，屋里要有光。`, cont: '拆开一九八九年的信' },
+      n1: { year: '无年份', title: '致后来的旅人', text: `如果你读到这里，说明灯塔还没有拆掉，而你恰好推开了这扇门。\n我叫周远，在此守灯三十一年。人们说我死在第三十一年的那个风暴夜——他们说得对，也不对。\n桌上的信封按了年份。拆开之前，点一盏灯吧。守灯人的规矩：读信时，屋里要有光。`, cont: '拆开一九八九年的信', contTo: 'n2' },
       n2: { year: '一九八九 · 春', title: '灯芯', text: `海冰初融，今夜雾大，灯要亮到天明。\n我做了一盏新的灯芯，剪去旧年的焦头。守灯这件事，说到底就是不断把烧焦的部分剪掉，让光继续。\n你那边，天气如何？`, replies: [
         { label: '这里也在下雨。你剪灯芯的样子，让我想起很多事。', flag: 'warm', to: 'n3' },
         { label: '等等——你说你"死在"风暴夜。到底发生了什么？', flag: 'probe', to: 'n4' },
@@ -67,7 +67,7 @@ const STORY_LIGHTHOUSE = {
       ]}
     },
     en: {
-      n1: { year: 'NO YEAR', title: 'To the Traveler After', text: `If you are reading this, the lighthouse still stands, and you have pushed open this door.\nMy name is Zhou Yuan. I kept this light for thirty-one years. They say I died on the storm night of my thirty-first year — they are right, and not right.\nThe envelopes on this desk are marked by year. Before you open one, light a lamp. A keeper's rule: letters are read by lamplight.`, cont: 'Open the letter from 1989' },
+      n1: { year: 'NO YEAR', title: 'To the Traveler After', text: `If you are reading this, the lighthouse still stands, and you have pushed open this door.\nMy name is Zhou Yuan. I kept this light for thirty-one years. They say I died on the storm night of my thirty-first year — they are right, and not right.\nThe envelopes on this desk are marked by year. Before you open one, light a lamp. A keeper's rule: letters are read by lamplight.`, cont: 'Open the letter from 1989', contTo: 'n2' },
       n2: { year: '1989 · SPRING', title: 'The Wick', text: `The sea ice is breaking up. Fog tonight; the lamp will burn till dawn.\nI trimmed a new wick, cutting away last year's char. Keeping a light, in the end, is only this: cutting away what has burned, so the flame can go on.\nAnd where you are — what is the weather like?`, replies: [
         { label: 'It is raining here too. The way you trim the wick — it reminds me of so much.', flag: 'warm', to: 'n3' },
         { label: 'Wait — you said you "died" on the storm night. What actually happened?', flag: 'probe', to: 'n4' },
@@ -327,4 +327,105 @@ const STORY_RADIO = {
   }
 };
 
-const BUILTIN_STORIES = [STORY_LIGHTHOUSE, STORY_TRAIN, STORY_RADIO];
+/* ============ 故事四：停钟巷（含隐藏结局） ============ */
+const STORY_CLOCK = {
+  id: 'clockwork',
+  title: '停钟巷', titleEn: 'The Lane of Stopped Clocks',
+  kicker: '整条巷子的钟，都停在四点四十四分', kickerEn: 'EVERY CLOCK IN THE LANE STOPPED AT 4:44',
+  desc: '修表铺「守时堂」月底拆迁。<br>你是钟表匠的外孙女，回来收拾满屋停摆的钟——<br>而祖父贴身的那只怀表，此刻正在你口袋里，走得很准。',
+  descEn: 'The watchmaker\'s shop closes this month.<br>You are his granddaughter, back to pack up a room of stopped clocks —<br>while the pocket watch he carried, now in your pocket, keeps perfect time.',
+  order: ['c1','c2','c3','c4','c5','c6','c7','c8','E1','E2','E3','E4'],
+  hiddenEnding: { id: 'E4', require: ['c4','c6','c7'], replace: 'E1' },
+  style: {
+    font: '"LiSu","STLiti","SimSun","Noto Serif SC",serif',
+    paper: '#2e2620', paper2: '#241d18',
+    ink: '#d9c6a5', seal: '#b5651d', gold: '#caa472',
+    ruling: 'rgba(180,150,100,0.08)', bg1: '#171310', bg2: '#241c15'
+  },
+  letters: {
+    zh: {
+      c1: { year: '上个月 · 遗物', title: '致小满', text: `拆迁通知贴在门上那天，你回来看铺子。\n工作台的抽屉没有锁。里面是一沓按年份理好的信，最上面这封，写着你的名字。\n"小满：\n你回来的时候，铺子应该已经腾空了。别嫌外公啰嗦——修了一辈子钟的人，总想给你留几句准的话。\n巷子里的人都说，守时堂的钟全坏了。他们说得对，也不对。\n钟没有坏。是我让它们停的。\n想知道为什么，就从这沓信的最上面，一封一封看下去。"`, replies: [
+        { label: '（把信纸翻过来——背面还有一行小字。）', flag: 'warm', to: 'c2' },
+        { label: '四点四十四分。外公，那到底是什么日子？', flag: 'probe', to: 'c3' }
+      ]},
+      c2: { year: '二〇一六 · 取件单', title: '布谷鸟钟（取件单背面）', age: 0.35, postcard: true, text: `一张褪色的取件单，字是顾客的，歪歪扭扭：\n"沈师傅：你让我别修那只布谷鸟钟，钱我不能收。可我总得知道为什么——它明明没坏。"\n单子背面是外公的回字，小而直：\n"钟没坏。是它的主人还没准备好让它重新叫。等她想听的那天，用螺丝刀撬一下左边的小门，它自己会醒。"\n最下面又添了几行顾客的字，日期是半个月后：\n"昨天我把门撬开了。它叫了。我妻子走了七年，这是我七年来头一回听见布谷鸟。\n谢谢您。钱放在台子上了。"`, replies: [
+        { label: '（收件人一栏写着：等一个人来取。）', flag: 'warm', to: 'c3' },
+        { label: '（工作台底下压着一本蓝皮账簿。）', flag: 'probe', to: 'c4' }
+      ]},
+      c3: { year: '无年份 · 信', title: '巷子里的钟', text: `你问四点四十四分。好。从钟说起。\n守时堂修过整条巷子的钟：剃头铺的挂钟、酱园的马蹄表、邮局的大钟、陈婆婆家那台老座钟。它们现在都停着，停在同一个时刻。不是我挨家挨户去停的——是巷子里的人自己抱着钟送来的。\n他们说：沈师傅的钟准了一辈子，他说停，那就停。\n一个修钟的人，凭什么决定别人的时间？\n就凭那一夜之后，我不敢再看任何一只钟往前走。`, replies: [
+        { label: '哪一夜？说清楚，外公。', flag: 'probe', to: 'c4' },
+        { label: '（先去翻那本蓝皮账簿。）', flag: 'warm', to: 'c4' }
+      ]},
+      c4: { year: '二〇一八 · 十一月九日', title: '日记（抄）', age: 0.5, text: `他的字到这里抖得厉害，你几乎是贴着台灯才认完的。\n"夜里十一点，胸口像被合页夹住。手够不到电话，滚下床，爬到柜边，拨通小满她妈。\n只说了一句：没事，就是想听听你声音。\n她说：爸你等着，我马上回来。\n雨大。四点四十四分，救护车进不了巷子。\n我在担架上想：她从小就这样，我说一句'没事'，她就当真跑断腿。\n四点四十四分。腕上的表还在响。我把它摘下来，看着它，没有按停。\n后来，满巷子的钟，我一只一只，亲手停在那个时刻。"`, replies: [
+        { label: '（信纸背后，粘着一沓没贴邮票的信。）', flag: 'probe', to: 'c6' },
+        { label: '外公……那不是你的错。', flag: 'warm', to: 'c5' }
+      ]},
+      c5: { year: '无年份 · 信', title: '守时堂的规矩', text: `别哭。听外公讲规矩。\n守时堂三代，传一句话：别人的钟，只修，不停；自己的时间，自己看着办。\n我停了一巷子的钟，坏了规矩。可我留下一只不许停的——我贴身那只怀表，你外婆的陪嫁。她走后我天天给它上弦；现在起，换你给它上弦。\n你知道为什么全巷的钟都停了，它还得走？\n因为总得有一只钟，替她把没走完的时间，走完。`, replies: [
+        { label: '（账簿底下，还有每年同一天写的信。）', flag: 'probe', to: 'c6' },
+        { label: '（最后一封信，信封是医院的。）', flag: 'warm', to: 'c7' }
+      ]},
+      c6: { year: '二〇一九—二〇二六 · 每年三月', title: '没寄出的信（给你母亲）', age: 0.55, text: `八封信，同一个收信人：你母亲。都没贴邮票。\n每年三月十二，他从天亮写到天黑。第一封从"早上好"写起，写到"夜里风大，记得关窗"——一整年的话，一天写完。\n最后一封只有两行：\n"今年的钟我自己上了弦。你走后的第七年，我终于敢让它走过四点四十四分——它走过去了，一点声音都没有。\n原来一分钟这么长。原来一分钟这么短。"`, replies: [
+        { label: '（把八封信按年份码好，放回抽屉最底层。）', flag: 'warm', to: 'c7' },
+        { label: '（医院的那封信，边角已经磨毛了。）', flag: 'probe', to: 'c7' }
+      ]},
+      c7: { year: '上个月 · 医院', title: '最后一件事', text: `小满：\n医生说就这几天。我不怕——我这条命是从合页里抠出来的，多走的每一天都是赚的。\n只托你一件事。\n月底拆巷子那天，把停着的钟，一只一只，全部上弦：剃头铺的、酱园的、邮局的、陈婆婆的，还有铺子里这四十七只。\n让它们从四点四十四分，一起往前走。走到四点四十五分的时候，整条巷子会一起报时。\n那是我欠她们的——欠了八年的一分钟。\n怀表你自己留着。它认人。它现在，认你。`, replies: [
+        { label: '好。我替你，把这一分钟走完。', flag: 'warm', to: 'E1' },
+        { label: '（门口有人站了很久——是陈婆婆，手里攥着纸条。）', flag: 'probe', to: 'c8' }
+      ]},
+      c8: { year: '今天', title: '陈婆婆的纸条', text: `"丫头：\n你外公走前那个礼拜，把每家每户的钟钥匙都送回来了，纸包着，写了名字。\n我问他：老沈，钟不修了？\n他说：修。等我孙女回来修，她手比我稳。\n丫头，他到最后都记挂着一巷子的钟。你手上那几把钥匙，收好。\n对了——他那只怀表，前年在我这儿放过一晚。第二天他来取，对着日头校了半天。\n我笑他：守时堂的钟还用校？\n他说：要校的，每天都得校。它不能快，也不能慢——一分钟都不行。"`, replies: [
+        { label: '（你不想上弦了。让钟睡着，让巷子安静地走。）', flag: 'letgo', to: 'E2' },
+        { label: '（你决定把工作台搬回家。就在阳台，就挂块小牌子。）', flag: 'keep', to: 'E3' }
+      ]}
+    },
+    en: {
+      c1: { year: 'LAST MONTH · EFFECTS', title: 'To Xiaoman', text: `The demolition notice went up the day you came back to the shop.\nThe workbench drawer was unlocked. Inside: a stack of letters sorted by year. The top one bore your name.\n"Xiaoman —\nBy the time you return, the shop will be emptied. Don't call your grandfather long-winded; a man who repaired clocks all his life wants to leave you a few words that run true.\nThe lane says every clock in Shoushitang broke. They are right, and not right.\nThe clocks are not broken. I stopped them.\nIf you want to know why, read the stack — from the top, one by one."`, replies: [
+        { label: '(Turn the page over — more writing on the back.)', flag: 'warm', to: 'c2' },
+        { label: '4:44. Grandpa — what date is that?', flag: 'probe', to: 'c3' }
+      ]},
+      c2: { year: '2016 · TICKET', title: 'The Cuckoo Clock (repair ticket)', age: 0.35, postcard: true, text: `A faded repair ticket, the customer's hand cramped and crooked:\n"Master Shen: you told me not to fix that cuckoo clock, and I can't take that lying down with my money. Tell me why — there is nothing wrong with it."\nOn the back, your grandfather's small straight script:\n"The clock isn't broken. Its owner isn't ready to hear it again. The day she wants to, pry the little left door with a screwdriver — it will wake by itself."\nAnd below, dated half a month later, the customer again:\n"I pried the door open yesterday. It called. Seven years since my wife passed — the first cuckoo I have heard in seven years.\nThank you. The money is on your bench."`, replies: [
+        { label: '(The collection line reads: for whoever comes to claim it.)', flag: 'warm', to: 'c3' },
+        { label: '(A blue ledger lies under the workbench.)', flag: 'probe', to: 'c4' }
+      ]},
+      c3: { year: 'NO YEAR · LETTER', title: 'The Lane\'s Clocks', text: `You ask about 4:44. Then let us start with the clocks.\nShoushitang repaired the whole lane's time: the barbershop's wall clock, the sauce-yard's carriage watch, the post office clock, Granny Chen's old regulator. All stopped now — at the same minute. I did not go door to door stopping them; the lane carried them to me.\nThey said: Master Shen's clocks have run true all his life. If he says stop, then stop.\nAnd who is a clockmaker to decide other people's time?\nOnly this: after that night, I could not bear to watch a single clock move forward.`, replies: [
+        { label: 'Which night? Tell me plainly, Grandpa.', flag: 'probe', to: 'c4' },
+        { label: '(Go look through the blue ledger first.)', flag: 'warm', to: 'c4' }
+      ]},
+      c4: { year: '2018 · NOVEMBER 9', title: 'The Diary (Copied)', age: 0.5, text: `From here his hand shakes so badly you read it almost against the lamp.\n"Eleven at night; chest clamped like a hinge. Couldn't reach the phone; fell out of bed, crawled to the cabinet, dialed Xiaoman's mother.\nSaid only: it's nothing — I just wanted to hear your voice.\nShe said: Dad, wait. I'm coming straight back.\nThe rain was heavy. At 4:44 the ambulance could not enter the lane.\nOn the stretcher I thought: she has been this way since she was small — I say 'it's nothing,' and she will run her legs off for it.\n4:44. The watch on my wrist was still ticking. I took it off, looked at it, and did not stop it.\nAfterward — every clock in the lane, one by one, I stopped with my own hands at that minute."`, replies: [
+        { label: '(Pasted to the back: a bundle of unstamped letters.)', flag: 'probe', to: 'c6' },
+        { label: 'Grandpa… it was not your fault.', flag: 'warm', to: 'c5' }
+      ]},
+      c5: { year: 'NO YEAR · LETTER', title: 'The Rule of Shoushitang', text: `Don't cry. Listen to the rule.\nThree generations, one sentence: other people's clocks, repair only — never stop; your own time, answer for yourself.\nI stopped a lane of clocks and broke the rule. But I kept one that was never allowed to stop — the pocket watch I carried, your grandmother's dowry. After she passed I wound it daily; from now on, you wind it.\nDo you know why, with the whole lane stopped, this one must go on?\nBecause one clock, at least, must live out the time she did not finish.`, replies: [
+        { label: '(Beneath the ledger: letters written the same day, every year.)', flag: 'probe', to: 'c6' },
+        { label: '(The last letter bears a hospital envelope.)', flag: 'warm', to: 'c7' }
+      ]},
+      c6: { year: '2019–2026 · EACH MARCH', title: 'The Unsent Letters (to your mother)', age: 0.55, text: `Eight letters, one addressee: your mother. None ever stamped.\nEvery twelfth of March he wrote from first light to dark. The earliest begins "good morning" and ends "wind tonight — shut the window": a whole year of words, written in a single day.\nThe last one holds two lines only:\n"This year I wound the clocks myself. Seven years after you left, I finally dared let one walk past 4:44 — it walked past without a sound.\nSo that is how long a minute is. So that is how short a minute is."`, replies: [
+        { label: '(Square the eight by year and lay them back at the bottom.)', flag: 'warm', to: 'c7' },
+        { label: '(The hospital letter is worn soft at the corners.)', flag: 'probe', to: 'c7' }
+      ]},
+      c7: { year: 'LAST MONTH · HOSPITAL', title: 'One Last Thing', text: `Xiaoman —\nThe doctors say days now. I am not afraid; my life was pried back out of a hinge — every day since has been profit.\nOne last thing I ask of you.\nThe day they tear down the lane, wind the stopped clocks, every one: the barbershop's, the sauce-yard's, the post office's, Granny Chen's — and these forty-seven in the shop.\nLet them walk on from 4:44 together. When they reach 4:45, the whole lane will strike at once.\nThat is what I owe them — one minute, eight years overdue.\nKeep the pocket watch. It knows people. Now it knows you.`, replies: [
+        { label: 'All right. I will walk that minute for you.', flag: 'warm', to: 'E1' },
+        { label: '(Someone has been standing at the door a long while — Granny Chen, a note crushed in her hand.)', flag: 'probe', to: 'c8' }
+      ]},
+      c8: { year: 'TODAY', title: 'Granny Chen\'s Note', text: `"Child —\nThe week before he went, your grandfather brought back every key in the lane, wrapped in paper, names written on.\nI asked: Old Shen, no more repairs?\nHe said: Repairs. When my granddaughter comes. Her hands are steadier than mine.\nChild — the lane's clocks were on his mind to the very end. Keep those keys well.\nOne more thing. His pocket watch stayed a night at my place, two years back. He came for it in the morning and set it against the sun for the longest time.\nI laughed at him: Shoushitang's clocks need setting?\nHe said: They do. Every day. It must not run fast; it must not run slow — not by a single minute."`, replies: [
+        { label: '(You will not wind them. Let the clocks sleep; let the lane go quietly.)', flag: 'letgo', to: 'E2' },
+        { label: '(You will carry the workbench home. The balcony; a small wooden sign.)', flag: 'keep', to: 'E3' }
+      ]}
+    }
+  },
+  endings: {
+    zh: {
+      E1: { title: '四点四十五分', text: `拆迁日，清晨。\n巷子里的人居然都来了。剃头铺的挂钟先醒，然后是酱园的马蹄表、邮局的大钟、陈婆婆的座钟——四十七把钥匙，你拧了一上午。\n四点四十四分，所有人屏住呼吸。秒针一格一格地爬。\n四点四十五分，整条巷子的钟一起报时。那只布谷鸟钟探出头，叫了三声。\n你站在人群最后，手按在口袋上。怀表还在走，很准。\n外公用一辈子守住的那一分钟——你们一起，把它走完了。` },
+      E2: { title: '让钟睡着', text: `你没有上弦。\n钟一只一只擦净，装箱，捐给了城里的钟表博物馆。展签上写：停钟巷遗物，全部停于 4:44。\n布展那天，讲解员对参观的人说：这是整条巷子，为一个人停摆的时间。\n怀表你自己戴着。每天睡前，把它拨快一分钟。\n一天一分钟。\n替他把没走完的，慢慢走完。` },
+      E3: { title: '守时堂 · 修理中', text: `你把工作台原样搬回了自家阳台，工具按他的习惯一字排开，台灯还是那盏。\n木牌挂在栏杆上：守时堂 · 修理中。\n第一个月没人来。第二个月，剃头铺的老张头抱着挂钟找来了。然后是酱园的马蹄表、邮局的大钟、陈婆婆的座钟。\n巷子拆了。钟都还活着。\n你修的第一只，是那只布谷鸟钟。撬开左边小门的时候，你的手，和他一样稳。` },
+      E4: { title: '拨回来的一分钟', text: `怀表送去检测那天，老师傅看了很久，把你叫进里屋。\n"这只表被人动过。"他说，"不是坏——是每天被拨回去一点。八年，一天不落。它不准吗？不。它比谁都准。它准的，是另一个人的时间。"\n你忽然听懂了陈婆婆的话。他每天校表，不是怕它快，也不是怕它慢。\n他是在替她——把那一分钟之后的日子，一分钟、一分钟地，拨回来。\n回到家，你给怀表上满弦，放在窗台上。\n四点四十四分，秒针爬过那道刻度，稳稳地，走了过去。\n你没有哭。你只是听见满屋的钟，咔哒，同时走了一格。` }
+    },
+    en: {
+      E1: { title: '4:45', text: `Demolition day, early morning.\nThe whole lane came. The barbershop's wall clock woke first, then the sauce-yard's carriage watch, the post office clock, Granny Chen's regulator — forty-seven keys, and you turned them all before noon.\nAt 4:44 the lane held its breath. The second hands climbed, one notch at a time.\nAt 4:45 every clock in the street struck together. The cuckoo leaned out of its little door and called three times.\nYou stood at the back of the crowd, hand pressed to your pocket. The watch still ran. True.\nThe minute he kept for a lifetime — you all walked it, together, to its end.` },
+      E2: { title: 'Let Them Sleep', text: `You never wound them.\nClock by clock you cleaned and crated them for the city clock museum. The label reads: effects of the Lane of Stopped Clocks — all stopped at 4:44.\nAt the opening, the guide tells visitors: this is a whole lane of time, stopped for one person.\nThe pocket watch you wear yourself. Each night before sleep, you set it one minute ahead.\nOne minute a day.\nFinishing, slowly, what he could not.` },
+      E3: { title: 'Shoushitang · Repairs', text: `You carried the workbench home to your balcony, tools laid out in a row the way he kept them, same lamp.\nA small wooden sign on the rail: SHOUSHITANG · REPAIRS.\nNo one came the first month. In the second, old Zhang from the barbershop arrived with his wall clock. Then the sauce-yard's watch, the post office clock, Granny Chen's regulator.\nThe lane is gone. The clocks are all still alive.\nThe first one you repaired was the cuckoo. Prying open the little left door, your hands were — exactly as steady as his.` },
+      E4: { title: 'The Minute Wound Back', text: `The old master examined the pocket watch a long time before calling you into the back room.\n"Someone has been at this," he said. "Not damage — set back, a little every day. Eight years, without missing one. Is it inaccurate? No. It is truer than any clock I know. It keeps someone else's time."\nGranny Chen's words came clear at last. He set that watch daily — not fearing it fast, not fearing it slow.\nHe was winding back, for her — minute by minute — the days that came after that one minute.\nAt home you wound it full and set it on the windowsill.\nAt 4:44 the second hand crossed the mark, steady, and went on.\nYou did not cry. You only heard it — every clock in the room, click, one notch, together.` }
+    }
+  }
+};
+
+const BUILTIN_STORIES = [STORY_LIGHTHOUSE, STORY_TRAIN, STORY_RADIO, STORY_CLOCK];

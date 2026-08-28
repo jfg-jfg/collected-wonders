@@ -372,7 +372,7 @@ const I18N = {
     endSub: '你拾级的碎片在此拼合——这是这座城最后的声音。',
     fragGot: '碎片', of: '／',
     lantern: ['灯', '灯', '灯'],
-    lvNames: ['一 · 深井', '二 · 回廊', '三 · 蜂巢', '四 · 迷津', '五 · 巨殿', '六 · 归途', '七 · 旧钟楼', '八 · 沉街', '九 · 门'],
+    lvNames: ['一 · 深井', '二 · 回廊', '三 · 蜂巢', '四 · 迷津', '五 · 巨殿', '六 · 归途', '七 · 旧钟楼', '八 · 沉街', '九 · 门', '十 · 灯室', '十一 · 油路', '十二 · 天光'],
     endlessName: n => `无底之井 · 第 ${n} 层`,
     endlessBtn: '∞ · 无底之井',
     edBtn: '造 井', edCustomName: '自造之井',
@@ -396,14 +396,14 @@ const I18N = {
       '再往下，连黑暗也是一种光。'
     ],
     locked: '未至', best: '最佳',
-    lvSub: ['你从一场不属于你的梦中醒来，井口是唯一的出口。', '水声在石壁间折返。你开始怀疑，回应你的不是回声。', '这里曾有人居住。他们留下的不是废墟，是一封封寄不出的信。', '你走过一条路，它就消失一条。迷津记得每一个放弃的人。', '巨殿的柱子刻满了名字。你的指尖抚过时，有一个位置是空的。', '你开始辨认方向了。这座城认得你——它在你身上留下了记号。', '钟声从遥远的上方传来。十二下。这座城在被谁计时？', '街道尽头是海。海的那边是光。你忽然明白了为什么信寄不出去。', '门没有锁。你推开它的那一刻，听见了第一个真正的声音——自己的呼吸。'],
+    lvSub: ['你从一场不属于你的梦中醒来，井口是唯一的出口。', '水声在石壁间折返。你开始怀疑，回应你的不是回声。', '这里曾有人居住。他们留下的不是废墟，是一封封寄不出的信。', '你走过一条路，它就消失一条。迷津记得每一个放弃的人。', '巨殿的柱子刻满了名字。你的指尖抚过时，有一个位置是空的。', '你开始辨认方向了。这座城认得你——它在你身上留下了记号。', '钟声从遥远的上方传来。十二下。这座城在被谁计时？', '街道尽头是海。海的那边是光。你忽然明白了为什么信寄不出去。', '门没有锁。你推开它的那一刻，听见了第一个真正的声音——自己的呼吸。', '门后没有海，是旋梯。你往上数台阶——九十九级。守灯人的日记里写过这个数字。', '油路堵着，焦黑的灯芯卡在管口。你把它抽出来，像从时间里抽出一截烧尽的芯。', '天窗推开的那刻，海在很远的下面，静得像睡着了。你替谁点了一下头。然后，你醒了。'],
     daily: '每 日 深 潜', dailyDone: '今日已抵达 · 明日再来', dailyTitle: '每日深潜', dailySub: '同一日，全城同一个迷宫。',
     wellsLbl: '名 井 集 · CURATED WELLS', wellsBest: b => `${b.s}步·${fmtTime(b.t)}`,
     exp: '照亮', heatLbl: '你 的 足 迹 · YOUR TRAIL', achTitle: '灯 下 集 · ACHIEVEMENTS',
     achs: [
       { id: 'first', ico: '✦', n: '初啼', d: '发出第一声回声' },
       { id: 'lv1', ico: '◈', n: '深井之底', d: '通过第一层' },
-      { id: 'all', ico: '☀', n: '重见天光', d: '走完九层' },
+      { id: 'all', ico: '☀', n: '重见天光', d: '走完十二层' },
       { id: 'par', ico: '🏮', n: '三灯满座', d: '任一层拿到三盏灯' },
       { id: 'frag3', ico: '❖', n: '半卷听城', d: '集齐三枚碎片' },
       { id: 'frag6', ico: '✧', n: '全卷听城', d: '集齐九枚碎片' },
@@ -426,7 +426,7 @@ const I18N = {
     endSub: 'The fragments you gathered assemble here — the last voice of the city.',
     fragGot: 'fragments', of: '/',
     lantern: ['◆', '◆', '◆'],
-    lvNames: ['I · The Well', 'II · Corridors', 'III · The Hive', 'IV · Labyrinth', 'V · Great Hall', 'VI · The Way Back', 'VII · The Bell Tower', 'VIII · The Drowned Street', 'IX · The Gate'],
+    lvNames: ['I · The Well', 'II · Corridors', 'III · The Hive', 'IV · Labyrinth', 'V · Great Hall', 'VI · The Way Back', 'VII · The Bell Tower', 'VIII · The Drowned Street', 'IX · The Gate', 'X · The Lamp Room', 'XI · The Oil Line', 'XII · Daylight'],
     endlessName: n => `The Bottomless · Depth ${n}`,
     endlessBtn: '∞ · BOTTOMLESS',
     edBtn: 'BUILD', edCustomName: 'A Well of Your Own',
@@ -450,14 +450,14 @@ const I18N = {
       'Farther down, even the dark is a kind of light.'
     ],
     locked: 'locked', best: 'best',
-    lvSub: ['You wake from a dream that was never yours. The well mouth is the only exit.', 'Water echoes between stone walls. You begin to wonder if it is echo that answers.', 'People lived here once. What they left behind is not ruins, but letters that cannot be sent.', 'The path vanishes behind you as you walk. The labyrinth remembers everyone who gave up.', 'The pillars of the great hall are carved with names. One space is empty — the right size for yours.', 'You can read the walls now. This city knows you — it has left its mark inside your bones.', 'A bell tolls from far above. Twelve times. Who is counting down for this city?', 'The street ends at the sea. Beyond the sea, light. You suddenly understand why the letters never arrived.', 'The gate has no lock. As you push it open, you hear the first true sound — your own breathing.'],
+    lvSub: ['You wake from a dream that was never yours. The well mouth is the only exit.', 'Water echoes between stone walls. You begin to wonder if it is echo that answers.', 'People lived here once. What they left behind is not ruins, but letters that cannot be sent.', 'The path vanishes behind you as you walk. The labyrinth remembers everyone who gave up.', 'The pillars of the great hall are carved with names. One space is empty — the right size for yours.', 'You can read the walls now. This city knows you — it has left its mark inside your bones.', 'A bell tolls from far above. Twelve times. Who is counting down for this city?', 'The street ends at the sea. Beyond the sea, light. You suddenly understand why the letters never arrived.', 'The gate has no lock. As you push it open, you hear the first true sound — your own breathing.', 'Beyond the gate, no sea — a spiral stair. You count the steps upward. Ninety-nine. The keeper\'s diary counted them first.', 'The oil line is choked, a charred wick jammed in the pipe. You draw it out like a burned length of time.', 'As the skylight swings open, the sea lies far below, still as sleep. You nod, once, for someone. Then — you wake.'],
     daily: 'DAILY DIVE', dailyDone: 'ARRIVED TODAY · COME BACK TOMORROW', dailyTitle: 'Daily Dive', dailySub: 'One maze per day, same for everyone.',
     wellsLbl: 'C U R A T E D   W E L L S', wellsBest: b => `${b.s} steps · ${fmtTime(b.t)}`,
     exp: 'lit', heatLbl: 'YOUR TRAIL', achTitle: 'LAMPS · ACHIEVEMENTS',
     achs: [
       { id: 'first', ico: '✦', n: 'First Cry', d: 'emit your first echo' },
       { id: 'lv1', ico: '◈', n: 'Bottom of the Well', d: 'clear depth I' },
-      { id: 'all', ico: '☀', n: 'Daylight Again', d: 'clear all nine depths' },
+      { id: 'all', ico: '☀', n: 'Daylight Again', d: 'clear all twelve depths' },
       { id: 'par', ico: '🏮', n: 'Three Lanterns', d: 'earn 3 lanterns on any depth' },
       { id: 'frag3', ico: '❖', n: 'Half the City', d: 'collect 3 fragments' },
       { id: 'frag6', ico: '✧', n: 'The Whole City', d: 'collect all 9 fragments' },
@@ -690,7 +690,7 @@ function validateLevel(g, w, h) {
   const dist = bfsDist(g, sx, sy);
   const pathLen = dist[gy][gx];
   if (pathLen < 0) issues.push('G unreachable');
-  if (pathLen < 8) issues.push('path too short (' + pathLen + ')');
+  if (pathLen < 12) issues.push('path too short (' + pathLen + ')');
   if (pathLen > w * h * 0.5) issues.push('path too long (' + pathLen + ')');
   // 统计格型
   let junctions = 0, niches = 0, corridors = 0;
@@ -741,7 +741,10 @@ function buildLevels() {
     { w: 23, h: 17, seed: 6606, style: 'spiral' },    // 六 · 归途：螺旋
     { w: 19, h: 13, seed: 7707, style: 'comb' },      // 七 · 旧钟楼：梳齿
     { w: 21, h: 15, seed: 8808, style: 'streets' },   // 八 · 沉街：街区
-    { w: 23, h: 17, seed: 9909, style: 'spiral' }     // 九 · 门：螺旋+同心
+    { w: 23, h: 17, seed: 9909, style: 'spiral' },    // 九 · 门：螺旋+同心
+    { w: 25, h: 17, seed: 11012, style: 'rooms' },    // 十 · 灯室：环厅房
+    { w: 25, h: 19, seed: 12013, style: 'comb' },     // 十一 · 油路：管廊梳齿
+    { w: 27, h: 19, seed: 13014, style: 'pillars' }   // 十二 · 天光：柱厅（与一层呼应）
   ];
   return specs.map(({ w, h, seed, style }) => {
     for (let a = 0; a < 20; a++) {
@@ -818,7 +821,10 @@ const LV_THEMES = [
   { wall: [133,108,75],  vig: [11,9,6],    glow: [195,168,115] },  // 六 · 归途：暖金
   { wall: [125,95,70],   vig: [10,7,5],    glow: [180,138,100] },  // 七 · 旧钟楼：铜锈
   { wall: [73,113,88],   vig: [5,10,7],    glow: [100,165,125] },  // 八 · 沉街：深绿
-  { wall: [140,140,150], vig: [9,9,11],    glow: [200,200,215] }   // 九 · 门：银白
+  { wall: [140,140,150], vig: [9,9,11],    glow: [200,200,215] },  // 九 · 门：银白
+  { wall: [150,122,72],  vig: [11,9,5],    glow: [225,185,115] },  // 十 · 灯室：黄铜暖光
+  { wall: [72,76,82],    vig: [5,6,7],     glow: [115,125,140] },  // 十一 · 油路：铁灰
+  { wall: [172,176,186], vig: [12,12,13],  glow: [240,238,228] }   // 十二 · 天光：破晓银金
 ];
 function lvTheme() { return LV_THEMES[Math.min(li, LV_THEMES.length - 1)]; }
 
@@ -832,7 +838,7 @@ const WELL_PACK = [
     code: "IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKI1MuLiMuLi4uLi4uLi4uLiMuLi4uLiMKIyMjLiMuIyMjLiMjIyMjLiMuIy4jLiMKI0cjLiMuLi4jLiMuLi4jLiMuIy4uLiMKIyojLiMjIy4jLiMuIy4jLiMjIyMjLiMKIy4jLi4uIy4jLi4uIy4jLi4uLi4uLiMKIy4jIyMuIy4jIyMjIy4jIyMjIyMjLiMKIy4uKiMuIy4jLi4uLi4jLi4uIy4uLiMKIyMjLiMuIyMjLiMjIyMjIyMuIy4jIyMKIy4uLiMuLi4uLiMuLi4uLi4uIy4uLiMKIyojLiMjIyMjIyMuIyMjIyMuIyMjLiMKIy4jLiMuLi4uLi4uIy4uLiMuIy4uLiMKIy4jIyMuIyMjLiMuIy4jLiMjIy4jIyMKIy4uLi4uLi4uLiMuLi4jLi4uLi4uLiMKIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyM=" }
 ];
 
-/* 无尽层：通关六层后解锁，尺寸与密度随深度增长 */
+/* 无尽层：通关全部主线后解锁，尺寸与密度随深度增长 */
 function buildEndless(di) {
   const w = Math.min(29, 21 + di * 2), h = Math.min(21, 15 + di);
   const styles = ['pillars','comb','rooms','random','spiral','streets'];
@@ -846,7 +852,7 @@ function buildEndless(di) {
   const rng = mulberry32(7700 + di * 137);
   return finishLevel(genLevel(w, h, rng, style));
 }
-const lvName = i => isCustom ? customName : (i < LEVELS.length ? T().lvNames[i] : T().endlessName(i - 9));
+const lvName = i => isCustom ? customName : (i < LEVELS.length ? T().lvNames[i] : T().endlessName(i - LEVELS.length));
 
 /* 每日挑战：日期种子迷宫 */
 function todayKey() {
@@ -913,7 +919,10 @@ const FRAGS = {
     '「第三十一年：灯还亮着。我不知道是谁在添油。我不敢下去看。」',
     '「钟楼的齿轮卡住了一封信。信封上写着：给还活着的人。」',
     '「沉街的窗台上，鞋还成双摆着。有些人在最后一刻仍在等另一个人穿鞋。」',
-    '「最后一夜：门开了。门外不是海，是光。我听见有人在光里叫我的名字——是我的声音。」'
+    '「最后一夜：门开了。门外不是海，是光。我听见有人在光里叫我的名字——是我的声音。」',
+    '「灯室的钥匙挂在门后第三颗钉子上。我闭着眼也够得到——在这座城里，手比眼睛可靠。」',
+    '「油路又堵了。老塔的旧病。我提着马灯下机房，来回四分钟。四分钟，够埋葬很多东西——也够救回一个年轻人。」',
+    '「如果有一天你读到这里：替我把灯点亮一次，十分钟就够。让它最后亮一次，像有人在。——周远」'
   ],
   en: [
     '"Night one: the well water rose three inches. Someone knocking from below, in lullaby rhythm."',
@@ -924,7 +933,10 @@ const FRAGS = {
     '"Year thirty-one: the lamp is still lit. I don\'t know who tends it. I\'m afraid to go down and look."',
     '"A letter wedged in the clockwork. The envelope reads: to whoever is still alive."',
     '"On the drowned street, shoes still paired on windowsills. Some, in the last moment, still waited for someone to put them on."',
-    '"The last night: the gate opened. Beyond it not the sea, but light. I heard someone call my name in the light — it was my own voice."'
+    '"The last night: the gate opened. Beyond it not the sea, but light. I heard someone call my name in the light — it was my own voice."',
+    '"The lamp-room key hangs on the third nail behind the door. I can reach it with my eyes closed — in this city, hands are truer than eyes."',
+    '"The oil line choked again. An old tower\'s old ailment. I took the storm lantern down to the engine room — four minutes, there and back. Four minutes is long enough to bury many things, and long enough to save one young man."',
+    '"If you ever read this far: light the lamp once for me. Ten minutes is enough. Let it burn one last time, as if someone were here. — Zhou Yuan"'
   ]
 };
 
@@ -1038,6 +1050,7 @@ let niches = null;      // 壁龛：死路格，玩家的躲避处
 let lastPingCell = null;   // 游魂的趋向目标
 function ghostCountFor(level, daily) {
   if (daily) return 1;
+  if (level >= 10) return 4;
   if (level >= 6) return 3;
   if (level >= 4) return 2;
   if (level >= 2) return 1;
@@ -1221,7 +1234,7 @@ function sndGhostHit() {
 function loadLevel(i, daily) {
   li = i;
   isDaily = !!daily;
-  const L = isDaily ? buildDaily() : (i < LEVELS.length ? LEVELS[i] : buildEndless(i - 5));
+  const L = isDaily ? buildDaily() : (i < LEVELS.length ? LEVELS[i] : buildEndless(i - LEVELS.length));
   grid = L.map.map(r => r.split(''));
   rows = grid.length; cols = grid[0].length;
   par = L.par;
@@ -2151,10 +2164,10 @@ function buildLevelGrid() {
     if (!locked) b.addEventListener('click', () => loadLevel(i));
     box.appendChild(b);
   });
-  // 无尽入口：六层通关后解锁
+  // 无尽入口：通关「九 · 门」即解锁（穿门后 10-12 层为登塔终章）
   const eb = document.createElement('button');
   eb.className = 'lv';
-  const eLocked = save.unlocked < LEVELS.length;
+  const eLocked = save.unlocked < 9;
   eb.disabled = eLocked;
   eb.innerHTML = `<div class="n">∞</div>
     <div class="t">${eLocked ? T().locked : (lang === 'zh' ? '无底之井' : 'Bottomless')}</div>

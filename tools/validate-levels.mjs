@@ -22,7 +22,8 @@ const { buildLevels, validateLevel } = make;
 const specs = [
   { w: 15, h: 11 }, { w: 17, h: 13 }, { w: 19, h: 13 },
   { w: 21, h: 15 }, { w: 23, h: 17 }, { w: 23, h: 17 },
-  { w: 19, h: 13 }, { w: 21, h: 15 }, { w: 23, h: 17 }
+  { w: 19, h: 13 }, { w: 21, h: 15 }, { w: 23, h: 17 },
+  { w: 25, h: 17 }, { w: 25, h: 19 }, { w: 27, h: 19 }
 ];
 
 const LEVELS = buildLevels();

@@ -227,7 +227,7 @@
   button:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
 
   @media (max-width: 640px) {
-    .hud { gap: 12px; font-size: 12px; top: 14px; }
+    .hud { gap: 12px; font-size: 13.5px; letter-spacing: 0.14em; top: 14px; }
     .topbar { top: 12px; right: 12px; }
     .levels { grid-template-columns: repeat(2, 1fr); }
     .ach-wall { grid-template-columns: repeat(2, 1fr); }
@@ -238,6 +238,7 @@
     .ed-note { font-size: 9.5px; letter-spacing: 0.1em; }
     .well-chip { font-size: 11.5px; padding: 7px 13px; }
     .well-chip small { display: block; margin: 2px 0 0; }
+    #minimap { transform: scale(0.75); transform-origin: bottom right; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {

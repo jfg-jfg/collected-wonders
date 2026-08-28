@@ -228,7 +228,7 @@ const I18N = {
     title: '拾遗',
     sub: 'COLLECTED WONDERS · 创意站点集',
     note: '零依赖 · 纯原生 HTML/CSS/JS · 双击即开 · 中英双语',
-    footer: 'v3.0 · 21 轮迭代 · 47 提交 · 五作皆可独赏<br><a href="https://jfg-jfg.github.io/collected-wonders/">在 线 版</a> · <a href="https://github.com/jfg-jfg/collected-wonders">源 码</a><br>2026 · 以代码作墨，以浏览器为纸',
+    footer: 'v4 · 84 提交 · 五作皆可独赏<br><a href="https://jfg-jfg.github.io/collected-wonders/">在 线 版</a> · <a href="https://github.com/jfg-jfg/collected-wonders">源 码</a><br>2026 · 以代码作墨，以浏览器为纸',
     works: [
       { zh: '墨', en: 'INK', tag: '视觉实验 · 流体', href: 'ink/',
         desc: '一支笔，一汪水。手写流体力学引擎让墨在宣纸上晕开——缓行则浓，疾书则淡。画完盖一枚朱印，带走它。',
@@ -240,10 +240,10 @@ const I18N = {
         desc: '雨、风、篝火、溪流、夜虫、远雷——所有声音由数学生成，画面与声音同源。调一个属于你的世界，专注或入眠。',
         ac: 'var(--scape-accent)' },
       { zh: '纸间', en: 'LETTERS', tag: '叙事 · 书信', href: 'letters/',
-        desc: '拆除前的灯塔里，守灯人留下一摞写给“后来人”的信。你的每一次回信，都会让往事渗出不同的一面。四个结局。',
+        desc: '三只信箱：守灯人的遗信、雪国列车的冬夜、深海电台的最后一夜。你的每一次回信都让往事渗出不同的一面——还可以让 AI 写一个，或亲手写一个寄给朋友。',
         ac: 'var(--letters-accent)' },
       { zh: '褶皱', en: 'FOLD', tag: '技术 · 分形', href: 'fold/',
-        desc: '一颗无限细节的星球。双精度模拟让缩放抵达十万亿倍，七个地名等你巡航——海马谷、鹦鹉螺湾、银龙针。坐标可分享。',
+        desc: '一颗无限细节的星球。双精度模拟让缩放抵达十万亿倍；巡航会循着图案最繁密处飞去，每个角落都藏着无名奇景。坐标可分享。',
         ac: 'var(--fold-accent)' }
     ]
   },
@@ -252,7 +252,7 @@ const I18N = {
     title: '拾遗',
     sub: 'COLLECTED WONDERS · a set of tiny art sites',
     note: 'zero-dependency · plain HTML/CSS/JS · double-click to open · bilingual',
-    footer: 'v3.0 · 21 rounds of iteration · 47 commits · each stands alone<br><a href="https://jfg-jfg.github.io/collected-wonders/">LIVE VERSION</a> · <a href="https://github.com/jfg-jfg/collected-wonders">SOURCE</a><br>2026 · code as ink, browser as paper',
+    footer: 'v4 · 84 commits · each stands alone<br><a href="https://jfg-jfg.github.io/collected-wonders/">LIVE VERSION</a> · <a href="https://github.com/jfg-jfg/collected-wonders">SOURCE</a><br>2026 · code as ink, browser as paper',
     works: [
       { zh: '墨', en: 'INK', tag: 'VISUAL · FLUID', href: 'ink/',
         desc: 'A brush, a pool of water. A hand-written fluid dynamics engine lets ink bloom across rice paper — slow strokes run heavy, fast ones fly white. Finish with a red seal, and take it home.',
@@ -264,10 +264,10 @@ const I18N = {
         desc: 'Rain, wind, fire, stream, crickets, distant thunder — every sound synthesized from math, scene and sound born of one model. Compose a world; focus or drift to sleep.',
         ac: 'var(--scape-accent)' },
       { zh: '纸间', en: 'LETTERS', tag: 'NARRATIVE · EPISTOLARY', href: 'letters/',
-        desc: 'In a lighthouse about to be demolished, the keeper left a stack of letters "to whoever comes after". Each reply you choose bleeds a different truth from the past. Four endings.',
+        desc: 'Three mailboxes: a lighthouse keeper\'s last letters, a snow-line winter of trains, the final night of a deep-sea radio. Each reply bleeds a different truth — or have an AI write a new story, or write one yourself and send it to a friend.',
         ac: 'var(--letters-accent)' },
       { zh: '褶皱', en: 'FOLD', tag: 'TECH · FRACTAL', href: 'fold/',
-        desc: 'A planet of infinite detail. Double-float emulation zooms to a hundred-billion magnification; seven named places await your cruise — Seahorse Valley, Nautilus Bay, the Silver Dragon Needle. Coordinates are shareable.',
+        desc: 'A planet of infinite detail. Double-float emulation zooms to a hundred-billion magnification; the cruise follows wherever the pattern grows densest — nameless wonders in every fold. Coordinates are shareable.',
         ac: 'var(--fold-accent)' }
     ]
   }
@@ -358,9 +358,20 @@ function workStat(en) {
         return lang === 'zh' ? `聆听 ${s.minutes || 0} 分钟` : `${s.minutes || 0} min listened`;
       }
       case 'LETTERS': {
-        const s = JSON.parse(localStorage.getItem('letters-save') || '{}');
-        const e = (s.endings || []).length, r = Math.min(s.readEver || 0, 13);
-        return lang === 'zh' ? `读过 ${r}/13 封 · 结局 ${e}/4` : `${r}/13 read · ${e}/4 endings`;
+        let read = 0, ends = 0, boxes = 0;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k.startsWith('letters-save-')) {
+            try {
+              const s2 = JSON.parse(localStorage.getItem(k));
+              read += Math.min(s2.readEver || 0, 30);
+              ends += (s2.endings || []).length;
+              if ((s2.readEver || 0) > 0 || (s2.endings || []).length) boxes++;
+            } catch (e) {}
+          }
+        }
+        if (!boxes) return '';
+        return lang === 'zh' ? `开了 ${boxes} 只信箱 · 读信 ${read} 封 · 结局 ${ends}` : `${boxes} boxes · ${read} letters · ${ends} endings`;
       }
       case 'FOLD': {
         const s = JSON.parse(localStorage.getItem('fold-stats') || '{}');

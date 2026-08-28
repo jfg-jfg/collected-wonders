@@ -116,6 +116,8 @@
   <button class="btn" id="moodBtn">✦ 心境</button>
   <button class="btn" id="flowBtn">⏳ 静止</button>
   <button class="btn" id="shareBtn">⤴ 分享</button>
+  <button class="btn" id="sleepBtn">☾ 睡</button>
+  <button class="btn" id="recBtn">● 录</button>
   <button class="btn" id="sndBtn">♪ 声</button>
   <button class="btn" id="langBtn">EN</button>
 </div>
@@ -235,7 +237,7 @@ resize();
 window.addEventListener('resize', () => { resize(); initParticles(); });
 
 /* ---------- 粒子 ---------- */
-let stars = [], clouds = [], raindrops = [], snowflakes = [], petals = [], embers = [], flies = [], flocks = [];
+let stars = [], clouds = [], raindrops = [], snowflakes = [], petals = [], embers = [], flies = [], flocks = [], meteors = [];
 function initParticles() {
   const rnd = mulberry32(99);
   stars = [];
@@ -267,6 +269,7 @@ initParticles();
 let AC = null, master = null;
 const audioNodes = {};
 let delaySend = null;
+let recDest = null;
 function initAudio() {
   if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
   try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
@@ -274,6 +277,8 @@ function initAudio() {
   comp.threshold.value = -18; comp.ratio.value = 6;
   master = AC.createGain(); master.gain.value = sndOn ? 0.6 : 0;
   master.connect(comp); comp.connect(AC.destination);
+  // 录制用音频分流
+  try { recDest = AC.createMediaStreamDestination(); comp.connect(recDest); } catch (e) { recDest = null; }
   // 回声（远钟/雷用）
   delaySend = AC.createGain(); delaySend.gain.value = 1;
   const dl = AC.createDelay(1.2); dl.delayTime.value = 0.34;
@@ -451,6 +456,64 @@ function draw(dt) {
       ctx.fillStyle = `rgba(240,244,255,${(starA * tw * 0.85).toFixed(3)})`;
       ctx.fillRect(st.x, st.y, st.r, st.r);
     }
+  }
+
+  // 极光（极夜：大雪 + 深夜）
+  if (S.snow > 0.55 && L < 0.14) {
+    const auroraA = clamp((S.snow - 0.55) * 2.2, 0, 1) * clamp((0.14 - L) / 0.14, 0, 1);
+    for (let layer = 0; layer < 3; layer++) {
+      const hue = 150 + layer * 18;
+      for (let x = 0; x < W; x += 10) {
+        const w1 = Math.sin(x * 0.004 + frameTime * 0.31 + layer * 1.7);
+        const w2 = Math.sin(x * 0.011 - frameTime * 0.47 + layer);
+        const y0 = H * (0.06 + layer * 0.028) + w1 * 26;
+        const h2 = H * (0.16 + 0.09 * w2) * (1 - layer * 0.18);
+        const a = auroraA * (0.07 + 0.09 * (0.5 + 0.5 * w2)) * (0.5 + 0.5 * Math.sin(frameTime * 0.8 + x * 0.02 + layer));
+        if (a > 0.004) {
+          const ag = ctx.createLinearGradient(0, y0, 0, y0 + h2);
+          ag.addColorStop(0, `hsla(${hue},85%,66%,${a.toFixed(3)})`);
+          ag.addColorStop(1, `hsla(${hue - 25},85%,55%,0)`);
+          ctx.fillStyle = ag;
+          ctx.fillRect(x, y0, 10, h2);
+        }
+      }
+    }
+  }
+
+  // 流星（晴夜偶现）
+  if (L < 0.1 && S.rain < 0.05 && Math.random() < dt * 0.09) {
+    meteors.push({
+      x: W * (0.15 + Math.random() * 0.8), y: H * Math.random() * 0.3,
+      vx: -(260 + Math.random() * 300), vy: 150 + Math.random() * 170, life: 1
+    });
+  }
+  meteors = meteors.filter(m => m.life > 0);
+  for (const m of meteors) {
+    m.x += m.vx * dt; m.y += m.vy * dt; m.life -= dt * 1.35;
+    const tail = 0.075;
+    const mg = ctx.createLinearGradient(m.x, m.y, m.x - m.vx * tail, m.y - m.vy * tail);
+    mg.addColorStop(0, `rgba(255,255,255,${(m.life * 0.9).toFixed(3)})`);
+    mg.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.strokeStyle = mg;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(m.x, m.y);
+    ctx.lineTo(m.x - m.vx * tail, m.y - m.vy * tail);
+    ctx.stroke();
+  }
+
+  // 太阳雨彩虹（小雨 + 昼）
+  if (S.rain > 0.02 && S.rain < 0.22 && L > 0.75) {
+    const rcx = W - cel.x, rcy = H * 0.86, R = H * 0.62;
+    const cols = [0, 30, 55, 110, 230, 275, 315]; // 赤橙黄绿蓝靛紫
+    const rbA = 0.085 * (1 - Math.abs(S.rain - 0.12) / 0.1);
+    cols.forEach((hue2, i) => {
+      ctx.strokeStyle = `hsla(${hue2},80%,60%,${clamp(rbA, 0, 0.1).toFixed(3)})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(rcx, rcy, R - i * 3.2, Math.PI * 1.08, Math.PI * 1.92);
+      ctx.stroke();
+    });
   }
 
   // 飞鸟（昼）
@@ -941,6 +1004,64 @@ document.getElementById('shareBtn').addEventListener('click', () => {
   } else toast(url);
 });
 
+/* 睡眠渐弱定时 */
+const sleepBtn = document.getElementById('sleepBtn');
+const SLEEP_STEPS = [0, 15, 30, 60];
+let sleepIdx = 0, sleepAt = 0, sleepFading = false;
+function updSleep() {
+  const m = SLEEP_STEPS[sleepIdx];
+  sleepBtn.textContent = lang === 'zh' ? (m ? `☾ ${m}分` : '☾ 睡') : (m ? `☾ ${m}m` : '☾ SLEEP');
+  sleepBtn.classList.toggle('on', m > 0);
+  sleepAt = m ? Date.now() + m * 60000 : 0;
+  if (!m) sleepFading = false;
+}
+sleepBtn.addEventListener('click', () => {
+  sleepIdx = (sleepIdx + 1) % SLEEP_STEPS.length;
+  updSleep();
+  const m = SLEEP_STEPS[sleepIdx];
+  if (m) toast(T(`${m} 分钟后渐弱入睡`, `fading out in ${m} min`));
+});
+
+/* 音画录制（webm） */
+const recBtn = document.getElementById('recBtn');
+let recorder = null, recChunks = [];
+function pickMime() {
+  const list = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  for (const m of list) if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m;
+  return '';
+}
+recBtn.addEventListener('click', () => {
+  if (recorder) {
+    recorder.stop();
+    return;
+  }
+  if (!window.MediaRecorder || !cv.captureStream) { toast(T('此浏览器不支持录制', 'Recording unsupported')); return; }
+  initAudio();
+  const stream = cv.captureStream(30);
+  if (recDest) recDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+  const mime = pickMime();
+  try { recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined); }
+  catch (e) { toast(T('录制启动失败', 'Recorder failed')); recorder = null; return; }
+  recChunks = [];
+  recorder.ondataavailable = e => { if (e.data && e.data.size) recChunks.push(e.data); };
+  recorder.onstop = () => {
+    const blob = new Blob(recChunks, { type: 'video/webm' });
+    const a = document.createElement('a');
+    a.download = `scape-${Date.now()}.webm`;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    recorder = null;
+    recBtn.classList.remove('on');
+    recBtn.textContent = lang === 'zh' ? '● 录' : '● REC';
+    toast(T('录制已保存', 'Recording saved'));
+  };
+  recorder.start(400);
+  recBtn.classList.add('on');
+  recBtn.textContent = lang === 'zh' ? '■ 录制中' : '■ STOP';
+  toast(T('开始录制——画面与声音都会录下', 'Recording — video & audio'));
+});
+
 /* 声音 */
 const sndBtn = document.getElementById('sndBtn');
 function updSnd() { sndBtn.textContent = lang === 'zh' ? (sndOn ? '♪ 声' : '♪ 静') : (sndOn ? '♪ SND' : '♪ MUTE'); }
@@ -955,7 +1076,9 @@ document.getElementById('langBtn').addEventListener('click', () => {
   lang = lang === 'zh' ? 'en' : 'zh';
   localStorage.setItem('scape-lang', lang);
   document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
-  updTheme(); updSnd(); updFlow(); buildUI();
+  updTheme(); updSnd(); updFlow(); updSleep();
+  if (!recorder) recBtn.textContent = lang === 'zh' ? '● 录' : '● REC';
+  buildUI();
 });
 
 /* ---------- 主循环 ---------- */
@@ -980,12 +1103,22 @@ function loop(now) {
   draw(dt);
   schedule();
   updateAudio(2);
+  // 睡眠定时：到点后 8 秒渐弱至无声
+  if (sleepAt && Date.now() > sleepAt && !sleepFading) {
+    sleepFading = true;
+    sleepIdx = 0;
+    if (master && AC) master.gain.setTargetAtTime(0, AC.currentTime, 3.2);
+    timeFlow = false; updFlow();
+    toast(T('晚安', 'good night'));
+    setTimeout(updSleep, 100);
+  }
 }
 
 /* ---------- 启动 ---------- */
 restoreState();
 document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
-updTheme(); updSnd(); updFlow(); buildUI(); updateClock();
+updTheme(); updSnd(); updFlow(); updSleep(); buildUI(); updateClock();
+if (!recorder && lang === 'en') recBtn.textContent = '● REC';
 // 首次手势解锁音频
 document.addEventListener('pointerdown', function once() {
   initAudio();

@@ -189,6 +189,7 @@
   <button class="btn-ghost" id="sndBtn">声 · 开</button>
   <button class="btn-ghost" id="langBtn">EN</button>
 </div>
+<button class="btn-ghost" id="backFixed" style="display:none;position:fixed;z-index:5;top:18px;left:22px">← 信 箱</button>
 
 <div class="stage" id="stage"></div>
 
@@ -414,12 +415,14 @@ function buildSelect() {
 
 function showSelect() {
   fromEditor = false;
+  setBack(false);
   document.getElementById('selectOv').style.display = 'flex';
   document.getElementById('titleScreen').classList.remove('show');
   buildSelect();
 }
 
 function showTitle() {
+  setBack(false);
   document.getElementById('selectOv').style.display = 'none';
   const ts = document.getElementById('titleScreen');
   ts.classList.remove('gone');
@@ -451,7 +454,24 @@ function showTitle() {
 /* ---------- 信封 & 信纸 ---------- */
 const stage = document.getElementById('stage');
 
+/* 常驻返回：读信/拆封时可退回信箱（重读时退回信堆） */
+const backFixed = document.getElementById('backFixed');
+function setBack(visible, label) {
+  backFixed.style.display = visible ? '' : 'none';
+  if (label) backFixed.textContent = label;
+}
+backFixed.addEventListener('click', () => {
+  revealTimers.forEach(clearTimeout); revealTimers = [];
+  document.getElementById('endingNote').classList.remove('show');
+  stage.innerHTML = '';
+  const ts = document.getElementById('titleScreen');
+  ts.classList.remove('gone');
+  setBack(false);
+  showTitle();
+});
+
 function showEnvelope(nextId) {
+  setBack(true, T('← 信 箱', '← BOX'));
   stage.innerHTML = '';
   const env = document.createElement('div');
   env.className = 'envelope';
@@ -474,6 +494,7 @@ function showEnvelope(nextId) {
 let revealTimers = [];
 function showLetter(id, reread) {
   revealTimers.forEach(clearTimeout); revealTimers = [];
+  setBack(true, reread ? T('← 信 堆', '← STACK') : T('← 信 箱', '← BOX'));
   const nd = S()[id];
   if (!nd) { showEnvelope(Object.keys(S())[0]); return; }
   visited.add('node:' + id);
@@ -575,6 +596,7 @@ function gotoNode(to) {
 
 /* ---------- 结局 ---------- */
 function showEnding(eid) {
+  setBack(false);
   const E = SE()[eid] || {};
   save.node = null;
   if (!save.endings.includes(eid)) save.endings.push(eid);
@@ -768,24 +790,30 @@ function openAI() {
         <div class="inline"><input type="range" id="aiEnd" min="2" max="5" value="3"><span class="val" id="aiEndV">3</span></div>
       </div>
       <div>
-        <label>${T('笔调', 'TONE')}</label>
-        <select id="aiTone">
+        <label>${T('笔调（可自由填写）', 'TONE (free text)')}</label>
+        <input type="text" id="aiTone" list="toneList" value="${T('深情 · 克制', 'tender · restrained')}">
+        <datalist id="toneList">
           <option>${T('深情 · 克制', 'tender · restrained')}</option>
           <option>${T('悬疑 · 层层揭开', 'suspense · peeling back')}</option>
           <option>${T('温暖 · 治愈', 'warm · healing')}</option>
           <option>${T('冷峻 · 留白', 'austere · elliptical')}</option>
           <option>${T('童话 · 轻盈', 'fable · weightless')}</option>
-        </select>
+          <option>${T('荒诞 · 轻幽默', 'absurd · wry')}</option>
+          <option>${T('科幻 · 苍茫', 'sci-fi · vast')}</option>
+        </datalist>
       </div>
       <div>
-        <label>${T('通信关系', 'CORRESPONDENTS')}</label>
-        <select id="aiRel">
+        <label>${T('通信关系（可自由填写）', 'CORRESPONDENTS (free text)')}</label>
+        <input type="text" id="aiRel" list="relList" value="${T('读者与早已离去的人', 'reader & someone long gone')}">
+        <datalist id="relList">
           <option>${T('读者与早已离去的人', 'reader & someone long gone')}</option>
           <option>${T('一对被迫分离的旧友', 'two friends apart')}</option>
           <option>${T('陌生笔友（互不知身份）', 'anonymous pen-pals')}</option>
           <option>${T('人与一台旧机器', 'a person & an old machine')}</option>
           <option>${T('人与多年后的自己', 'oneself, years apart')}</option>
-        </select>
+          <option>${T('隔着时差的两个城市', 'two cities, hours apart')}</option>
+          <option>${T('与一座即将拆除的房子', 'with a house about to fall')}</option>
+        </datalist>
       </div>
     </div>
     <label>${T('补充要求（可选）', 'EXTRA (optional)')}</label>
@@ -811,8 +839,8 @@ function openAI() {
     const theme = modalSheet.querySelector('#aiTheme').value.trim();
     if (!theme) { toast(T('先填一个题材', 'Give a premise first')); return; }
     const L = +lenR.value, E = +endR.value;
-    const tone = modalSheet.querySelector('#aiTone').value;
-    const rel = modalSheet.querySelector('#aiRel').value;
+    const tone = (modalSheet.querySelector('#aiTone').value || '').trim() || T('深情 · 克制', 'tender · restrained');
+    const rel = (modalSheet.querySelector('#aiRel').value || '').trim() || T('读者与早已离去的人', 'reader & someone long gone');
     const extra = modalSheet.querySelector('#aiExtra').value.trim();
     const zh = lang === 'zh';
     const prompt = zh ?

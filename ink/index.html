@@ -1951,7 +1951,7 @@ function startCapture() {
     };
     rec.start(300);
     capDemo = {
-      rec, st, t: 0,
+      rec, st, t: 0, sealed: false,
       strokes: [
         { t0: 1.0, t1: 3.8, x0: .34, y0: .76, x1: .365, y1: .30, bow: .05, dye: .40, vmul: .25 },  // 缓行竖——浓
         { t0: 4.2, t1: 5.5, x0: .42, y0: .72, x1: .445, y1: .32, bow: -.07, dye: .30, vmul: 1.0 }, // 疾行竖——淡/飞白
@@ -1986,6 +1986,12 @@ function captureTick(dt) {
     splat(x, y, vx * dt, vy * dt, k.dye * dt * 9, k.rad || 0.9, 0, 0.4);
   }
   capDemo.st.textContent = 'CAP ' + capDemo.t.toFixed(1) + 's';
+  // 收尾：一枚引首章落在右下（演示三式印面之一）
+  if (capDemo.t > 15.1 && !capDemo.sealed) {
+    capDemo.sealed = true;
+    seals.push({ x: 0.7, y: 0.66, size: 54, rot: -0.07, img: null, style: 2 });
+    renderSeals();
+  }
   if (capDemo.t > 16) {
     capDemo.rec.stop();
     capDemo = null;

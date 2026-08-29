@@ -40,6 +40,7 @@ run "fold postcard"    "fold/index.html#postcard&preview"
 
 # 回声
 run "echo lv0"         "echo/index.html#lv0"
+run "echo lab"         "echo/index.html#lab"
 run "echo lv9 锁"      "echo/index.html#lv9"
 run "echo lv11"        "echo/index.html#lv11"
 run "echo 无尽5"       "echo/index.html#lv16"

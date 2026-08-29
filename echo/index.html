@@ -1321,8 +1321,24 @@ function spawnGhosts(mixOverride) {
     if (G(x, y) === '#' || G(x, y) === 'G' || G(x, y) === '*') continue;
     if (Math.hypot(x - px, y - py) < 6) continue;
     if (isNiche(x, y)) continue;
-    if (ghosts.some(g => Math.hypot(g.x - x, g.y - y) < 5)) continue;
+    // 守灯魂本就驻守锚点（远离游荡区），间距要求放宽到 3
+    const sep = kind === 'warden' ? 3 : 5;
+    if (ghosts.some(g => Math.hypot(g.x - x, g.y - y) < sep)) continue;
     const anchor = kind === 'warden' ? (anchors[idx % anchors.length] || [gx, gy]) : null;
+    ghosts.push({ x, y, dx: 0, dy: 1, t: 0, phase: Math.random() * 10, trail: [], kind,
+                  ax: anchor ? anchor[0] : gx, ay: anchor ? anchor[1] : gy });
+    idx++;
+  }
+  // 兜底：严格间距放不下时放宽到 2 格再试（保证分魂数量齐备——#lab 抓获过静默少生成）
+  guard = 0;
+  while (idx < mix.length && guard++ < 800) {
+    const kind = mix[idx];
+    const x = 1 + Math.floor(Math.random() * (cols - 2));
+    const y = 1 + Math.floor(Math.random() * (rows - 2));
+    if (G(x, y) === '#' || G(x, y) === 'G' || G(x, y) === '*' || isNiche(x, y)) continue;
+    if (Math.hypot(x - px, y - py) < 4) continue;
+    if (ghosts.some(g => Math.hypot(g.x - x, g.y - y) < 2)) continue;
+    const anchor = kind === 'warden' && anchors.length ? anchors[idx % anchors.length] : null;
     ghosts.push({ x, y, dx: 0, dy: 1, t: 0, phase: Math.random() * 10, trail: [], kind,
                   ax: anchor ? anchor[0] : gx, ay: anchor ? anchor[1] : gy });
     idx++;
@@ -2893,6 +2909,57 @@ const em = location.hash.match(/^#edit(?:=([A-Za-z0-9+/=]+))?$/);
 if (em) {
   const dec = em[1] ? edDecode(em[1]) : null;
   if (!em[1] || dec) edEnter(dec);
+}
+/* #lab：玩法级端到端自检——钥匙锁门 / 分魂组合 / 自动寻路通关 */
+if (location.hash.includes('lab')) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;top:8px;left:8px;z-index:99;background:#101820;color:#fff;font:11px monospace;padding:6px 10px;border-radius:6px;white-space:pre';
+  el.textContent = 'LAB …';
+  document.body.appendChild(el);
+  try {
+    const find = ch => {
+      for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) if (grid[y][x] === ch) return [x, y];
+      return null;
+    };
+    const stepToward = dst => {   // BFS 走一步朝 dst（不真走，只返回方向）
+      const dist = bfsDist(grid, dst[0], dst[1]);
+      const d = dist[py][px];
+      if (d <= 0) return null;
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nx = px + dx, ny = py + dy;
+        if (dist[ny] && dist[ny][nx] === d - 1) return [dx, dy];
+      }
+      return null;
+    };
+    const walkTo = dst => {       // 走到 dst（含被锁门弹回的步骤上限）
+      for (let i = 0; i < 400; i++) {
+        if (px === dst[0] && py === dst[1]) return true;
+        const mv = stepToward(dst);
+        if (!mv) return px === dst[0] && py === dst[1];
+        tryMove(mv[0], mv[1]);
+      }
+      return false;
+    };
+    const res = [];
+    // ① 第七层：三型分魂齐备（四魂自第十层起）
+    loadLevel(6);
+    const kinds6 = [...new Set(ghosts.map(g => g.kind))].sort().join('+');
+    const kindSet = new Set(ghosts.map(g => g.kind));
+    res.push(`lv7ghosts=${ghosts.length}(${kinds6})`);
+    const okKinds = ghosts.length === 3 && kindSet.has('hunter') && kindSet.has('wanderer') && kindSet.has('warden');
+    // ② 塔层：钥匙锁门 → 撞门被阻 → 取钥 → 开门通关
+    loadLevel(9);
+    const okLockSetup = needKey === true && !!keyCell;
+    const g9 = find('G'), k9 = keyCell.slice();
+    let stepsBefore = steps;
+    walkTo(g9);                       // 无钥先走到门口（最后一步被弹）
+    const atDoorBlocked = !(px === g9[0] && py === g9[1]) && steps - stepsBefore < 400;
+    walkTo(k9);                       // 去取钥
+    const gotKey = hasKey === true && walkTo(g9) && state === 'clear';
+    res.push(`lock=${okLockSetup ? 1 : 0} blocked=${atDoorBlocked ? 1 : 0} key=${gotKey ? 1 : 0}`);
+    const okWreck = okLockSetup && atDoorBlocked && gotKey;
+    el.textContent = `LAB ${okKinds && okWreck ? 'PASS' : 'FAIL'}  ${res.join('  ')}`;
+  } catch (e) { el.textContent = 'LAB ERR ' + e.message; }
 }
 requestAnimationFrame(frame);
 </script>

@@ -186,7 +186,19 @@ window.addEventListener('error', e => {
 const I18N = {
   zh: {
     sub: '分形星球',
-    hint: '滚轮缩放 · 拖拽巡游 · 双击俯冲',
+    hint: '滚轮缩放 · 拖拽巡游 · 双击俯冲 · ? 帮助',
+    helpTitle: '帮 助 · HELP',
+    helpLines: [
+      ['+ / −', '缩放（微扰引擎可深潜至 10²⁰）'],
+      ['方向键', '平移'],
+      ['J', '四模式：曼 → 儒 → 舰 → 牛（牛顿引力盆）'],
+      ['P', '调色板轮换'],
+      ['G', '构图网格（三分法 + 黄金分割）'],
+      ['S', '寄明信片（邮票/邮戳/题款/朱印）'],
+      ['H / ?', '本帮助']
+    ],
+    helpTouch: '指针：拖动平移 · 滚轮/双指缩放 · 双击俯冲 · 长按地名删除',
+    helpHide: '任意键或点击关闭',
     share: '分享坐标', copied: '已复制链接', copyFail: '链接已写入地址栏，请手动复制',
     reset: '回母港', zoom: '倍率', palette: '色',
     tour: '▶ 巡航', tourStop: '■ 停', tourTip: '自动巡航各地名，每处停留 6 秒',
@@ -221,7 +233,19 @@ const I18N = {
   },
   en: {
     sub: 'Fractal Planet',
-    hint: 'SCROLL TO ZOOM · DRAG TO DRIFT · DOUBLE-CLICK TO DIVE',
+    hint: 'SCROLL TO ZOOM · DRAG TO DRIFT · DOUBLE-CLICK TO DIVE · ? HELP',
+    helpTitle: 'HELP',
+    helpLines: [
+      ['+ / −', 'zoom (perturbation engine reaches 10²⁰)'],
+      ['ARROWS', 'pan'],
+      ['J', 'four modes: Mset → Julia → Ship → Newton'],
+      ['P', 'cycle palettes'],
+      ['G', 'composition grid (thirds + golden ratio)'],
+      ['S', 'send a postcard (stamp/postmark/seal)'],
+      ['H / ?', 'this help']
+    ],
+    helpTouch: 'pointer: drag to pan · wheel/pinch to zoom · double-click to dive · long-press a place to delete',
+    helpHide: 'any key or click to close',
     share: 'SHARE SPOT', copied: 'link copied', copyFail: 'link is in the address bar — copy manually',
     reset: 'HOME PORT', zoom: 'mag', palette: 'PAL',
     tour: '▶ TOUR', tourStop: '■ STOP', tourTip: 'auto-cruise named spots, 6s each',
@@ -1555,6 +1579,8 @@ shotBtn.addEventListener('click', exportPostcard);
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   const k = e.key;
+  if (k === '?' || k === 'h' || k === 'H') { toggleHelp(); return; }
+  if (helpOv) closeHelp();   // 帮助开着时，任意键先收起（操作照常生效）
   const pan = (dx, dy) => { target.x += dx * view.s; target.y += dy * view.s; fly = null; requestRender(); };
   if (k === '+' || k === '=') { zoomAt(innerWidth / 2, innerHeight / 2, 0.72); fly = null; }
   else if (k === '-' || k === '_') { zoomAt(innerWidth / 2, innerHeight / 2, 1.38); fly = null; }
@@ -1573,6 +1599,24 @@ document.getElementById('langBtn').addEventListener('click', () => {
   localStorage.setItem('fold-lang', lang);
   applyI18n();
 });
+/* 帮助面板：H / ? 呼出，任意键或点击收起 */
+let helpOv = null;
+function toggleHelp() {
+  if (helpOv) { closeHelp(); return; }
+  helpOv = document.createElement('div');
+  helpOv.style.cssText = 'position:fixed;inset:0;z-index:60;background:rgba(6,8,14,0.82);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:grid;place-items:center;cursor:pointer';
+  const box = document.createElement('div');
+  box.style.cssText = 'max-width:420px;width:88vw;background:rgba(16,20,30,0.95);border:1px solid rgba(201,166,217,0.35);border-radius:12px;padding:22px 26px;font-size:13px;line-height:2;color:#d8dce6';
+  const rows = T().helpLines.map(([key, d]) =>
+    `<div style="display:flex;gap:14px"><span style="min-width:74px;color:#c9a6d9;font-family:Georgia,serif">${key}</span><span style="opacity:.85">${d}</span></div>`).join('');
+  box.innerHTML = `<div style="text-align:center;letter-spacing:.4em;color:#c9a6d9;font-size:14px;margin-bottom:14px">${T().helpTitle}</div>${rows}` +
+    `<div style="margin-top:14px;padding-top:12px;border-top:1px dashed rgba(216,220,230,0.2);opacity:.7;font-size:12px">${T().helpTouch}</div>` +
+    `<div style="margin-top:10px;text-align:center;opacity:.5;font-size:11px">${T().helpHide}</div>`;
+  helpOv.appendChild(box);
+  helpOv.addEventListener('click', closeHelp);
+  document.body.appendChild(helpOv);
+}
+function closeHelp() { if (helpOv) { helpOv.remove(); helpOv = null; } }
 function applyI18n() {
   document.documentElement.lang = lang === 'zh' ? 'zh' : 'en';
   document.title = lang === 'zh' ? '褶皱 · FOLD — 分形星球' : 'FOLD — Fractal Planet';

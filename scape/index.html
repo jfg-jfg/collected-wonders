@@ -844,12 +844,19 @@ function draw(dt) {
   /* ---------- 主题：大漠（沙丘层 + 热浪 + 星空明澈） ---------- */
   if (theme === 4) {
     const hor = H * 0.58;
-    /* 沙丘层（三层正弦曲线，颜色随天色） */
+    /* 沙丘层（三层正弦曲线，颜色随天色冷暖变化：昼=金沙 / 暮=赭红 / 夜=靛蓝） */
     for (let layer = 0; layer < 3; layer++) {
       const phase = layer * 1.8;
       const amp = 22 + layer * 14;
       const yBase = hor + layer * (H - hor) * 0.3;
-      const warm = [Math.round(200 - layer * 30), Math.round(170 - layer * 28), Math.round(120 - layer * 20)];
+      /* 天色混入：昼暖沙色 → 夜冷蓝紫 */
+      const dayR = 200 - layer * 30, dayG = 170 - layer * 28, dayB = 120 - layer * 20;
+      const nightR = 35 + layer * 8, nightG = 30 + layer * 8, nightB = 55 + layer * 10;
+      const warm = [
+        Math.round(dayR * L + nightR * (1 - L)),
+        Math.round(dayG * L + nightG * (1 - L)),
+        Math.round(dayB * L + nightB * (1 - L))
+      ];
       ctx.fillStyle = `rgba(${warm[0]},${warm[1]},${warm[2]},${(0.85 - layer * 0.15).toFixed(2)})`;
       ctx.beginPath();
       ctx.moveTo(0, H);

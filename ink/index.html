@@ -224,6 +224,11 @@
   }
   button:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
+  /* 横屏/矮屏：工具栏限高可滚，保住纸面 */
+  @media (max-height: 540px) {
+    .toolbar { max-height: 52vh; overflow-y: auto; scrollbar-width: none; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;

@@ -43,26 +43,29 @@
 
 ```
 toy/
-├── index.html                  # 序 · GALLERY 门户（含跨站统计）
+├── index.html                  # 序 · GALLERY 门户（含跨站统计/上次到访/彩蛋提示）
 ├── ink/index.html              # 墨 · 水墨流体画室
 ├── echo/index.html             # 回声 · 回声定位迷宫
 ├── scape/index.html            # 造境 · 程序化声景
 ├── letters/index.html          # 纸间 · 互动书信（引擎）
-├── letters/story-data.js       # 纸间 · 四个内置故事（含 AI schema）
+├── letters/story-data.js       # 纸间 · 六个内置故事（含 AI schema）
 ├── fold/index.html             # 褶皱 · 分形星球
+├── 404.html                    # 404 页（2 秒回门户）
 ├── tools/smoke-test.sh         # 冒烟测试（六站无头检查）
+├── tools/hash-test.sh          # 27 状态 hash 直达回归
 ├── tools/validate-levels.mjs   # 回声关卡验证器
 ├── tools/validate-stories.mjs  # 纸间故事图验证器
-└── docs/DESIGN.md              # 总体设计文档
+├── tools/gen-wells.mjs         # 名井关卡码生成器
+└── docs/                       # DESIGN 设计 / UNIVERSE 宇宙年表 / DEVICE-CHECK 真机 / POST-DRAFTS 发帖
 ```
 
 ## 快捷键速查
 
-- **墨**：`1-4` 笔刷 · `[ ]` 笔宽 · `Z` 撤销 · `C` 墨色 · `W` 洗纸 · `S` 保存
+- **墨**：`1-4` 笔刷 · `[ ]` 笔宽 · `Z` 撤销 · `C` 墨色（**长按色点自定**） · `E` 极速 · `W` 洗纸 · `S` 保存
 - **回声**：方向键/WASD 移动 · 空格/点击发声呐（**长按蓄力**） · 壁龛藏身可**屏息** · `#lv0`~`#lvN`（N≥12 无尽）· `#edit[=码]` 造井 · `#dbg=daily` 每日
 - **造境**：`1-9` 预设 · `0` 每日气象 · `T` 主题（七主题循环） · `M` 心境 · `F` 时光流转 · `R` 录制 · `←→` 时刻 · `#w=<base64>` 直达场景
 - **纸间**：点击拆信 · 选择回信推进 · 点击信纸跳过渐显 · `Esc` 关弹层 · `#p=<id>` 直达信箱 · `#p=<id>&n=<节点>` 直达信
-- **褶皱**：`+/-` 缩放 · 方向键平移 · `J` Julia · `P` 调色板 · `S` 寄明信片 · `G` 构图网格 · `#x=,y=,s=&dx=,dy=` 坐标直达（含双单低位）· `#grid=1` 网格
+- **褶皱**：`+/-` 缩放 · 方向键平移 · `J` 四模式 · `P` 调色板 · `S` 寄明信片 · `G` 构图网格 · `H/?` 帮助 · `#x=,y=,s=&dx=,dy=` 坐标直达（含双单低位）· `#grid=1` 网格
 
 ## 给纸间写一个故事（AI 玩法）
 

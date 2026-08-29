@@ -956,7 +956,7 @@ const FRAGS = {
 const save = Object.assign(
   { unlocked: 0, best: {}, frags: [], ach: {}, daily: {}, snd: true },
   JSON.parse(localStorage.getItem('echo-save') || '{}'));
-const persist = () => localStorage.setItem('echo-save', JSON.stringify(save));
+const persist = () => { try { localStorage.setItem('echo-save', JSON.stringify(save)); } catch (e) {} };
 
 /* ================= 音频（全合成） ================= */
 let AC = null;

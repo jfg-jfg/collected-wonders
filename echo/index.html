@@ -912,6 +912,13 @@ function buildDaily() {
   const rng = mulberry32(s);
   return finishLevel(genLevel(19, 13, rng, style));
 }
+/* 每日碎片：日期种子从守灯人日记选一句做当日专属碎片 */
+function dailyFrag() {
+  const frags = lang === 'zh' ? FRAGS.zh : FRAGS.en;
+  let s = 0;
+  for (const ch of todayKey()) s = (s * 31 + ch.charCodeAt(0)) >>> 0;
+  return frags[s % frags.length];
+}
 
 /* BFS 连通性校验 + 验证报告 */
 function validateLevels() {
@@ -1359,7 +1366,8 @@ function tryMove(dx, dy) {
     } else {
       save.frags[li] = true;   // 每层一句，任一碎片点亮
       persist();
-      showFrag(((lang === 'zh' ? FRAGS.zh : FRAGS.en)[li] || ''), true);
+      /* 每日深潜用专属碎片（日期种子从日记选句），主线用对应层碎片 */
+      showFrag(isDaily ? dailyFrag() : ((lang === 'zh' ? FRAGS.zh : FRAGS.en)[li] || ''), true);
       checkAchs();
     }
   }

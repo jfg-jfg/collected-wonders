@@ -1025,6 +1025,13 @@ function draw(dt) {
       ctx.roundRect(19, 19, W - 38, H - 38, 22);
       ctx.stroke();
     }
+    /* 太空流星（舷窗内偶现的银线） */
+    if (Math.random() < dt * 0.12) {
+      meteors.push({
+        x: W * (0.1 + Math.random() * 0.8), y: H * Math.random() * 0.3,
+        vx: -(200 + Math.random() * 200), vy: 100 + Math.random() * 80, life: 1
+      });
+    }
     /* 漂浮微粒（太空尘埃） */
     const duskA = 0.6;
     for (let i = 0; i < 12; i++) {

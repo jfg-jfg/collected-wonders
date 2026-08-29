@@ -1566,8 +1566,9 @@ document.getElementById('saveBtn').addEventListener('click', saveArtwork);
    载入时放大回写，刷新不丢作品 */
 let artDirty = false;
 const _origSplat = splat;
-splat = function (x, y, dx, dy, dyeAmt, radiusScale, tint) {
-  _origSplat(x, y, dx, dy, dyeAmt, radiusScale, tint);
+/* 脏标记包装：透传全部参数（含第 8 参 wet——曾被旧签名静默丢弃，#lab 抓获） */
+splat = function () {
+  _origSplat.apply(null, arguments);
   artDirty = true;
 };
 function idbOpen() {
@@ -2056,6 +2057,53 @@ if (benchOn) {
   benchOut.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:99;background:#20242c;color:#fff;font:12px monospace;padding:6px 12px;border-radius:6px';
   benchOut.textContent = 'BENCH auto…';
   document.body.appendChild(benchOut);
+}
+
+/* #lab：着色管线自检（无头断言）——湿度通道写入/衰减、LUT 色相映射、LUT 重建
+   readback 路径与 snapshotDyeSmall 相同（RGBA/FLOAT on RGBA16F，已验证可用） */
+if (location.hash.includes('lab')) {
+  const out = document.createElement('div');
+  out.style.cssText = 'position:fixed;top:8px;left:8px;z-index:99;background:#20242c;color:#fff;font:11px monospace;padding:6px 10px;border-radius:6px;white-space:pre';
+  out.textContent = 'LAB …';
+  document.body.appendChild(out);
+  setTimeout(() => {
+    try {
+      const results = [];
+      const dyeRead = (u, v) => {
+        const px = new Float32Array(4);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, dye.read.fbo);
+        gl.readPixels(Math.min(dye.width - 1, Math.round(u * dye.width)),
+                      Math.min(dye.height - 1, Math.round(v * dye.height)),
+                      1, 1, gl.RGBA, gl.FLOAT, px);
+        return [px[0], px[1], px[2]];
+      };
+      // 1) 湿度写入 + 藤黄落色
+      splat(0.5, 0.5, 0, 0, 0.8, 2.2, 0.57, 1.0);
+      step(0.016);
+      const d1 = dyeRead(0.5, 0.5);
+      results.push(`wet0=${d1[2].toFixed(3)}`, `dye=${d1[0].toFixed(3)}`);
+      const okWet = d1[2] > 0.05 && d1[0] > 0.05;
+      // 2) 湿度独立蒸发（模拟 2.2s；染料几乎不衰减）
+      for (let i = 0; i < 22; i++) step(0.1);
+      const d2 = dyeRead(0.5, 0.5);
+      results.push(`wet2.2s=${d2[2].toFixed(3)}`, `dye2.2s=${d2[0].toFixed(3)}`);
+      const okDecay = d2[2] < d1[2] * 0.5 && d2[0] > d1[0] * 0.8;
+      // 3) LUT 色相映射：G/R 应≈tint(0.57)
+      const hue = d2[1] / (d2[0] + 1e-6);
+      results.push(`hue=${hue.toFixed(2)}~0.57`);
+      const okHue = Math.abs(hue - 0.57) < 0.07;
+      // 4) LUT 驻点改写与重建（自定色路径）
+      const orig = PIG_STOPS[5].c;
+      PIG_STOPS[5].c = [0.9, 0.1, 0.1];
+      rebuildLut();
+      PIG_STOPS[5].c = orig;
+      rebuildLut();
+      results.push('lutRebuild=ok');
+      out.textContent = 'LAB ' + (okWet && okDecay && okHue ? 'PASS' : 'FAIL') + '  ' + results.join('  ');
+    } catch (e) {
+      out.textContent = 'LAB ERR ' + e.message;
+    }
+  }, 700);
 }
 
 /* ---------------- resize ---------------- */

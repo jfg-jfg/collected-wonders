@@ -49,6 +49,7 @@ run "echo edit"        "echo/index.html#edit"
 run "ink 默认"         "ink/index.html"
 run "ink album"        "ink/index.html#dbg=album"
 run "ink bench"        "ink/index.html#bench"
+run "ink lab"          "ink/index.html#lab"
 
 # 纸间
 run "letters story"    "letters/index.html#p=lighthouse&n=n2"

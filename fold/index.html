@@ -263,7 +263,11 @@ uniform float uJulia;
 uniform vec2 uCx;
 uniform vec2 uCy;
 uniform float uMode;   /* 0 曼德博 1 儒利亚 2 燃烧之舰 */
-uniform float uTier;   /* 0 单精度（浅层提速） 1 df64 */
+uniform float uTier;   /* 0 单精度（浅层提速） 1 df64 2 微扰 perturbation */
+uniform highp sampler2D uOrbit;   /* 参考轨道：RGBA32F (Zx_hi,Zx_lo,Zy_hi,Zy_lo) × n */
+uniform float uOrbitN;
+uniform vec2 uDRefX;   /* 视野中心 − 参考点（float，dd 相消后的小量） */
+uniform vec2 uDRefY;
 
 vec2 ds_add(vec2 a, vec2 b) {
   float t1 = a.x + b.x;
@@ -335,8 +339,8 @@ void main() {
     } else {
       t = n; gout = exp(-n * 0.015);
     }
-  } else {
-    /* ---- df64 档：深层（1e5 ~ 1e13） ---- */
+  } else if (uTier < 1.5) {
+    /* ---- df64 档：深层（1e5 ~ 3e12） ---- */
     vec2 zx, zy, Cx, Cy;
     if (julia) { zx = cxc; zy = cyc; Cx = uCx; Cy = uCy; }
     else { zx = vec2(0.0); zy = vec2(0.0); Cx = cxc; Cy = cyc; }
@@ -374,6 +378,40 @@ void main() {
       }
     } else {
       t = n; gout = exp(-n * 0.015);
+    }
+  } else {
+    /* ---- 微扰档 perturbation：JS BigInt 参考轨道 + float32 δ 重放（3e12 ~ 1e20+） ---- */
+    vec2 dc = vec2(uv.x * uScale + uDRefX.x, uv.y * uScale + uDRefY.x);
+    vec2 d = vec2(0.0);          /* z₀ = 0 对所有像素成立 → δ₀ = 0 */
+    float sum = 0.0, n = 0.0;
+    float escA2 = 0.0;
+    bool glitch = false;
+    for (int k = 0; k < 8192; k++) {
+      if (float(k) >= uIter || float(k) >= uOrbitN) break;
+      vec4 Zt = texelFetch(uOrbit, ivec2(k, 0), 0);
+      vec2 Zv = vec2(Zt.x + Zt.y, Zt.z + Zt.w);
+      /* Pauldelbrot 判据：|Z+δ|² < |δ|² → 该像素失真 */
+      vec2 zfull = Zv + d;
+      if (dot(zfull, zfull) < dot(d, d)) { glitch = true; break; }
+      vec2 w = 2.0 * Zv + d;
+      d = vec2(w.x * d.x - w.y * d.y, w.x * d.y + w.y * d.x) + dc;
+      sum += 0.5 + 0.5 * sin(atan(zfull.y, zfull.x) * 3.0);
+      n += 1.0;
+      float mod2 = dot(Zv + d, Zv + d);
+      if (mod2 > 65536.0) {
+        t = float(k) + 1.0 - log2(log2(mod2) * 0.5);
+        esc = true;
+        escA2 = exp(-t * 0.03);
+        break;
+      }
+    }
+    if (esc) {
+      stripe = sum / max(n, 1.0);
+      escA = escA2;
+      lg = 0.0;                  /* δ 空间 DE 暂缺：极深处不做等距线 */
+    } else {
+      t = glitch ? 0.0 : n;
+      gout = glitch ? 0.0 : exp(-n * 0.015);
     }
   }
 
@@ -466,7 +504,11 @@ function makeProgram(frag) {
 const progIter = makeProgram(FRAG_ITER);
 const progColor = makeProgram(FRAG_COLOR);
 const UI = {}, UC = {};
-['uCenterX','uCenterY','uScale','uRes','uIter','uJulia','uCx','uCy','uMode','uTier'].forEach(n => UI[n] = gl.getUniformLocation(progIter, n));
+['uCenterX','uCenterY','uScale','uRes','uIter','uJulia','uCx','uCy','uMode','uTier','uOrbit','uOrbitN','uDRefX','uDRefY'].forEach(n => UI[n] = gl.getUniformLocation(progIter, n));
+/* 轨道采样器固定在单元 1，避免与 pass2 数据纹理（单元 0）形成渲染反馈环 */
+gl.useProgram(progIter);
+gl.uniform1i(UI.uOrbit, 1);
+gl.useProgram(progColor);
 ['uData','uPhase','uPal','uStratum'].forEach(n => UC[n] = gl.getUniformLocation(progColor, n));
 
 /* ---------- 数据纹理 FBO ---------- */
@@ -488,11 +530,25 @@ function allocData() {
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 }
 
-/* ============ 视图状态 ============ */
-const view = { x: -0.6, y: 0, s: 1.4 };   // 中心与半高
-const target = { x: -0.6, y: 0, s: 1.4 }; // 平滑追踪目标
-let fly = null;                            // 飞行动画 {x0,y0,s0,x1,y1,s1,t0,dur}
-const MAG_LIMIT = 1e-13;
+/* ============ 视图状态（中心坐标为双单 double-double，~31 位有效数字） ============ */
+/* view.x/target.x 为主部（double），xl/yl 为修正部；运算走 ddAdd/ddAddD/ddMulD */
+function ddAdd(ah, al, bh, bl) {
+  const hi = ah + bh;
+  const e = hi - ah;
+  const lo = ((bh - e) + (ah - (hi - e))) + al + bl;
+  const r = hi + lo;
+  return [r, lo - (r - hi)];
+}
+function ddAddD(hi, lo, d) { return ddAdd(hi, lo, d, 0); }
+function ddMulD(hi, lo, k) {
+  const r = hi * k;
+  const e = (hi * k - r) + lo * k;   // 一阶近似（k 为普通标量已足够）
+  return [r + e, e - ((r + e) - r)];
+}
+const view = { x: -0.6, y: 0, s: 1.4, xl: 0, yl: 0 };     // 中心与半高
+const target = { x: -0.6, y: 0, s: 1.4, xl: 0, yl: 0 };   // 平滑追踪目标
+let fly = null;                            // 飞行动画 {x0,y0,s0,x1,y1,s1,t0,dur,x0l,y0l,x1l,y1l}
+const MAG_LIMIT = 1e-20;
 let juliaOn = false, juliaC = { x: -0.7269, y: 0.1889 };
 let shipMode = false;
 let palIdx = 0;
@@ -503,6 +559,80 @@ function split64(v) {
   const hi = Math.fround(v);
   const lo = v - hi;
   return [hi, lo];
+}
+
+/* ============ 微扰参考轨道：JS BigInt 定点 → RGBA32F 纹理 ============ */
+/* 精确的 double→定点（位分解，无精度损失） */
+const _dv = new DataView(new ArrayBuffer(8));
+function doubleToFixed(v, K) {
+  _dv.setFloat64(0, v);
+  const bits = _dv.getBigUint64(0);
+  const sign = bits >= 0x8000000000000000n ? -1n : 1n;
+  const exp = Number((bits >> 52n) & 0x7ffn);
+  const man = bits & 0xfffffffffffffn;
+  let m, e;
+  if (exp === 0) { m = man; e = -1074; }
+  else { m = man | 0x10000000000000n; e = exp - 1075; }
+  const shift = BigInt(e) + BigInt(K);
+  if (shift >= 0n) return sign * (m << shift);
+  const sh = -shift;
+  return sign * ((m >> sh) + ((m >> (sh - 1n)) & 1n));   // 就近舍入
+}
+let orbit = null;          // {tex,n,escN,sRef,rx,rxl,ry,ryl}
+let orbitTex = null;
+function ensureOrbitTex() {
+  if (orbitTex) return orbitTex;
+  orbitTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, orbitTex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 8192, 1, 0, gl.RGBA, gl.FLOAT, null);
+  return orbitTex;
+}
+function buildOrbit(iterNeed) {
+  const mag = 1.4 / view.s;
+  const K = Math.min(200, Math.max(64, Math.ceil(Math.log2(mag)) + 28));
+  const fx = doubleToFixed(view.x, K) + doubleToFixed(view.xl, K);
+  const fy = doubleToFixed(view.y, K) + doubleToFixed(view.yl, K);
+  const cx = fx, cy = fy;
+  const ONE = 1n << BigInt(K);
+  const LIM = 4n * ONE * ONE;
+  const N = Math.min(8192, Math.max(256, iterNeed));
+  const data = new Float32Array(8192 * 4);
+  let x = 0n, y = 0n;      /* Z₀ = 0 */
+  let escN = N;
+  for (let n = 0; n < N; n++) {
+    /* 存 Z_n 为 ds 对（float32×2 ≈ 48 位，足够） */
+    const ihi = Number(x >> BigInt(K));
+    const ifr = Number(x & (ONE - 1n)) / Number(ONE);
+    const zx = Math.fround(ihi + ifr);
+    data[n * 4] = zx;
+    data[n * 4 + 1] = Math.fround(ihi + ifr - zx);
+    const ihy = Number(y >> BigInt(K));
+    const ify = Number(y & (ONE - 1n)) / Number(ONE);
+    const zy = Math.fround(ihy + ify);
+    data[n * 4 + 2] = zy;
+    data[n * 4 + 3] = Math.fround(ihy + ify - zy);
+    const x2 = x * x, y2 = y * y;
+    if (x2 + y2 > LIM) { escN = n; break; }
+    const nx = x2 - y2 + cx;
+    const ny = ((x * y) << 1n) + cy;
+    x = nx; y = ny;
+  }
+  const tex = ensureOrbitTex();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 8192, 1, gl.RGBA, gl.FLOAT, data);
+  orbit = { n: escN, full: N, sRef: view.s, rx: view.x, rxl: view.xl, ry: view.y, ryl: view.yl };
+}
+function orbitValid(iter) {
+  if (!orbit) return false;
+  if (orbit.n < Math.min(iter, 512)) return false;
+  if (Math.abs(Math.log(view.s / orbit.sRef)) > Math.LN2) return false;   // 缩放差 > 2×
+  const dxr = ddAdd(view.x, view.xl, -orbit.rx, -orbit.rxl);
+  const dyr = ddAdd(view.y, view.yl, -orbit.ry, -orbit.ryl);
+  return Math.hypot(dxr[0], dyr[0]) < 0.6 * view.s;                       // 参考点仍在近屏
 }
 function resize() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -522,16 +652,28 @@ resize();
 let lastIter = 0;
 let lastRenderT = 0;
 function renderIter() {
-  const [xh, xl] = split64(view.x);
-  const [yh, yl] = split64(view.y);
+  const xh = view.x, xl = view.xl;
+  const yh = view.y, yl = view.yl;
+  const mag = 1.4 / view.s;
   const busy = dragStart !== null || fly !== null || Math.abs(view.s - target.s) / target.s > 0.01;
-  const iter = Math.min(2000, Math.round((160 + 42 * Math.log2(3 / view.s) * 0.5 + 80) * (busy ? 0.45 : 1)));
+  /* 微扰档只用于曼德博深潜；儒/舰保持 float/df64 */
+  const tier = (shipMode || juliaOn)
+    ? (mag < 3e4 ? 0 : 1)
+    : (mag < 3e4 ? 0 : mag < 3e12 ? 1 : 2);
+  const iterCap = tier === 2 ? 6000 : 2000;
+  const iter = Math.min(iterCap, Math.round((160 + 42 * Math.log2(3 / view.s) * 0.5 + 80) * (tier === 2 ? 1.4 : 1) * (busy ? 0.45 : 1)));
   const [cxh, cxl] = split64(juliaC.x);
   const [cyh, cyl] = split64(juliaC.y);
-  const mag = 1.4 / view.s;
+  /* 参考轨道：失效才重建（缩放差>2× / 参考点离屏 / 迭代上限增长） */
+  if (tier === 2 && !orbitValid(iter)) {
+    try { buildOrbit(Math.round(iter * 1.2)); } catch (e) { /* BigInt 轨道异常 → 退回 df64 */ }
+  }
   gl.useProgram(progIter);
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
   gl.viewport(0, 0, canvas.width, canvas.height);
+  /* 断开反馈环：pass2 曾把 dataTex 留在单元 0（即本 FBO 的目标纹理） */
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, null);
   gl.uniform2f(UI.uCenterX, xh, xl);
   gl.uniform2f(UI.uCenterY, yh, yl);
   gl.uniform1f(UI.uScale, view.s);
@@ -541,7 +683,18 @@ function renderIter() {
   gl.uniform2f(UI.uCx, cxh, cxl);
   gl.uniform2f(UI.uCy, cyh, cyl);
   gl.uniform1f(UI.uMode, shipMode ? 2.0 : 0.0);
-  gl.uniform1f(UI.uTier, mag < 3e4 ? 0.0 : 1.0);
+  const usePert = tier === 2 && orbit && orbit.n >= 32;
+  gl.uniform1f(UI.uTier, usePert ? 2.0 : (tier === 0 ? 0.0 : 1.0));
+  if (usePert) {
+    const dxr = ddAdd(view.x, view.xl, -orbit.rx, -orbit.rxl);
+    const dyr = ddAdd(view.y, view.yl, -orbit.ry, -orbit.ryl);
+    gl.uniform1f(UI.uOrbitN, orbit.n);
+    gl.uniform2f(UI.uDRefX, dxr[0] + dxr[1], 0);
+    gl.uniform2f(UI.uDRefY, dyr[0] + dyr[1], 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, orbitTex);
+    gl.uniform1i(UI.uOrbit, 1);
+  }
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   lastIter = iter;
@@ -608,7 +761,9 @@ function updateCoords() {
     saveStats();
     showToast(T().bottomLine, 9000);
   }
-  const magStr = mag >= 1e8 ? (mag / 1e8).toFixed(1) + '×10⁸'
+  const magStr = mag >= 1e16 ? (mag / 1e16).toFixed(1) + '×10¹⁶'
+    : mag >= 1e12 ? (mag / 1e12).toFixed(1) + '×10¹²'
+    : mag >= 1e8 ? (mag / 1e8).toFixed(1) + '×10⁸'
     : mag >= 1e4 ? (mag / 1e4).toFixed(1) + '×10⁴'
     : mag >= 100 ? mag.toFixed(0)
     : mag.toFixed(1);
@@ -698,7 +853,7 @@ function deepZoneName(mag, x, y, s) {
 /* ============ 交互 ============ */
 let dragStart = null, moved = false;
 canvas.addEventListener('pointerdown', e => {
-  dragStart = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
+  dragStart = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, vxl: view.xl, vyl: view.yl };
   moved = false;
   canvas.classList.add('dragging');
   canvas.setPointerCapture(e.pointerId);
@@ -708,9 +863,11 @@ canvas.addEventListener('pointermove', e => {
   const dx = (e.clientX - dragStart.x) / innerHeight * 2 * view.s;
   const dy = (e.clientY - dragStart.y) / innerHeight * 2 * view.s;
   if (Math.abs(e.clientX - dragStart.x) + Math.abs(e.clientY - dragStart.y) > 4) moved = true;
-  view.x = dragStart.vx - dx;
-  view.y = dragStart.vy + dy;
-  target.x = view.x; target.y = view.y; target.s = view.s;
+  const nx = ddAddD(dragStart.vx, dragStart.vxl, -dx);
+  const ny = ddAddD(dragStart.vy, dragStart.vyl, dy);
+  view.x = nx[0]; view.xl = nx[1];
+  view.y = ny[0]; view.yl = ny[1];
+  target.x = view.x; target.y = view.y; target.s = view.s; target.xl = view.xl; target.yl = view.yl;
   fly = null;
   document.getElementById('hint').classList.add('gone');
   requestRender();
@@ -730,8 +887,10 @@ function zoomAt(cx, cy, f) {
   const kx = (cx - innerWidth / 2) / innerHeight * 2;
   const ky = -(cy - innerHeight / 2) / innerHeight * 2;
   const ratio = ns / target.s;
-  target.x += kx * target.s * (1 - ratio);
-  target.y += ky * target.s * (1 - ratio);
+  const nx = ddAddD(target.x, target.xl, kx * target.s * (1 - ratio));
+  const ny = ddAddD(target.y, target.yl, ky * target.s * (1 - ratio));
+  target.x = nx[0]; target.xl = nx[1];
+  target.y = ny[0]; target.yl = ny[1];
   target.s = ns;
   requestRender();
 }
@@ -767,7 +926,11 @@ let customSpots = [];
 try { customSpots = JSON.parse(localStorage.getItem('fold-spots') || '[]'); } catch (e) {}
 function saveSpots() { localStorage.setItem('fold-spots', JSON.stringify(customSpots)); }
 function flyTo(p) {
-  fly = { x0: view.x, y0: view.y, s0: view.s, x1: p.x, y1: p.y, s1: p.s, t0: performance.now(), dur: 2600 };
+  fly = {
+    x0: view.x, y0: view.y, s0: view.s, x0l: view.xl, y0l: view.yl,
+    x1: p.x, y1: p.y, s1: p.s, x1l: p.xl || 0, y1l: p.yl || 0,
+    t0: performance.now(), dur: 2600
+  };
   document.getElementById('hint').classList.add('gone');
 }
 function buildPlaces() {
@@ -821,7 +984,7 @@ function buildPlaces() {
     const d = new Date();
     customSpots.push({
       name: `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`,
-      x: view.x, y: view.y, s: view.s
+      x: view.x, y: view.y, s: view.s, xl: view.xl, yl: view.yl
     });
     saveSpots(); buildPlaces();
   });
@@ -873,7 +1036,7 @@ function dwellCheck(now) {
     c.getContext('2d').drawImage(canvas, 0, 0, c.width, c.height);
     img = c.toDataURL('image/jpeg', 0.55);
   } catch (e) {}
-  log.push({ t: Date.now(), x: view.x, y: view.y, s: view.s, n: zoneNamePlain(mag, view.x, view.y, view.s), m: Math.round(Math.log10(mag)), img });
+  log.push({ t: Date.now(), x: view.x, y: view.y, s: view.s, xl: view.xl, yl: view.yl, n: zoneNamePlain(mag, view.x, view.y, view.s), m: Math.round(Math.log10(mag)), img });
   if (log.length > 60) log.shift();
   saveLog();
 }
@@ -917,7 +1080,9 @@ document.getElementById('logOv').addEventListener('click', e => {
 
 /* ============ 分享 ============ */
 function writeHash() {
-  history.replaceState(null, '', `#x=${view.x.toPrecision(15)},y=${view.y.toPrecision(15)},s=${view.s.toPrecision(6)}`);
+  history.replaceState(null, '',
+    `#x=${view.x.toPrecision(17)},y=${view.y.toPrecision(17)},s=${view.s.toPrecision(6)}` +
+    `&dx=${view.xl.toPrecision(17)},dy=${view.yl.toPrecision(17)}`);
 }
 document.getElementById('shareBtn').addEventListener('click', async () => {
   writeHash();
@@ -935,8 +1100,8 @@ function flashTitle(btn, txt) {
   setTimeout(() => btn.textContent = old, 1800);
 }
 document.getElementById('resetBtn').addEventListener('click', () => {
-  view.x = -0.6; view.y = 0; view.s = 1.4;
-  target.x = view.x; target.y = view.y; target.s = view.s;
+  view.x = -0.6; view.y = 0; view.s = 1.4; view.xl = 0; view.yl = 0;
+  target.x = view.x; target.y = view.y; target.s = view.s; target.xl = 0; target.yl = 0;
   fly = null; juliaOn = false; shipMode = false;
   requestRender();
 });
@@ -990,9 +1155,11 @@ function findInterestingSpot() {
   // 转换为坐标
   const u = (best.sx + 0.5) / SX - 0.5;
   const v = 0.5 - (best.sy + 0.5) / SY;
+  const nx = ddAddD(view.x, view.xl, u * view.s * 2);
+  const ny = ddAddD(view.y, view.yl, v * view.s * 2);
   return {
-    x: view.x + u * view.s * 2,
-    y: view.y + v * view.s * 2,
+    x: nx[0], xl: nx[1],
+    y: ny[0], yl: ny[1],
     s: view.s * (0.3 + Math.random() * 0.25)  // 缩小 25-45%
   };
 }
@@ -1034,18 +1201,18 @@ juliaBtn.addEventListener('click', () => {
     // 曼 → 儒
     juliaC = { x: view.x, y: view.y };
     juliaOn = true;
-    view.x = 0; view.y = 0; view.s = 1.6;
+    view.x = 0; view.y = 0; view.s = 1.6; view.xl = 0; view.yl = 0;
   } else if (juliaOn && !shipMode) {
     // 儒 → 舰
     juliaOn = false;
     shipMode = true;
-    view.x = -1.75; view.y = -0.03; view.s = 0.35;
+    view.x = -1.75; view.y = -0.03; view.s = 0.35; view.xl = 0; view.yl = 0;
   } else {
     // 舰 → 曼
     shipMode = false;
-    view.x = -0.6; view.y = 0; view.s = 1.4;
+    view.x = -0.6; view.y = 0; view.s = 1.4; view.xl = 0; view.yl = 0;
   }
-  target.x = view.x; target.y = view.y; target.s = view.s;
+  target.x = view.x; target.y = view.y; target.s = view.s; target.xl = 0; target.yl = 0;
   fly = null;
   updateJuliaBtn(); updateCoords(); requestRender();
 });
@@ -1147,9 +1314,16 @@ function frame(now) {
     const t = Math.min(1, (now - fly.t0) / fly.dur);
     const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;  // easeInOutQuad
     view.s = Math.exp(Math.log(fly.s0) + (Math.log(fly.s1) - Math.log(fly.s0)) * e);
-    view.x = fly.x0 + (fly.x1 - fly.x0) * e;
-    view.y = fly.y0 + (fly.y1 - fly.y0) * e;
-    target.x = view.x; target.y = view.y; target.s = view.s;
+    /* 双单插值：端点差用 dd 精确求出，再乘缓动系数加回 */
+    const dxa = ddAdd(fly.x1, fly.x1l, -fly.x0, -fly.x0l);
+    const dya = ddAdd(fly.y1, fly.y1l, -fly.y0, -fly.y0l);
+    const nx = ddAddD(...ddMulD(dxa[0], dxa[1], e), 0);
+    const px = ddAdd(fly.x0, fly.x0l, nx[0], nx[1]);
+    const ny2 = ddAddD(...ddMulD(dya[0], dya[1], e), 0);
+    const py = ddAdd(fly.y0, fly.y0l, ny2[0], ny2[1]);
+    view.x = px[0]; view.xl = px[1];
+    view.y = py[0]; view.yl = py[1];
+    target.x = view.x; target.y = view.y; target.s = view.s; target.xl = view.xl; target.yl = view.yl;
     if (t >= 1) fly = null;
     requestRender();
   } else {
@@ -1160,11 +1334,17 @@ function frame(now) {
     // 平滑追踪：view 指数逼近 target（惯性缩放）
     const k = 1 - Math.exp(-dt * 9);
     const dxs = (target.s - view.s) / view.s;
-    const dxy = Math.hypot(target.x - view.x, target.y - view.y) / Math.max(target.s, 1e-13);
+    const dxy = Math.hypot(target.x - view.x, target.y - view.y) / Math.max(target.s, 1e-30);
     if (Math.abs(dxs) > 1e-4 || dxy > 1e-4) {
       view.s = Math.exp(Math.log(view.s) + Math.log(target.s / view.s) * k);
-      view.x += (target.x - view.x) * k;
-      view.y += (target.y - view.y) * k;
+      const dxa = ddAdd(target.x, target.xl, -view.x, -view.xl);
+      const dya = ddAdd(target.y, target.yl, -view.y, -view.yl);
+      const nx = ddAddD(...ddMulD(dxa[0], dxa[1], k), 0);
+      const px = ddAdd(view.x, view.xl, nx[0], nx[1]);
+      const ny2 = ddAddD(...ddMulD(dya[0], dya[1], k), 0);
+      const py = ddAdd(view.y, view.yl, ny2[0], ny2[1]);
+      view.x = px[0]; view.xl = px[1];
+      view.y = py[0]; view.yl = py[1];
       requestRender();
     }
   }
@@ -1192,11 +1372,14 @@ function frame(now) {
 
 /* ============ 启动 ============ */
 applyI18n();
-// URL hash 坐标恢复
+// URL hash 坐标恢复（含双单低位 dx/dy，旧链接向后兼容）
 const hm = location.hash.match(/x=([-\d.e+]+),y=([-\d.e+]+),s=([\d.e+-]+)/);
 if (hm) {
   view.x = +hm[1]; view.y = +hm[2]; view.s = +hm[3];
-  target.x = view.x; target.y = view.y; target.s = view.s;
+  const dl = location.hash.match(/dx=([-\d.e+]+),dy=([-\d.e+]+)/);
+  view.xl = dl ? +dl[1] : 0;
+  view.yl = dl ? +dl[2] : 0;
+  target.x = view.x; target.y = view.y; target.s = view.s; target.xl = view.xl; target.yl = view.yl;
 }
 // #julia 或 #julia,cx,cy 测试直达
 const jm = location.hash.match(/julia(?:,([-\d.e+]+),([-\d.e+]+))?/);

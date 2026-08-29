@@ -2880,6 +2880,7 @@ function frame(now) {
 }
 
 /* ================= 启动 ================= */
+try { localStorage.setItem('toy-last', JSON.stringify({ s: 'echo', t: Date.now() })); } catch (e) {}
 applyI18n();
 updSnd();
 updRecall();

@@ -1807,6 +1807,7 @@ function frame(now) {
 }
 
 /* ============ 启动 ============ */
+try { localStorage.setItem('toy-last', JSON.stringify({ s: 'fold', t: Date.now() })); } catch (e) {}
 applyI18n();
 // URL hash 坐标恢复（含双单低位 dx/dy，旧链接向后兼容）
 const hm = location.hash.match(/x=([-\d.e+]+),y=([-\d.e+]+),s=([\d.e+-]+)/);

@@ -433,6 +433,24 @@ function applyI18n() {
       : `today: scape weather <b>${scenesEn[h % 8]}</b> · fold planet is waiting <b>☄</b>`;
     grid.appendChild(dl);
   }
+  // 上次到访（跨站记忆）+ 键盘提示
+  {
+    let last = null;
+    try { last = JSON.parse(localStorage.getItem('toy-last') || 'null'); } catch (e) {}
+    if (last && Date.now() - last.t < 14 * 864e5) {
+      const names = { ink: '墨 INK', echo: '回声 ECHO', scape: '造境 SCAPE', letters: '纸间 LETTERS', fold: '褶皱 FOLD' };
+      const mins = Math.floor((Date.now() - last.t) / 60000);
+      const ago = mins < 60 ? (lang === 'zh' ? `${mins} 分钟` : `${mins}m`)
+        : mins < 1440 ? (lang === 'zh' ? `${Math.floor(mins / 60)} 小时` : `${Math.floor(mins / 60)}h`)
+        : (lang === 'zh' ? `${Math.floor(mins / 1440)} 天` : `${Math.floor(mins / 1440)}d`);
+      const lv = document.createElement('div');
+      lv.className = 'global-stat';
+      lv.innerHTML = lang === 'zh'
+        ? `上次到访：<b>${names[last.s] || '?'}</b> · ${ago}前　·　← → 选卡 · Enter 进入`
+        : `last visit: <b>${names[last.s] || '?'}</b> · ${ago} ago　·　← → browse · Enter to open`;
+      grid.appendChild(lv);
+    }
+  }
 }
 function workStat(en) {
   try {

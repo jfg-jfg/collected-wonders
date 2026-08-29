@@ -1424,6 +1424,7 @@ function mframe(now) {
 
 /* ---------- 启动 ---------- */
 document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+try { localStorage.setItem('toy-last', JSON.stringify({ s: 'letters', t: Date.now() })); } catch (e) {}
 loadPack(BUILTIN_STORIES[0]);
 // hash 直达：#p=<id> 或 #p=<id>&n=<node>；#dbg=editor/ai/import/stack 供自检
 {

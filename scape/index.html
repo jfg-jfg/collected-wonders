@@ -1803,6 +1803,7 @@ window.addEventListener('keydown', e => {
 /* ---------- 启动 ---------- */
 restoreState();
 document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+try { localStorage.setItem('toy-last', JSON.stringify({ s: 'scape', t: Date.now() })); } catch (e) {}
 updTheme(); updSnd(); updFlow(); updSleep(); buildUI(); updateClock();
 if (!recorder && lang === 'en') recBtn.textContent = '● REC';
 // 首次手势解锁音频

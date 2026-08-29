@@ -2163,6 +2163,7 @@ const helpPanel = document.getElementById('helpPanel');
 document.getElementById('helpBtn').addEventListener('click', () => helpPanel.classList.toggle('show'));
 
 /* ---------------- 启动 ---------------- */
+try { localStorage.setItem('toy-last', JSON.stringify({ s: 'ink', t: Date.now() })); } catch (e) {}
 applyI18n();
 if (ecoMode) { applyQuality(); const eb2 = document.getElementById('ecoBtn'); if (eb2) eb2.classList.add('on'); }
 else if (Math.min(screen.width, screen.height) < 700 && localStorage.getItem('ink-eco') === null && !location.hash.includes('bench') && !location.hash.includes('capture')) {

@@ -191,7 +191,7 @@ const I18N = {
     reset: '回母港', zoom: '倍率', palette: '色',
     tour: '▶ 巡航', tourStop: '■ 停', tourTip: '自动巡航各地名，每处停留 6 秒',
     addSpot: '存此地', delSpot: '长按删除',
-    juliaOn: '儒', juliaOff: '曼', shipName: '舰',
+    juliaOn: '儒', juliaOff: '曼', shipName: '舰', newtonName: '牛',
     juliaTipOn: '切换到儒利亚集合（以当前中心为 c）', juliaTipOff: '回到曼德博集合',
     palTip: '切换调色板', shot: '寄 出', shotOk: '✓ 明信片已保存',
     sndOn: '♪ 声', sndOff: '♪ 静', sndTip: '计数音景：越深，数得越慢',
@@ -226,7 +226,7 @@ const I18N = {
     reset: 'HOME PORT', zoom: 'mag', palette: 'PAL',
     tour: '▶ TOUR', tourStop: '■ STOP', tourTip: 'auto-cruise named spots, 6s each',
     addSpot: 'MARK SPOT', delSpot: 'long-press to delete',
-    juliaOn: 'JULIA', juliaOff: 'MSET', shipName: 'SHIP',
+    juliaOn: 'JULIA', juliaOff: 'MSET', shipName: 'SHIP', newtonName: 'NEWTON',
     juliaTipOn: 'switch to the Julia set (c = current center)', juliaTipOff: 'back to the Mandelbrot set',
     palTip: 'cycle palette', shot: 'SEND', shotOk: '✓ postcard saved',
     sndOn: '♪ SND', sndOff: '♪ MUTE', sndTip: 'counting soundscape: deeper, slower',
@@ -287,7 +287,7 @@ uniform float uIter;
 uniform float uJulia;
 uniform vec2 uCx;
 uniform vec2 uCy;
-uniform float uMode;   /* 0 曼德博 1 儒利亚 2 燃烧之舰 */
+uniform float uMode;   /* 0 曼德博 1 儒利亚 2 燃烧之舰 3 牛顿 */
 uniform float uTier;   /* 0 单精度（浅层提速） 1 df64 2 微扰 perturbation */
 uniform highp sampler2D uOrbit;   /* 参考轨道：RGBA32F (Zx_hi,Zx_lo,Zy_hi,Zy_lo) × n */
 uniform float uOrbitN;
@@ -334,7 +334,50 @@ void main() {
   bool esc = false;
   float escA = 0.0;
 
-  if (uTier < 0.5) {
+  if (uMode > 2.5) {
+    /* ---- 牛顿分形：z_{n+1} = (2z³+1)/(3z²)，引力盆地图 ---- */
+    /* 三个根：1, e^{2πi/3}, e^{4πi/3} */
+    vec2 z = vec2(cxc.x, cyc.x);
+    vec2 prev = z;
+    float conv = 0.0;
+    float root = 0.0;
+    for (int k = 0; k < 256; k++) {
+      if (float(k) >= uIter) break;
+      prev = z;
+      /* z³ = z·z·z（复乘） */
+      vec2 z2 = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y);
+      vec2 z3 = vec2(z2.x * z.x - z2.y * z.y, z2.x * z.y + z2.y * z.x);
+      /* z_{n+1} = (2z³ + 1) / (3z²) */
+      vec2 num = vec2(2.0 * z3.x + 1.0, 2.0 * z3.y);
+      vec2 den = vec2(3.0 * z2.x, 3.0 * z2.y);
+      float dd2 = dot(den, den);
+      if (dd2 < 1e-20) break;   /* z=0 奇点 */
+      z = vec2((num.x * den.x + num.y * den.y) / dd2,
+               (num.y * den.x - num.x * den.y) / dd2);
+      conv = length(z - prev);
+      if (conv < 1e-6) {
+        /* 判定收敛到哪个根 */
+        float d0 = length(z - vec2(1.0, 0.0));
+        float d1 = length(z - vec2(-0.5, 0.8660254));
+        float d2 = length(z - vec2(-0.5, -0.8660254));
+        root = d0 < d1 && d0 < d2 ? 0.0 : (d1 < d2 ? 0.3333 : 0.6667);
+        esc = true;
+        escA = 1.0 - float(k) / 256.0;   /* 越快收敛越亮 */
+        t = float(k);
+        break;
+      }
+    }
+    /* 未收敛（边界区域）→ 也按最近根着色但暗 */
+    if (!esc) {
+      float d0 = length(z - vec2(1.0, 0.0));
+      float d1 = length(z - vec2(-0.5, 0.8660254));
+      root = d0 < d1 ? 0.0 : 0.5;
+      escA = 0.3;
+    }
+    /* 覆写 pack 值（牛顿专用编码） */
+    fragColor = vec4(root, escA, 0.0, 1.0);
+    return;
+  } else if (uTier < 0.5) {
     /* ---- 单精度档：浅层（倍率 < 1e5），普通 float 迭代 ---- */
     vec2 z, c;
     vec2 dz = vec2(julia ? 1.0 : 0.0);   /* 复导数（全纯模式） */
@@ -464,6 +507,7 @@ uniform sampler2D uData;
 uniform float uPhase;
 uniform float uPal;
 uniform float uStratum;   /* 0 浅 … 1 深（log10(mag)/13）：地质层 */
+uniform float uNewton;    /* >0.5 时牛顿着色分支 */
 
 vec3 palette(float t) {
   /* 四套调色板：0墨 1极光 2炉火 3素宣 | 4 滑稽（Konami 隐藏） */
@@ -492,6 +536,16 @@ vec3 strata(vec3 c) {
 }
 void main() {
   vec4 d = texelFetch(uData, ivec2(gl_FragCoord.xy), 0);
+  if (uNewton > 0.5) {
+    /* 牛顿引力盆：三个根=三种色相，收敛速度=亮度 */
+    float hue = d.r + uPhase * 0.15;
+    vec3 col2 = palette(hue);
+    col2 *= 0.35 + 0.65 * d.g;
+    /* 盆地边界辉光 */
+    col2 += palette(hue + 0.3) * (1.0 - d.g) * 0.22;
+    fragColor = vec4(col2, 1.0);
+    return;
+  }
   bool esc = d.a >= 0.004;
   vec3 col;
   if (esc) {
@@ -554,7 +608,7 @@ const UI = {}, UC = {};
 gl.useProgram(progIter);
 gl.uniform1i(UI.uOrbit, 1);
 gl.useProgram(progColor);
-['uData','uPhase','uPal','uStratum'].forEach(n => UC[n] = gl.getUniformLocation(progColor, n));
+['uData','uPhase','uPal','uStratum','uNewton'].forEach(n => UC[n] = gl.getUniformLocation(progColor, n));
 
 /* ---------- 数据纹理 FBO + 拉丝前帧纹理 ---------- */
 let dataTex = null, fbo = null, prevTex = null;
@@ -605,6 +659,7 @@ let fly = null;                            // 飞行动画 {x0,y0,s0,x1,y1,s1,t0
 const MAG_LIMIT = 1e-20;
 let juliaOn = false, juliaC = { x: -0.7269, y: 0.1889 };
 let shipMode = false;
+let newtonMode = false;
 let palIdx = 0;
 let phaseT = 0;
 const PAL_NAMES = { zh: ['墨', '极光', '炉火', '素宣', '滑稽'], en: ['INK', 'AURORA', 'EMBER', 'PLAIN', 'MEME'] };
@@ -711,11 +766,11 @@ function renderIter() {
   const mag = 1.4 / view.s;
   const busy = dragStart !== null || fly !== null || Math.abs(view.s - target.s) / target.s > 0.01;
   /* 微扰档只用于曼德博深潜；儒/舰保持 float/df64 */
-  const tier = (shipMode || juliaOn)
+  const tier = newtonMode ? 0 : (shipMode || juliaOn)
     ? (mag < 3e4 ? 0 : 1)
     : (mag < 3e4 ? 0 : mag < 3e12 ? 1 : 2);
-  const iterCap = tier === 2 ? 6000 : 2000;
-  const iter = Math.min(iterCap, Math.round((160 + 42 * Math.log2(3 / view.s) * 0.5 + 80) * (tier === 2 ? 1.4 : 1) * (busy ? 0.45 : 1)));
+  const iterCap = newtonMode ? 128 : tier === 2 ? 6000 : 2000;
+  const iter = newtonMode ? 128 : Math.min(iterCap, Math.round((160 + 42 * Math.log2(3 / view.s) * 0.5 + 80) * (tier === 2 ? 1.4 : 1) * (busy ? 0.45 : 1)));
   const [cxh, cxl] = split64(juliaC.x);
   const [cyh, cyl] = split64(juliaC.y);
   /* 参考轨道：失效才重建（缩放差>2× / 参考点离屏 / 迭代上限增长） */
@@ -736,7 +791,7 @@ function renderIter() {
   gl.uniform1f(UI.uJulia, juliaOn ? 1.0 : 0.0);
   gl.uniform2f(UI.uCx, cxh, cxl);
   gl.uniform2f(UI.uCy, cyh, cyl);
-  gl.uniform1f(UI.uMode, shipMode ? 2.0 : 0.0);
+  gl.uniform1f(UI.uMode, newtonMode ? 3.0 : shipMode ? 2.0 : 0.0);
   const usePert = tier === 2 && orbit && orbit.n >= 32;
   gl.uniform1f(UI.uTier, usePert ? 2.0 : (tier === 0 ? 0.0 : 1.0));
   if (usePert) {
@@ -764,6 +819,7 @@ function renderColor() {
   gl.uniform1f(UC.uPhase, phaseT);
   gl.uniform1f(UC.uPal, palIdx);
   gl.uniform1f(UC.uStratum, Math.min(1, Math.max(0, Math.log10(Math.max(mag, 1)) / 13)));
+  gl.uniform1f(UC.uNewton, newtonMode ? 1.0 : 0.0);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
 function render() {
@@ -1233,7 +1289,7 @@ function flashTitle(btn, txt) {
 document.getElementById('resetBtn').addEventListener('click', () => {
   view.x = -0.6; view.y = 0; view.s = 1.4; view.xl = 0; view.yl = 0;
   target.x = view.x; target.y = view.y; target.s = view.s; target.xl = 0; target.yl = 0;
-  fly = null; juliaOn = false; shipMode = false;
+  fly = null; juliaOn = false; shipMode = false; newtonMode = false;
   requestRender();
 });
 
@@ -1335,7 +1391,7 @@ function tourNext() {
 /* Julia / 调色板 / 截图 */
 const juliaBtn = document.getElementById('juliaBtn');
 juliaBtn.addEventListener('click', () => {
-  if (!juliaOn && !shipMode) {
+  if (!juliaOn && !shipMode && !newtonMode) {
     // 曼 → 儒
     juliaC = { x: view.x, y: view.y };
     juliaOn = true;
@@ -1345,9 +1401,14 @@ juliaBtn.addEventListener('click', () => {
     juliaOn = false;
     shipMode = true;
     view.x = -1.75; view.y = -0.03; view.s = 0.35; view.xl = 0; view.yl = 0;
-  } else {
-    // 舰 → 曼
+  } else if (shipMode) {
+    // 舰 → 牛（牛顿分形：引力盆地图）
     shipMode = false;
+    newtonMode = true;
+    view.x = 0; view.y = 0; view.s = 2.0; view.xl = 0; view.yl = 0;
+  } else {
+    // 牛 → 曼
+    newtonMode = false;
     view.x = -0.6; view.y = 0; view.s = 1.4; view.xl = 0; view.yl = 0;
   }
   target.x = view.x; target.y = view.y; target.s = view.s; target.xl = 0; target.yl = 0;
@@ -1355,7 +1416,7 @@ juliaBtn.addEventListener('click', () => {
   updateJuliaBtn(); updateCoords(); requestRender();
 });
 function updateJuliaBtn() {
-  juliaBtn.textContent = shipMode ? T().shipName : (juliaOn ? T().juliaOff : T().juliaOn);
+  juliaBtn.textContent = newtonMode ? T().newtonName : shipMode ? T().shipName : (juliaOn ? T().juliaOff : T().juliaOn);
   juliaBtn.title = T().juliaTipOn;
 }
 /* 色相缓移：两遍架构下只重跑着色遍——迭代数据不再重算 */
@@ -1707,6 +1768,14 @@ if (jm) {
   target.x = 0; target.y = 0; target.s = 1.6;
 }
 render();
+// #newton：牛顿分形直达
+if (location.hash.includes('newton')) {
+  newtonMode = true;
+  view.x = 0; view.y = 0; view.s = 2.0; view.xl = 0; view.yl = 0;
+  target.x = 0; target.y = 0; target.s = 2.0; target.xl = 0; target.yl = 0;
+  updateJuliaBtn();
+  render();
+}
 // #grid=1：构图网格直达
 if (location.hash.includes('grid=1')) document.getElementById('grid').classList.add('on');
 // #dbg: 无头自检——读取像素证据写入 DOM（不影响正常使用）

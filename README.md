@@ -23,7 +23,7 @@
 
 ## 技术核心
 
-- **墨**：WebGL2 手写 Stable Fluids 求解器（advection / vorticity / Jacobi 压力迭代），双通道染料实现墨色混合，动态三档画质
+- **墨**：WebGL2 手写 Stable Fluids 求解器（advection / vorticity / Jacobi 压力迭代），**真颜料 RGB 混色**（染料四通道：颜料预乘+湿度），动态三档画质
 - **回声**：声呐涟漪照明、六风格加法式迷宫生成（开放底图 + 战略置墙 + BFS 结构验证）、游魂 BFS+评分 AI、WebAudio 全合成音效
 - **造境**：十声道纯数学合成（零采样），时刻参数统一驱动天色/日月/星/窗灯/声音，事件调度器（雷/钟/鸟），MediaRecorder 音画同录
 - **纸间**：分支书信图引擎（replies + contTo + 隐藏结局替换）、故事包 JSON schema、图可达性验证、WebAudio 纸声合成

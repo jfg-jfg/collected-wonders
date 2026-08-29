@@ -1,0 +1,33 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 纸间故事包验证（结构/悬挂引用/可达性/隐藏结局）
+        run: node tools/validate-stories.mjs
+
+      - name: 回声关卡验证（12 内置关 BFS 结构 + 随机压力）
+        run: node tools/validate-levels.mjs
+
+      - name: 全站内联脚本语法检查
+        run: |
+          set -e
+          for f in index.html */index.html; do
+            awk '/^<script>$/{x=1;next} /^<\/script>$/{x=0} x' "$f" > /tmp/c.js
+            node --check /tmp/c.js || { echo "FAIL $f"; exit 1; }
+          done
+          node --check letters/story-data.js
+          echo "all inline scripts OK"
+
+      - name: 404 页存在性
+        run: test -f 404.html && echo "404 ok"

@@ -1,5 +1,7 @@
 # 拾遗 · Collected Wonders
 
+[![CI](https://github.com/jfg-jfg/collected-wonders/actions/workflows/ci.yml/badge.svg)](https://github.com/jfg-jfg/collected-wonders/actions/workflows/ci.yml)
+
 > 五件小小的奇物 · Five small wonders
 > 零依赖 · 纯原生 HTML/CSS/JS · 双击即开 · 中英双语
 

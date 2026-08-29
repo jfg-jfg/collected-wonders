@@ -361,17 +361,29 @@ function applyI18n() {
       <div class="c-go">${lang === 'zh' ? '进 入 →' : 'ENTER →'}</div>`;
     grid.appendChild(a);
   }
-  // 彩蛋收集：五站梗物集齐点亮
+  // 彩蛋收集：五站梗物集齐点亮（未集齐时给下一个的提示）
   {
     const el = document.getElementById('eggLine');
     let eggs = {};
     try { eggs = JSON.parse(localStorage.getItem('toy-eggs') || '{}'); } catch (e) {}
-    const got = ['ink', 'echo', 'scape', 'fold', 'letters'].filter(k => eggs[k]).length;
+    const SITES = ['ink', 'echo', 'scape', 'fold', 'letters'];
+    const got = SITES.filter(k => eggs[k]).length;
     if (got > 0) {
       el.style.display = '';
       el.textContent = lang === 'zh'
         ? (got >= 5 ? '🥚×5 彩蛋猎人 · 五梗归一' : `🥚×${got} ……还有 ${5 - got} 个梗没被找到`)
         : (got >= 5 ? '🥚×5 EGG HUNTER · all five found' : `🥚×${got} …${5 - got} meme${got === 4 ? '' : 's'} still hiding`);
+      const HINTS = {
+        ink:     { zh: '墨：洗纸，快速连点五次', en: 'INK: click WASH five times, fast' },
+        echo:    { zh: '回声：三秒内连发八次声呐', en: 'ECHO: eight pings within three seconds' },
+        scape:   { zh: '造境：把十个声道全部拉满', en: 'SCAPE: push all ten channels to maximum' },
+        fold:    { zh: '褶皱：↑↑↓↓←→←→BA', en: 'FOLD: ↑↑↓↓←→←→BA' },
+        letters: { zh: '纸间：随手敲 ikun', en: 'LETTERS: just type ikun' }
+      };
+      const miss = SITES.filter(k => !eggs[k]);
+      if (miss.length) {
+        el.textContent += '　·　' + (lang === 'zh' ? '下一个提示：' : 'next hint: ') + HINTS[miss[0]][lang];
+      }
     }
   }
   // 全局统计行

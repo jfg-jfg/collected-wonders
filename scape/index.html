@@ -1321,10 +1321,11 @@ const PRESETS = {
   blossom: { rain: 0, wind: 0.2, fire: 0, stream: 0.25, cricket: 0, thunder: 0, birds: 0.45, bell: 0.15, snow: 0, petal: 0.85, time: 15 },
   polar:    { rain: 0, wind: 0.35, fire: 0, stream: 0, cricket: 0.15, thunder: 0, birds: 0, bell: 0.1, snow: 0.9, petal: 0, time: 22, theme: 3 },
   dune:     { rain: 0, wind: 0.25, fire: 0, stream: 0, cricket: 0.25, thunder: 0, birds: 0.15, bell: 0.2, snow: 0, petal: 0, time: 23, theme: 4 },
-  orbit:    { rain: 0, wind: 0.1, fire: 0, stream: 0, cricket: 0, thunder: 0, birds: 0, bell: 0.4, snow: 0, petal: 0, time: 0, theme: 5 }
+  orbit:    { rain: 0, wind: 0.1, fire: 0, stream: 0, cricket: 0, thunder: 0, birds: 0, bell: 0.4, snow: 0, petal: 0, time: 0, theme: 5 },
+  jungle:   { rain: 0.35, wind: 0.15, fire: 0, stream: 0.4, cricket: 0.55, thunder: 0.15, birds: 0.3, bell: 0, snow: 0, petal: 0, time: 21, theme: 6 }
 };
-const PRESET_ZH = { rainy: '雨夜读书', morning: '山涧清晨', fireside: '炉边听风', valley: '午后山谷', winter: '冬夜围炉', blossom: '花信风', polar: '极夜枯林', dune: '大漠星夜', orbit: '轨道' };
-const PRESET_EN = { rainy: 'Rainy Night', morning: 'Dawn', fireside: 'Fireside', valley: 'Valley', winter: 'Winter', blossom: 'Blossom', polar: 'Polar Night', dune: 'Desert Stars', orbit: 'Orbit' };
+const PRESET_ZH = { rainy: '雨夜读书', morning: '山涧清晨', fireside: '炉边听风', valley: '午后山谷', winter: '冬夜围炉', blossom: '花信风', polar: '极夜枯林', dune: '大漠星夜', orbit: '轨道', jungle: '林夜听蛙' };
+const PRESET_EN = { rainy: 'Rainy Night', morning: 'Dawn', fireside: 'Fireside', valley: 'Valley', winter: 'Winter', blossom: 'Blossom', polar: 'Polar Night', dune: 'Desert Stars', orbit: 'Orbit', jungle: 'Jungle Night' };
 /* 每日气象：日期种子选一处境（与褶皱每日星球同机制，全城同日同境） */
 const DAILY_SCENES = [
   { name: '雪夜炉火', nameEn: 'Fire & Snow', s: { fire: .8, snow: .9, wind: .15, time: 21.5, theme: 0 } },

@@ -53,7 +53,7 @@
 - `tools/validate-levels.mjs`：从 echo 提取生成器复验十二关 + 40 样本随机压力
 - `tools/validate-stories.mjs`：故事包图验证（order/回信/contTo 悬挂、双语文本、隐藏结局、可达性）——首跑即捕获守灯人六级孤儿信链
 - `tools/gen-wells.mjs`：名井关卡码生成器
-- 测试直达 hash：`echo#lv0..#lv11/#edit[=码]` · `scape#w=<base64>`（工具内生成）· `letters#p=<id>[&n=<节点>]`（`#dbg=editor/ai/import/stack/share` 自检）· `fold#x=,y=,s= / #julia,cx,cy / #dbg`
+- 测试直达 hash：`echo#lv0..#lvN(N≥12 无尽)/#edit[=码]/#dbg=daily` · `scape#w=<base64>` · `letters#p=<id>[&n=<节点>]`（`#dbg=editor/ai/import/stack/share`）· `fold#x=,y=,s=/#julia,cx,cy/#dbg` · `ink#bench/#dbg=album` · 全站 `#lang=en|zh` 语言直达
 - 质量事故档案：着色器 varying 未声明 / 手作迷宫不可达→生成器化 / **1500 行静默 JS 错误致整站失效→从零重建+错误上报钩子** / v5 重建丢特性（录制/定时/彩蛋→v6 找回） / nextAfter 使 n2 链孤儿化→contTo / TDZ（resize 提前调 initParticles）/ bak 恢复链覆盖未提交代码（教训：**先提交再折腾**）
 
 ## 迭代史摘要

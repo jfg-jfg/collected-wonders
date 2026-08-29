@@ -385,6 +385,7 @@ const I18N = {
     inscLbl: '题款', frame: '装裱', inscPh: '拾遗',
     brushes: ['圆笔', '硬笔', '泼墨', '水笔'],
     inkNames: ['玄墨', '花青', '靛青', '石绿', '藤黄', '赭石', '紫檀', '朱砂'],
+    inkCustom: '长按自定墨色',
     papers: ['生宣', '熟宣', '绢本']
   },
   en: {
@@ -410,6 +411,7 @@ const I18N = {
     inscLbl: 'INSCR', frame: 'FRAME', inscPh: '拾遗',
     brushes: ['Round', 'Hard', 'Splash', 'Water'],
     inkNames: ['Black', 'Cyanine', 'Indigo', 'Malachite', 'Gamboge', 'Ochre', 'Sandalwood', 'Cinnabar'],
+    inkCustom: 'hold to customize this ink',
     papers: ['Raw Xuan', 'Sized Xuan', 'Silk']
   }
 };
@@ -633,12 +635,13 @@ void main(){
   fragColor = vec4(vel, 0.0, 1.0);
 }`;
 
-/* 水墨显示：R=墨密度，G=密度×色相坐标 → 四色颜料渐变；支持纸面缩放平移 */
+/* 水墨显示：R=墨密度，G=密度×色相坐标 → 颜料渐变（LUT 纹理，可自定）；支持纸面缩放平移 */
 const FRAG_DISPLAY = `#version 300 es
 precision highp float;
 in vec2 vUv; in vec2 vL; in vec2 vR; in vec2 vT; in vec2 vB; out vec4 fragColor;
 uniform sampler2D uDye;
 uniform sampler2D uPaper;
+uniform sampler2D uLut;
 uniform vec2 texelSize;
 uniform float flatPaper;
 uniform vec3 paperTint;
@@ -646,22 +649,8 @@ uniform float uZoom;
 uniform vec2 uViewC;
 
 vec3 pigment(float t){
-  vec3 black  = vec3(0.44, 0.46, 0.53);  /* 玄墨 */
-  vec3 cyanine= vec3(0.30, 0.50, 0.62);  /* 花青 */
-  vec3 indigo = vec3(0.30, 0.40, 0.58);  /* 靛青 */
-  vec3 malach = vec3(0.32, 0.52, 0.38);  /* 石绿 */
-  vec3 gambo  = vec3(0.62, 0.52, 0.22);  /* 藤黄 */
-  vec3 ochre  = vec3(0.50, 0.36, 0.24);  /* 赭石 */
-  vec3 sandal = vec3(0.44, 0.28, 0.48);  /* 紫檀 */
-  vec3 cinna  = vec3(0.64, 0.21, 0.15);  /* 朱砂 */
-  vec3 c = mix(black, cyanine, smoothstep(0.0, 0.145, t));
-  c = mix(c, indigo, smoothstep(0.145, 0.285, t));
-  c = mix(c, malach, smoothstep(0.285, 0.43, t));
-  c = mix(c, gambo, smoothstep(0.43, 0.57, t));
-  c = mix(c, ochre, smoothstep(0.57, 0.715, t));
-  c = mix(c, sandal, smoothstep(0.715, 0.855, t));
-  c = mix(c, cinna, smoothstep(0.855, 1.0, t));
-  return c;
+  /* 256×1 LUT 纹理：JS 侧生成，八驻点可由用户长按色点自定 */
+  return texture(uLut, vec2(clamp(t, 0.001, 0.999), 0.5)).rgb;
 }
 void main(){
   /* 视图变换：屏幕 uv → 纸面 uv */
@@ -943,6 +932,71 @@ const INKS = [
 ];
 const INK_CSS = ['#3a3d44', '#3d6a8a', '#4d6794', '#4a8a5a', '#a08a30', '#7f5c3d', '#6a4070', '#a33626'];
 let inkIdx = 0;
+
+/* ---------------- 颜料色带 LUT（八驻点，长按色点可自定） ---------------- */
+/* 驻点 = 原 GLSL pigment() 的 8 色；tint 值即驻点位置（染料 G/R 混色轴） */
+const PIG_STOPS = [
+  { t: 0.0,    c: [0.44, 0.46, 0.53] },  // 玄墨
+  { t: 0.145,  c: [0.30, 0.50, 0.62] },  // 花青
+  { t: 0.285,  c: [0.30, 0.40, 0.58] },  // 靛青
+  { t: 0.43,   c: [0.32, 0.52, 0.38] },  // 石绿
+  { t: 0.57,   c: [0.62, 0.52, 0.22] },  // 藤黄
+  { t: 0.715,  c: [0.50, 0.36, 0.24] },  // 赭石
+  { t: 0.855,  c: [0.44, 0.28, 0.48] },  // 紫檀
+  { t: 1.0,    c: [0.64, 0.21, 0.15] }   // 朱砂
+];
+const lutCanvas = document.createElement('canvas');
+lutCanvas.width = 256; lutCanvas.height = 1;
+const lutTex = gl.createTexture();
+function smooth01(a, b, x) {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+}
+function rebuildLut() {
+  const c2 = lutCanvas.getContext('2d');
+  const img = c2.createImageData(256, 1);
+  for (let i = 0; i < 256; i++) {
+    const x = i / 255;
+    let col = PIG_STOPS[0].c;
+    for (let s = 0; s < PIG_STOPS.length - 1; s++) {
+      const a = PIG_STOPS[s], b = PIG_STOPS[s + 1];
+      if (x >= a.t && x <= b.t) {
+        const k = smooth01(a.t, b.t, x);
+        col = [a.c[0] + (b.c[0] - a.c[0]) * k, a.c[1] + (b.c[1] - a.c[1]) * k, a.c[2] + (b.c[2] - a.c[2]) * k];
+        break;
+      }
+    }
+    img.data[i * 4] = Math.round(col[0] * 255);
+    img.data[i * 4 + 1] = Math.round(col[1] * 255);
+    img.data[i * 4 + 2] = Math.round(col[2] * 255);
+    img.data[i * 4 + 3] = 255;
+  }
+  c2.putImageData(img, 0, 0);
+  gl.activeTexture(gl.TEXTURE2);
+  gl.bindTexture(gl.TEXTURE_2D, lutTex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, lutCanvas);
+}
+/* 自定义墨色持久化：hex 数组（null = 保持默认） */
+function hex2rgb(h) {
+  return [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
+}
+function applyCustomPalette() {
+  let pal = null;
+  try { pal = JSON.parse(localStorage.getItem('ink-palette') || 'null'); } catch (e) {}
+  if (!Array.isArray(pal)) return;
+  pal.forEach((h, i) => {
+    if (h && i < PIG_STOPS.length) {
+      PIG_STOPS[i].c = hex2rgb(h);
+      INK_CSS[i] = h;
+    }
+  });
+}
+applyCustomPalette();
+rebuildLut();
 
 /* ---------------- 模拟参数 ---------------- */
 const config = {
@@ -1822,6 +1876,9 @@ function renderFrame(dt, forceFlat) {
   gl.activeTexture(gl.TEXTURE1);
   gl.bindTexture(gl.TEXTURE_2D, paperTex);
   gl.uniform1i(progDisplay.uni.uPaper, 1);
+  gl.activeTexture(gl.TEXTURE2);
+  gl.bindTexture(gl.TEXTURE_2D, lutTex);
+  gl.uniform1i(progDisplay.uni.uLut, 2);
   gl.uniform1f(progDisplay.uni.flatPaper, forceFlat || flatPaperNext ? 1.0 : 0.0);
   gl.uniform3f(progDisplay.uni.paperTint, P.tint[0], P.tint[1], P.tint[2]);
   const z = forceFlat || flatPaperNext ? 1 : view.zoom;
@@ -1982,8 +2039,33 @@ function buildChips() {
     b.className = 'pig' + (i === inkIdx ? ' on' : '');
     b.style.background = INK_CSS[i];
     b.setAttribute('aria-label', I18N[lang].inkNames[i]);
-    b.title = I18N[lang].inkNames[i];
+    b.title = I18N[lang].inkNames[i] + ' · ' + I18N[lang].inkCustom;
     b.addEventListener('click', () => { inkIdx = i; buildChips(); });
+    b.addEventListener('contextmenu', e => e.preventDefault());
+    // 长按 450ms：自定墨色——取色器实时改 LUT 驻点，混色随新色带即刻生效
+    let lp = null;
+    b.addEventListener('pointerdown', () => {
+      lp = setTimeout(() => {
+        lp = null;
+        const inp = document.createElement('input');
+        inp.type = 'color';
+        inp.value = INK_CSS[i];
+        inp.addEventListener('input', () => {
+          PIG_STOPS[i].c = hex2rgb(inp.value);
+          INK_CSS[i] = inp.value;
+          b.style.background = inp.value;
+          rebuildLut();
+          try {
+            const pal = JSON.parse(localStorage.getItem('ink-palette') || '[]');
+            pal[i] = inp.value;
+            localStorage.setItem('ink-palette', JSON.stringify(pal));
+          } catch (e) {}
+        });
+        inp.click();
+      }, 450);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev =>
+      b.addEventListener(ev, () => { if (lp) { clearTimeout(lp); lp = null; } }));
     pg.appendChild(b);
   });
   const rg = document.getElementById('paperGrp');

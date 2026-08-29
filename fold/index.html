@@ -1704,7 +1704,7 @@ function frame(now) {
     requestRender();
   } else {
     // 待机深潜：闲置 25s 缓缓深入（屏保）；reduced-motion 用户跳过
-    if (!REDUCED_MOTION && now - lastInteractF > 25000) {
+    if (!REDUCED_MOTION && !newtonMode && now - lastInteractF > 25000) {
       if (idleDiveMag0 === 0) idleDiveMag0 = 1.4 / view.s;
       target.s = Math.max(MAG_LIMIT * 1.4, target.s * Math.exp(-dt * 0.07));
     }

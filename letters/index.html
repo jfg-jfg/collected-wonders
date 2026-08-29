@@ -254,8 +254,11 @@ function loadPack(p) {
   const sb = document.getElementById('sndBtn');
   sb.textContent = save.snd ? T('声 · 开', 'SND · ON') : T('声 · 关', 'SND · OFF');
 }
-const persist = () => localStorage.setItem('letters-save-' + pack.id, JSON.stringify(save));
-const persistImports = () => localStorage.setItem('letters-imports', JSON.stringify(imports));
+const persist = () => { try { localStorage.setItem('letters-save-' + pack.id, JSON.stringify(save)); } catch (e) {} };
+const persistImports = () => {
+  try { localStorage.setItem('letters-imports', JSON.stringify(imports)); }
+  catch (e) { toast(T('本地存储已满：请先移除一些导入的故事', 'Local storage full — remove some imported stories')); }
+};
 
 function applyStyle() {
   const s = pack.style || {};

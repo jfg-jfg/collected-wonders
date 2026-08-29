@@ -169,6 +169,7 @@ const I18N = {
   }
 };
 let lang = localStorage.getItem('fold-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+{ const hm = location.hash.match(/lang=(\w{2})/); if (hm) { lang = hm[1] === 'en' ? 'en' : 'zh'; try { localStorage.setItem('fold-lang', lang); } catch (e) {} } }
 const T = () => I18N[lang];
 
 /* ============ WebGL ============ */

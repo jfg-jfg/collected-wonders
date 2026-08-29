@@ -416,6 +416,7 @@ const I18N = {
   }
 };
 let lang = localStorage.getItem('ink-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+{ const hm = location.hash.match(/lang=(\w{2})/); if (hm) { lang = hm[1] === 'en' ? 'en' : 'zh'; try { localStorage.setItem('ink-lang', lang); } catch (e) {} } }
 function applyI18n() {
   document.documentElement.lang = lang === 'zh' ? 'zh' : 'en';
   document.querySelectorAll('[data-i18n]').forEach(el => {

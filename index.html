@@ -286,6 +286,7 @@ const I18N = {
   }
 };
 let lang = localStorage.getItem('gallery-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+{ const hm = location.hash.match(/lang=(\w{2})/); if (hm) { lang = hm[1] === 'en' ? 'en' : 'zh'; try { localStorage.setItem('gallery-lang', lang); } catch (e) {} } }
 const EMBLEMS = {
   INK: '<div class="em-ink"><div class="drop"></div><div class="drop"></div><div class="drop"></div></div>',
   ECHO: '<div class="em-echo"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="core"></div></div>',

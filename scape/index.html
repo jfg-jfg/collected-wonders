@@ -178,6 +178,7 @@ const CH = ['rain','wind','fire','stream','cricket','thunder','birds','bell','sn
 const CH_ZH = { rain:'雨', wind:'风', fire:'篝火', stream:'溪流', cricket:'夜虫', thunder:'雷', birds:'鸟鸣', bell:'远钟', snow:'雪', petal:'落花' };
 const CH_EN = { rain:'RAIN', wind:'WIND', fire:'FIRE', stream:'STREAM', cricket:'CRICKETS', thunder:'THUNDER', birds:'BIRDS', bell:'BELL', snow:'SNOW', petal:'PETALS' };
 let lang = localStorage.getItem('scape-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+{ const hm = location.hash.match(/lang=(\w{2})/); if (hm) { lang = hm[1] === 'en' ? 'en' : 'zh'; try { localStorage.setItem('scape-lang', lang); } catch (e) {} } }
 let theme = 0; // 0山 1海 2城
 let sndOn = true;
 let timeFlow = false;

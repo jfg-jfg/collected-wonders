@@ -230,6 +230,7 @@ window.addEventListener('error', e => {
    ================================================================ */
 
 let lang = localStorage.getItem('letters-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+{ const hm = location.hash.match(/lang=(\w{2})/); if (hm) { lang = hm[1] === 'en' ? 'en' : 'zh'; try { localStorage.setItem('letters-lang', lang); } catch (e) {} } }
 const T = (z, e) => lang === 'zh' ? z : e;
 let pack = null;
 let save = null;

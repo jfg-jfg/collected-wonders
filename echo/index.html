@@ -284,7 +284,9 @@
   <span id="hudLevel"></span><span class="sep">·</span>
   <span id="hudSteps"></span><span class="sep">·</span>
   <span id="hudPings"></span><span class="sep">·</span>
-  <span id="hudTime"></span><span class="sep" id="hudLostSep" style="display:none">·</span>
+  <span id="hudTime"></span><span class="sep" id="hudKeySep" style="display:none">·</span>
+  <span id="hudKey" style="display:none"></span>
+  <span class="sep" id="hudLostSep" style="display:none">·</span>
   <span id="hudLost" style="display:none"></span>
 </div>
 
@@ -394,7 +396,7 @@ window.addEventListener('error', e => {
 const I18N = {
   zh: {
     menuSub: '无光的深处，唯回声与你同行。<br>以声照路，走出这座沉没之城。', start: '入 井',
-    kbd: '<span>方向键 / WASD</span> 移动　<span>空格 / 点击</span> 发出回声',
+    kbd: '<span>方向键 / WASD</span> 移动　<span>空格 / 点击</span> 发出回声　<span>长按</span> 蓄力声呐',
     steps: '步', pings: '回声', par: '定额', time: '时', lost: '迷失',
     recallOn: '余像 · 开', recallOff: '余像 · 关',
     recallTip: '余像：照过的墙留下微光（辅助模式）',
@@ -432,6 +434,9 @@ const I18N = {
       wanderer: '👻 游荡魂对你的声音充耳不闻，只循自己的路线漂移。',
       warden: '👻 守灯魂徘徊在碎片与出口旁——取物之前，先看清它的巡界。'
     },
+    lockMsg: '🔒 门纹丝不动。守灯人的日记写过：「钥匙挂在门后第三颗钉子上。」',
+    keyMsg: '🗝 一枚黄铜钥匙，比井水还凉。天光之门认得它。',
+    chargeHint: '长按声呐蓄力：照得更远——但游魂也听得更清。',
     locked: '未至', best: '最佳',
     lvSub: ['你从一场不属于你的梦中醒来，井口是唯一的出口。', '水声在石壁间折返。你开始怀疑，回应你的不是回声。', '这里曾有人居住。他们留下的不是废墟，是一封封寄不出的信。', '你走过一条路，它就消失一条。迷津记得每一个放弃的人。', '巨殿的柱子刻满了名字。你的指尖抚过时，有一个位置是空的。', '你开始辨认方向了。这座城认得你——它在你身上留下了记号。', '钟声从遥远的上方传来。十二下。这座城在被谁计时？', '街道尽头是海。海的那边是光。你忽然明白了为什么信寄不出去。', '门没有锁。你推开它的那一刻，听见了第一个真正的声音——自己的呼吸。', '门后没有海，是旋梯。你往上数台阶——九十九级。守灯人的日记里写过这个数字。', '油路堵着，焦黑的灯芯卡在管口。你把它抽出来，像从时间里抽出一截烧尽的芯。', '天窗推开的那刻，海在很远的下面，静得像睡着了。你替谁点了一下头。然后，你醒了。'],
     daily: '每 日 深 潜', dailyDone: '今日已抵达 · 明日再来', dailyTitle: '每日深潜', dailySub: '同一日，全城同一个迷宫。',
@@ -448,12 +453,13 @@ const I18N = {
       { id: 'daily', ico: '☾', n: '每日回访', d: '完成一次每日深潜' },
       { id: 'ghostless', ico: '🛡', n: '暗影无伤', d: '有游魂的层零迷失通关' },
       { id: 'streak3', ico: '✹', n: '三灯连燃', d: '连续三关三盏灯' },
-      { id: 'abyss', ico: '⌘', n: '无底之井', d: '无尽下潜抵达第十层' }
+      { id: 'abyss', ico: '⌘', n: '无底之井', d: '无尽下潜抵达第十层' },
+      { id: 'keyroom', ico: '🗝', n: '灯室来客', d: '拾起第一枚钥匙' }
     ]
   },
   en: {
     menuSub: 'In the lightless deep, only echoes walk with you.<br>Sound out the dark. Climb out of the drowned city.', start: 'DESCEND',
-    kbd: '<span>Arrows / WASD</span> move　<span>Space / click</span> echo',
+    kbd: '<span>Arrows / WASD</span> move　<span>Space / click</span> echo　<span>hold</span> to charge',
     steps: 'steps', pings: 'echoes', par: 'par', time: 'time', lost: 'lost',
     recallOn: 'RECALL ON', recallOff: 'RECALL OFF',
     recallTip: 'Recall: lit walls leave a faint afterglow (assist mode)',
@@ -491,6 +497,9 @@ const I18N = {
       wanderer: '👻 A drifter is deaf to your echoes; it follows only its own route.',
       warden: '👻 A warden circles the fragments and the exit — read its beat before you reach.'
     },
+    lockMsg: '🔒 The gate will not move. The keeper\'s diary: "the key hangs on the third nail behind the door."',
+    keyMsg: '🗝 A brass key, colder than well water. The daylight gate will know it.',
+    chargeHint: 'Hold the echo to charge: farther light — but the ghosts hear it clearer too.',
     locked: 'locked', best: 'best',
     lvSub: ['You wake from a dream that was never yours. The well mouth is the only exit.', 'Water echoes between stone walls. You begin to wonder if it is echo that answers.', 'People lived here once. What they left behind is not ruins, but letters that cannot be sent.', 'The path vanishes behind you as you walk. The labyrinth remembers everyone who gave up.', 'The pillars of the great hall are carved with names. One space is empty — the right size for yours.', 'You can read the walls now. This city knows you — it has left its mark inside your bones.', 'A bell tolls from far above. Twelve times. Who is counting down for this city?', 'The street ends at the sea. Beyond the sea, light. You suddenly understand why the letters never arrived.', 'The gate has no lock. As you push it open, you hear the first true sound — your own breathing.', 'Beyond the gate, no sea — a spiral stair. You count the steps upward. Ninety-nine. The keeper\'s diary counted them first.', 'The oil line is choked, a charred wick jammed in the pipe. You draw it out like a burned length of time.', 'As the skylight swings open, the sea lies far below, still as sleep. You nod, once, for someone. Then — you wake.'],
     daily: 'DAILY DIVE', dailyDone: 'ARRIVED TODAY · COME BACK TOMORROW', dailyTitle: 'Daily Dive', dailySub: 'One maze per day, same for everyone.',
@@ -507,7 +516,8 @@ const I18N = {
       { id: 'daily', ico: '☾', n: 'Daily Visitor', d: 'complete a daily dive' },
       { id: 'ghostless', ico: '🛡', n: 'Untouched', d: 'clear a ghost depth without being lost' },
       { id: 'streak3', ico: '✹', n: 'Triple Flame', d: 'three 3-lantern clears in a row' },
-      { id: 'abyss', ico: '⌘', n: 'The Bottomless', d: 'reach endless depth Ⅹ' }
+      { id: 'abyss', ico: '⌘', n: 'The Bottomless', d: 'reach endless depth Ⅹ' },
+      { id: 'keyroom', ico: '🗝', n: 'Guest of the Lamp Room', d: 'pick up your first key' }
     ]
   }
 };
@@ -1009,20 +1019,48 @@ function audio() {
   if (AC.state === 'suspended') AC.resume();
   return AC;
 }
-function sndPing() {
+function sndPing(pw) {
+  const ac = audio(); if (!ac || !save.snd) return;
+  const t = ac.currentTime;
+  const p = pw || 0;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'sine';
+  // 蓄力声呐：起音更低、扫频更长、更响（沉钟感）
+  o.frequency.setValueAtTime(880 - p * 320, t);
+  o.frequency.exponentialRampToValueAtTime(220 - p * 96, t + 0.42 + p * 0.5);
+  g.gain.setValueAtTime(0.16 + p * 0.1, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45 + p * 0.55);
+  const d = ac.createDelay(1.2), fb = ac.createGain(), wet = ac.createGain();
+  d.delayTime.value = 0.31; fb.gain.value = 0.34 + p * 0.15; wet.gain.value = 0.5 + p * 0.3;
+  o.connect(g); g.connect(ac.destination);
+  g.connect(d); d.connect(fb); fb.connect(d); d.connect(wet); wet.connect(ac.destination);
+  o.start(t); o.stop(t + 0.5 + p * 0.6);
+}
+function sndKey() {
+  const ac = audio(); if (!ac || !save.snd) return;
+  const t = ac.currentTime;
+  [987.77, 1567.98].forEach((fq, i) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'triangle'; o.frequency.value = fq;
+    g.gain.setValueAtTime(0.001, t + i * 0.1);
+    g.gain.exponentialRampToValueAtTime(0.13, t + i * 0.1 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.1 + 0.9);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t + i * 0.1); o.stop(t + i * 0.1 + 1);
+  });
+}
+function sndLocked() {
   const ac = audio(); if (!ac || !save.snd) return;
   const t = ac.currentTime;
   const o = ac.createOscillator(), g = ac.createGain();
-  o.type = 'sine';
-  o.frequency.setValueAtTime(880, t);
-  o.frequency.exponentialRampToValueAtTime(220, t + 0.42);
-  g.gain.setValueAtTime(0.16, t);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
-  const d = ac.createDelay(1.2), fb = ac.createGain(), wet = ac.createGain();
-  d.delayTime.value = 0.31; fb.gain.value = 0.34; wet.gain.value = 0.5;
-  o.connect(g); g.connect(ac.destination);
-  g.connect(d); d.connect(fb); fb.connect(d); d.connect(wet); wet.connect(ac.destination);
-  o.start(t); o.stop(t + 0.5);
+  const f = ac.createBiquadFilter();
+  o.type = 'square'; o.frequency.setValueAtTime(110, t);
+  o.frequency.exponentialRampToValueAtTime(70, t + 0.14);
+  f.type = 'lowpass'; f.frequency.value = 320;
+  g.gain.setValueAtTime(0.09, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+  o.connect(f); f.connect(g); g.connect(ac.destination);
+  o.start(t); o.stop(t + 0.22);
 }
 function sndStep() {
   const ac = audio(); if (!ac || !save.snd) return;
@@ -1104,6 +1142,8 @@ let visits = null;      // 逐格访问计数（通关热力回放）
 let winParticles = [];  // 通关金色粒子
 let niches = null;      // 壁龛：死路格，玩家的躲避处
 let lastPingCell = null;   // 游魂的趋向目标
+let hasKey = false, needKey = false, keyCell = null;   // 钥匙与天光之门
+let pingPower = 0, chargeStart = 0;                    // 蓄力声呐的声浪余威
 /* 游魂分型：趋声魂（循声）/ 游荡魂（充耳不闻，自行漂移）/ 守灯魂（守在碎片与出口旁） */
 const GHOST_KINDS = {
   hunter:   { near: '214,72,72',  core: '236,110,96',  map: '224,122,95' },
@@ -1128,7 +1168,6 @@ function ghostMix(level, daily) {
 function ghostMixForCount(n) {  // 自造井 / 名井：按数量混编
   return ['hunter', 'wanderer', 'warden', 'hunter'].slice(0, Math.max(0, n));
 }
-function ghostCountFor(level, daily) { return ghostMix(level, daily).length; }
 /* 壁龛识别：只有一个开放邻居的格子 = 躲避处 */
 function findNiches() {
   niches = new Set();
@@ -1141,6 +1180,31 @@ function findNiches() {
   }
 }
 function isNiche(x, y) { return niches && niches.has(x + ',' + y); }
+/* 钥匙：塔层（灯室/油路/天光）与无尽每五层——天光之门上锁，先寻钥匙（强制探索）
+   出口在验证器眼中仍可达（只是进不去），结构验证零改动 */
+function placeKey() {
+  let gx2 = 1, gy2 = 1;
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++)
+    if (grid[y][x] === 'G') { gx2 = x; gy2 = y; }
+  const dist = bfsDist(grid, px, py);
+  const maxD = dist[gy2][gx2];
+  if (maxD <= 0) return;
+  const cands = [];
+  for (let y = 1; y < rows - 1; y++) for (let x = 1; x < cols - 1; x++) {
+    if (grid[y][x] !== '.' || dist[y][x] <= 0) continue;
+    if (isNiche(x, y)) continue;
+    if (FRAG_CELLS.some(([fx, fy]) => fx === x && fy === y)) continue;
+    if (Math.hypot(x - gx2, y - gy2) < 4) continue;      // 别贴着出口
+    const dd = dist[y][x] / maxD;
+    if (dd >= 0.35 && dd <= 0.75) cands.push([x, y, Math.abs(dd - 0.55)]);
+  }
+  if (!cands.length) return;                              // 放不下就不锁
+  cands.sort((a, b) => a[2] - b[2]);
+  const pick = cands[Math.floor(Math.random() * Math.min(4, cands.length))];
+  grid[pick[1]][pick[0]] = 'K';
+  keyCell = [pick[0], pick[1]];
+  needKey = true;
+}
 let curGhostMix = null;   // 本次对局的分型混编（被撞后重生沿用）
 function spawnGhosts(mixOverride) {
   ghosts = [];
@@ -1220,7 +1284,9 @@ function moveGhosts(dt) {
     // 分型步频 + 近距减速（玩家 3 格内）；无底之井越深步频越快（封顶 -0.22s）
     const pd = Math.hypot(g.x - px, g.y - py);
     const kind = g.kind || 'hunter';
-    const rush = li >= LEVELS.length ? Math.min(0.22, (li - LEVELS.length) * 0.02) : 0;
+    // 无底之井越深步频越快；声浪余威（蓄力声呐后）游魂闻声疾行
+    const rush = (li >= LEVELS.length ? Math.min(0.22, (li - LEVELS.length) * 0.02) : 0)
+               + pingPower * 0.16;
     const interval = Math.max(0.4, (pd < 3 ? KIND_STEP_NEAR[kind] : KIND_STEP[kind]) - rush);
     if (g.t < interval) continue;
     g.t = 0;
@@ -1244,11 +1310,11 @@ function moveGhosts(dt) {
       let score = 0;
       // 偏好开阔区（+2）
       if (isOpenArea(nx, ny)) score += 2;
-      // 趋声：趋声魂全权重，守灯魂微弱，游荡魂充耳不闻
+      // 趋声：趋声魂全权重，守灯魂微弱，游荡魂充耳不闻；声浪余威放大趋声
       if (lastPingCell && kind !== 'wanderer') {
         const dNew = Math.hypot(nx - lastPingCell[0], ny - lastPingCell[1]);
         const dCur = Math.hypot(g.x - lastPingCell[0], g.y - lastPingCell[1]);
-        if (dNew < dCur) score += kind === 'hunter' ? 1.5 : 0.6;
+        if (dNew < dCur) score += (kind === 'hunter' ? 1.5 : 0.6) * (1 + pingPower * 0.9);
       }
       // 守灯魂：守在锚点旁——离岗则回，不追出防区
       if (kind === 'warden') {
@@ -1366,6 +1432,10 @@ function loadLevel(i, daily) {
   visits = new Float32Array(cols * rows);
   findNiches();
   lastPingCell = null;
+  hasKey = false; needKey = false; keyCell = null; chargeStart = 0; pingPower = 0;
+  // 塔层与无尽每五层：天光之门上锁
+  if (!isCustom && !isDaily && (li === 9 || li === 10 || li === 11 ||
+      (li >= LEVELS.length && (li - LEVELS.length) % 5 === 4))) placeKey();
   spawnGhosts();
   litWalls = new Set();
   totalWalls = 0;
@@ -1431,11 +1501,26 @@ const G = (x, y) => (x < 0 || y < 0 || x >= cols || y >= rows) ? '#' : grid[y][x
 function tryMove(dx, dy) {
   if (state !== 'play') return;
   const nx = px + dx, ny = py + dy;
-  if (G(nx, ny) === '#') { sndStep(); return; }
+  const c = G(nx, ny);
+  if (c === '#') { sndStep(); return; }
+  // 上锁的天光之门：没有钥匙进不去（撞门提示，不计步）
+  if (c === 'G' && needKey && !hasKey) {
+    sndLocked();
+    showFrag(T().lockMsg, false);
+    return;
+  }
   px = nx; py = ny; steps++;
   visits[ny * cols + nx] += 1;
   sndStep();
   ripples.push({ x: px + 0.5, y: py + 0.5, r: 0, maxR: 1.8, soft: true });
+  if (c === 'K') {
+    hasKey = true;
+    grid[ny][nx] = '.';
+    keyCell = null;
+    sndKey();
+    showFrag(T().keyMsg, false);
+    award('keyroom');
+  }
   if (G(nx, ny) === '*') {
     fragTakenSet.add(nx + ',' + ny);
     sndFrag();
@@ -1457,14 +1542,16 @@ function tryMove(dx, dy) {
   updateHud();
 }
 
-function ping(cx, cy) {
+function ping(cx, cy, power) {
   if (state !== 'play') return;
   pings++;
+  const pw = Math.max(0, Math.min(1, power || 0));
   const gx = cx !== undefined ? cx : px + 0.5;
   const gy = cy !== undefined ? cy : py + 0.5;
-  ripples.push({ x: gx, y: gy, r: 0, maxR: 7.5 });
-  sndPing();
+  ripples.push({ x: gx, y: gy, r: 0, maxR: 7.5 * (1 + pw * 0.85) });
+  sndPing(pw);
   lastPingCell = [gx, gy];   // 游魂闻声而动
+  if (pw > 0.1) pingPower = Math.max(pingPower, 0.35 + pw * 1.05);   // 声浪余威：游魂闻声疾行
   award('first');
   updateHud();
   /* 彩蛋：3 秒内连发 8 次声呐 → 三体警告 */
@@ -1713,6 +1800,7 @@ function enterCustomPlay(map, parVal, name, ghostCount) {
   visits = new Float32Array(cols * rows);
   findNiches();
   lastPingCell = null;
+  hasKey = false; needKey = false; keyCell = null; chargeStart = 0; pingPower = 0;
   litWalls = new Set();
   totalWalls = 0;
   for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++)
@@ -1980,6 +2068,37 @@ function render(dt) {
       ctx.font = `${Math.round(cell * 0.52)}px serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(lang === 'zh' ? '出' : '⌂', gcx, gcy + 1);
+      // 上锁的天光之门：暗芯金环锁孔盖住「出」字
+      if (needKey && !hasKey) {
+        ctx.fillStyle = `rgba(18,22,30,${(ga * 0.88).toFixed(3)})`;
+        ctx.beginPath(); ctx.arc(gcx, gcy, cell * 0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = `rgba(232,192,122,${(ga * 0.9).toFixed(3)})`;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.arc(gcx, gcy, cell * 0.34, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = `rgba(232,192,122,${ga.toFixed(3)})`;
+        ctx.beginPath(); ctx.arc(gcx, gcy - cell * 0.08, cell * 0.1, 0, Math.PI * 2); ctx.fill();
+        ctx.fillRect(gcx - cell * 0.035, gcy - cell * 0.06, cell * 0.07, cell * 0.2);
+      }
+    }
+  }
+
+  // 钥匙：金色微光中闪动
+  if (keyCell) {
+    const [kx2, ky2] = keyCell;
+    const d = Math.hypot(kx2 - px, ky2 - py);
+    const near = Math.max(0, 1 - d / 2.4);
+    const lit = lights[ky2 * cols + kx2] * 0.85;
+    const a = Math.min(1, near * 0.9 + lit);
+    if (a > 0.02) {
+      const kcx = ox + (kx2 + 0.5) * cell, kcy = oy + (ky2 + 0.5) * cell;
+      const glint = 0.5 + 0.5 * Math.sin(time * 4 + kx2 * 2.3);
+      ctx.fillStyle = `rgba(232,192,122,${(a * (0.5 + glint * 0.5)).toFixed(3)})`;
+      ctx.shadowColor = 'rgba(232,192,122,0.9)';
+      ctx.shadowBlur = 10 * a;
+      ctx.font = `${Math.round(cell * 0.48)}px serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('🗝', kcx, kcy + 1);
+      ctx.shadowBlur = 0;
     }
   }
 
@@ -2045,6 +2164,19 @@ function render(dt) {
   ctx.arc(pcx, pcy, cell * 0.17, 0, Math.PI * 2);
   ctx.fill();
   ctx.shadowBlur = 0;
+
+  // 蓄力声呐：按住时收紧-扩张的蓝白环
+  if (chargeStart && state === 'play') {
+    const p2 = Math.min(1, (performance.now() - chargeStart - 120) / 1000);
+    if (p2 > 0) {
+      const throb = 0.85 + 0.15 * Math.sin(performance.now() / 60);
+      ctx.strokeStyle = `rgba(157,196,255,${(0.22 + p2 * 0.42).toFixed(3)})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(pcx, pcy, cell * (0.5 + p2 * 2.1) * throb, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
 
   // 通关金色粒子
   for (let i = winParticles.length - 1; i >= 0; i--) {
@@ -2135,6 +2267,12 @@ function updateHud() {
   document.getElementById('hudSteps').innerHTML = `${T().steps} <b>${steps}</b> / ${T().par} ${par}`;
   document.getElementById('hudPings').innerHTML = `${T().pings} <b>${pings}</b>`;
   document.getElementById('hudTime').innerHTML = `${T().time} <b>${fmtTime(elapsed)}</b>`;
+  const kh = document.getElementById('hudKey');
+  if (kh) {
+    kh.style.display = needKey ? '' : 'none';
+    document.getElementById('hudKeySep').style.display = needKey ? '' : 'none';
+    kh.innerHTML = hasKey ? '🔑' : '🔒';
+  }
   const gh = document.getElementById('hudLost');
   if (gh) {
     gh.style.display = ghosts.length ? '' : 'none';
@@ -2384,7 +2522,7 @@ window.addEventListener('keydown', e => {
     if (state === 'play') { tryMove(...map[k]); moveCooldown = 0.11; }
   } else if (k === ' ') {
     e.preventDefault();
-    if (!e.repeat) ping();   // 长按不连发（也避免误触三体彩蛋）
+    if (!e.repeat) { ping(); chargeStart = performance.now(); }   // 落键即响；按住蓄力
   } else if (k === 'Enter' && state === 'menu') {
     loadLevel(0);
   } else if ((k === 'x' || k === 'X') && state === 'menu') {
@@ -2392,12 +2530,20 @@ window.addEventListener('keydown', e => {
     document.getElementById('dailyBtn').click();
   }
 });
-window.addEventListener('keyup', () => moveCooldown = 0);
+window.addEventListener('keyup', e => {
+  moveCooldown = 0;
+  // 蓄力声呐：按住 ≥300ms 后松开，释放更远的声浪（游魂也听得更清）
+  if (e.key === ' ' && state === 'play' && chargeStart) {
+    const held = performance.now() - chargeStart;
+    chargeStart = 0;
+    if (held > 300) ping(px + 0.5, py + 0.5, Math.min(1, (held - 200) / 1000));
+  }
+});
 
 let touchStart = null;
 cv.addEventListener('pointerdown', e => {
   if (editor.on) return;
-  touchStart = [e.clientX, e.clientY];
+  touchStart = [e.clientX, e.clientY, performance.now()];
 });
 /* 拖行连走：按住不放拖动，每滑过 26px 走一步（移动端核心操作） */
 cv.addEventListener('pointermove', e => {
@@ -2417,7 +2563,10 @@ cv.addEventListener('pointerup', e => {
       if (Math.abs(dx) > Math.abs(dy)) tryMove(Math.sign(dx), 0);
       else tryMove(0, Math.sign(dy));
     } else {
-      ping((e.clientX - ox) / cell, (e.clientY - oy) / cell);
+      // 按住蓄力：长按释放更远的声浪
+      const held = performance.now() - (touchStart[2] || 0);
+      const pw = held > 300 ? Math.min(1, (held - 200) / 1000) : 0;
+      ping((e.clientX - ox) / cell, (e.clientY - oy) / cell, pw);
     }
   }
   touchStart = null;
@@ -2491,6 +2640,7 @@ function frame(now) {
   if (state === 'play') {
     elapsed = performance.now() - startTime;
     if (Math.floor(elapsed / 1000) % 2 === 0) updateHud();
+    pingPower = Math.max(0, pingPower - dt / 2.2);   // 声浪余威衰减
     propagate(dt);
     updateGhostHum(now);
     moveGhosts(dt);

@@ -618,9 +618,11 @@ function draw(dt) {
     }
   }
 
-  // 山脊（前两层）
-  ctx.drawImage(ridges[0], 0, 0);
-  ctx.drawImage(ridges[1], 0, 0);
+  // 山脊（前两层）——雪原/大漠/太空覆盖地面，不画山脊
+  if (theme < 3) {
+    ctx.drawImage(ridges[0], 0, 0);
+    ctx.drawImage(ridges[1], 0, 0);
+  }
 
   // 彩蛋：滑稽显圣（十全十美后 7 秒，山脊之上）
   if (hjqT > 0) drawHjq(Math.min(1, hjqT / 1.2, (7 - hjqT) / 0.6));
@@ -655,7 +657,7 @@ function draw(dt) {
   }
 
   // 前山脊
-  ctx.drawImage(ridges[2], 0, 0);
+  if (theme < 3) ctx.drawImage(ridges[2], 0, 0);
 
   // 主题：海
   if (theme === 1) {
@@ -749,6 +751,220 @@ function draw(dt) {
         }
         x += bw + 6 + rnd2() * 26;
       }
+    }
+  }
+
+  /* ---------- 主题：雪原（枯枝林 + 积雪地面 + 雪漂） ---------- */
+  if (theme === 3) {
+    const hor = H * 0.62;
+    /* 积雪地面：蓝白渐变（随天色调冷暖） */
+    const sg = ctx.createLinearGradient(0, hor, 0, H);
+    const cool = 1 - L * 0.3;
+    sg.addColorStop(0, `rgb(${Math.round(200 * cool + sky.hor[0] * 0.2)},${Math.round(210 * cool + sky.hor[1] * 0.2)},${Math.round(225 * cool + sky.hor[2] * 0.2)})`);
+    sg.addColorStop(1, `rgb(${Math.round(140 * cool + sky.top[0] * 0.3)},${Math.round(155 * cool + sky.top[1] * 0.3)},${Math.round(180 * cool + sky.top[2] * 0.3)})`);
+    ctx.fillStyle = sg;
+    ctx.fillRect(0, hor, W, H - hor);
+    /* 枯枝林（确定性位置，远近两层） */
+    const treeRnd = mulberry32(777);
+    for (let layer = 0; layer < 2; layer++) {
+      const scale = layer ? 0.6 : 1.0;
+      const y = layer ? hor + (H - hor) * 0.25 : hor + 4;
+      ctx.strokeStyle = layer ? 'rgba(35,30,28,0.5)' : 'rgba(22,18,16,0.8)';
+      ctx.lineWidth = 2.2 * scale;
+      let tx = treeRnd() * 60;
+      while (tx < W + 40) {
+        const th = (50 + treeRnd() * 60) * scale;
+        const tw = th * 0.04;
+        /* 主干 */
+        ctx.beginPath();
+        ctx.moveTo(tx, y);
+        ctx.quadraticCurveTo(tx + (treeRnd() - 0.5) * 12, y - th * 0.5, tx + (treeRnd() - 0.5) * 16, y - th);
+        ctx.stroke();
+        /* 分枝 2-3 根 */
+        ctx.lineWidth = 1.2 * scale;
+        for (let b = 0; b < 3; b++) {
+          const bh = th * (0.35 + treeRnd() * 0.25);
+          const by = y - bh;
+          const bd = (treeRnd() > 0.5 ? 1 : -1) * (12 + treeRnd() * 18) * scale;
+          ctx.beginPath();
+          ctx.moveTo(tx + (treeRnd() - 0.5) * 6, by);
+          ctx.quadraticCurveTo(tx + bd * 0.5, by - bh * 0.4, tx + bd, by - bh * 0.6);
+          ctx.stroke();
+        }
+        ctx.lineWidth = 2.2 * scale;
+        tx += 40 + treeRnd() * 80;
+      }
+    }
+    /* 风吹雪漂（沿地面飘动，亮度随风速） */
+    if (S.wind > 0.05) {
+      const driftN = Math.round(S.wind * 30);
+      ctx.fillStyle = `rgba(240,246,255,${(0.06 + S.wind * 0.12).toFixed(3)})`;
+      for (let i = 0; i < driftN; i++) {
+        const dy = hor + 10 + ((i * 37 + frameTime * (20 + S.wind * 80)) % (H - hor));
+        const dx = ((i * 53 + frameTime * (30 + S.wind * 120)) % (W + 60)) - 30;
+        ctx.fillRect(dx, dy, 8 + S.wind * 14, 1.5);
+      }
+    }
+    /* 月影投在雪地上 */
+    if (!cel.isDay && cel.y < hor) {
+      const shadowW = 60 + (hor - cel.y) * 0.3;
+      const shadowA = 0.06 * (1 - Math.abs(cel.x - W / 2) / W);
+      if (shadowA > 0.01) {
+        ctx.fillStyle = `rgba(20,25,40,${shadowA.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.ellipse(W - cel.x, hor + 20, shadowW, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  /* ---------- 主题：大漠（沙丘层 + 热浪 + 星空明澈） ---------- */
+  if (theme === 4) {
+    const hor = H * 0.58;
+    /* 沙丘层（三层正弦曲线，颜色随天色） */
+    for (let layer = 0; layer < 3; layer++) {
+      const phase = layer * 1.8;
+      const amp = 22 + layer * 14;
+      const yBase = hor + layer * (H - hor) * 0.3;
+      const warm = [Math.round(200 - layer * 30), Math.round(170 - layer * 28), Math.round(120 - layer * 20)];
+      ctx.fillStyle = `rgba(${warm[0]},${warm[1]},${warm[2]},${(0.85 - layer * 0.15).toFixed(2)})`;
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      for (let x = 0; x <= W; x += 8) {
+        const y = yBase + Math.sin(x * 0.006 + phase + frameTime * 0.05) * amp
+                       + Math.sin(x * 0.015 + phase * 2) * amp * 0.3;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(W, H);
+      ctx.closePath();
+      ctx.fill();
+    }
+    /* 热浪扭曲（昼间，地平线附近微弱波动） */
+    if (L > 0.6) {
+      const shimmerA = (L - 0.6) * 0.5;
+      ctx.strokeStyle = `rgba(255,240,200,${(shimmerA * 0.08).toFixed(3)})`;
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 5; i++) {
+        const y = hor - 8 + i * 5;
+        const xOff = Math.sin(frameTime * 3 + i * 2) * 3;
+        ctx.beginPath();
+        ctx.moveTo(xOff, y);
+        ctx.quadraticCurveTo(W * 0.5 + xOff * 2, y + 1.5, W + xOff, y);
+        ctx.stroke();
+      }
+    }
+    /* 岩石剪影（确定性） */
+    const rockRnd = mulberry32(444);
+    ctx.fillStyle = 'rgba(50,38,25,0.85)';
+    for (let i = 0; i < 4; i++) {
+      const rx = rockRnd() * W;
+      const ry = hor + 20 + rockRnd() * (H - hor) * 0.5;
+      const rs = 8 + rockRnd() * 18;
+      ctx.beginPath();
+      ctx.moveTo(rx - rs, ry);
+      ctx.quadraticCurveTo(rx - rs * 0.3, ry - rs * 0.7, rx, ry - rs * 0.8);
+      ctx.quadraticCurveTo(rx + rs * 0.4, ry - rs * 0.5, rx + rs, ry);
+      ctx.closePath();
+      ctx.fill();
+    }
+    /* 大漠星空（夜间额外亮星——无光污染） */
+    const desertStarA = Math.max(0, 1 - L * 1.8);
+    if (desertStarA > 0.05) {
+      const dsRnd = mulberry32(888);
+      for (let i = 0; i < 40; i++) {
+        const sx2 = dsRnd() * W;
+        const sy2 = dsRnd() * hor * 0.8;
+        const sr = 0.5 + dsRnd() * 1.2;
+        const tw2 = 0.5 + 0.5 * Math.sin(frameTime * (1 + dsRnd() * 2) + dsRnd() * 7);
+        ctx.fillStyle = `rgba(255,255,255,${(desertStarA * tw2 * 0.9).toFixed(3)})`;
+        ctx.fillRect(sx2, sy2, sr, sr);
+      }
+    }
+    /* 风沙（沿地面飘动） */
+    if (S.wind > 0.1) {
+      ctx.fillStyle = `rgba(200,180,130,${(S.wind * 0.08).toFixed(3)})`;
+      for (let i = 0; i < Math.round(S.wind * 20); i++) {
+        const sy3 = hor + 5 + ((i * 41 + frameTime * (40 + S.wind * 100)) % (H - hor));
+        const sx3 = ((i * 67 + frameTime * (50 + S.wind * 150)) % (W + 40)) - 20;
+        ctx.fillRect(sx3, sy3, 6 + S.wind * 10, 1);
+      }
+    }
+  }
+
+  /* ---------- 主题：太空舱（舷窗 + 地球弧线 + 漂浮物） ---------- */
+  if (theme === 5) {
+    /* 太空背景填满（覆盖山脊） */
+    ctx.fillStyle = 'rgba(3,4,8,0.92)';
+    ctx.fillRect(0, 0, W, H);
+    /* 星星（太空更亮更密） */
+    const spRnd = mulberry32(333);
+    for (let i = 0; i < 80; i++) {
+      const sx4 = spRnd() * W;
+      const sy4 = spRnd() * H * 0.7;
+      const sr2 = 0.5 + spRnd() * 1.5;
+      const tw3 = 0.4 + 0.6 * Math.abs(Math.sin(frameTime * 0.8 + spRnd() * 7));
+      ctx.fillStyle = `rgba(255,255,255,${(tw3 * 0.9).toFixed(3)})`;
+      ctx.fillRect(sx4, sy4, sr2, sr2);
+    }
+    /* 地球弧线（下方） */
+    const eR = W * 1.1;
+    const eCx = W * 0.5;
+    const eCy = H + eR * 0.72;
+    const eg = ctx.createRadialGradient(eCx, eCy - eR * 0.28, eR * 0.6, eCx, eCy, eR);
+    eg.addColorStop(0, 'rgba(30,80,140,0.9)');
+    eg.addColorStop(0.5, 'rgba(20,50,100,0.8)');
+    eg.addColorStop(0.85, 'rgba(10,25,55,0.7)');
+    eg.addColorStop(1, 'rgba(5,15,35,0.8)');
+    ctx.fillStyle = eg;
+    ctx.beginPath();
+    ctx.arc(eCx, eCy, eR, 0, Math.PI * 2);
+    ctx.fill();
+    /* 地球云层（简单噪声带） */
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(eCx, eCy, eR, 0, Math.PI * 2);
+    ctx.clip();
+    for (let i = 0; i < 4; i++) {
+      const cy2 = H * (0.82 + i * 0.04);
+      const cw = W * (0.3 + (i % 2) * 0.3);
+      ctx.fillStyle = `rgba(255,255,255,${(0.08 + i * 0.02).toFixed(2)})`;
+      ctx.beginPath();
+      ctx.ellipse(W * 0.3 + i * W * 0.2, cy2, cw, 4 + i * 2, 0.1 * (i % 2 ? 1 : -1), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+    /* 大气辉光（地球边缘） */
+    const ag = ctx.createRadialGradient(eCx, eCy, eR * 0.98, eCx, eCy, eR * 1.05);
+    ag.addColorStop(0, 'rgba(100,160,255,0.3)');
+    ag.addColorStop(1, 'rgba(100,160,255,0)');
+    ctx.fillStyle = ag;
+    ctx.beginPath();
+    ctx.arc(eCx, eCy, eR * 1.05, 0, Math.PI * 2);
+    ctx.fill();
+    /* 舷窗框（圆角矩形暗边） */
+    ctx.strokeStyle = 'rgba(40,45,55,0.95)';
+    ctx.lineWidth = 18;
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(9, 9, W - 18, H - 18, 30);
+      ctx.stroke();
+    } else {
+      ctx.strokeRect(9, 9, W - 18, H - 18);
+    }
+    ctx.strokeStyle = 'rgba(70,75,85,0.5)';
+    ctx.lineWidth = 2;
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(19, 19, W - 38, H - 38, 22);
+      ctx.stroke();
+    }
+    /* 漂浮微粒（太空尘埃） */
+    const duskA = 0.6;
+    for (let i = 0; i < 12; i++) {
+      const px4 = (i * 89 + frameTime * (3 + i % 3)) % W;
+      const py4 = (i * 47 + Math.sin(frameTime * 0.3 + i) * 20) % (H * 0.5);
+      ctx.fillStyle = `rgba(200,210,230,${(duskA * (0.3 + 0.4 * Math.sin(frameTime + i * 2))).toFixed(3)})`;
+      ctx.fillRect(px4, py4, 1.5, 1.5);
     }
   }
 
@@ -1080,14 +1296,23 @@ function saveStateSoon() {
   }, 400);
 }
 function restoreState() {
+  let hasSaved = false;
   try {
     const st = JSON.parse(localStorage.getItem('scape-state') || 'null');
     if (st && Array.isArray(st.c)) {
       st.c.forEach((v, i) => { if (CH[i] !== undefined) S[CH[i]] = clamp(+v || 0, 0, 1); });
       if (st.t !== undefined) time = clamp(+st.t, 0, 24);
-      if (st.th !== undefined) theme = clamp(st.th | 0, 0, 2);
+      if (st.th !== undefined) { theme = clamp(st.th | 0, 0, 5); hasSaved = true; }
     }
   } catch (e) {}
+  // 季节自动主题：首访（无保存）按月份选主题
+  if (!hasSaved) {
+    const mo = new Date().getMonth() + 1;  // 1-12
+    theme = mo === 12 || mo <= 2 ? 3       // 冬 → 雪原
+           : mo <= 5 ? 0                    // 春 → 山（花信风）
+           : mo <= 8 ? 1                    // 夏 → 海
+           : 0;                             // 秋 → 山
+  }
   // #w= 分享链接优先
   const m = location.hash.match(/w=([A-Za-z0-9+/=]+)/);
   if (m) {
@@ -1096,7 +1321,7 @@ function restoreState() {
       if (st && Array.isArray(st.c)) {
         st.c.forEach((v, i) => { if (CH[i] !== undefined) S[CH[i]] = clamp(+v || 0, 0, 1); });
         if (st.t !== undefined) time = clamp(+st.t, 0, 24);
-        if (st.th !== undefined) theme = clamp(st.th | 0, 0, 2);
+        if (st.th !== undefined) theme = clamp(st.th | 0, 0, 5);
         toast(T('已载入分享的境', 'Shared scene loaded'));
       }
     } catch (e) {}
@@ -1113,11 +1338,11 @@ function toast(msg) {
 
 /* 主题按钮 */
 const themeBtn = document.getElementById('themeBtn');
-const THEMES = ['⛰ 山', '🌊 海', '🏙 城'];
-const THEMES_EN = ['⛰ MTN', '🌊 SEA', '🏙 CITY'];
+const THEMES = ['⛰ 山', '🌊 海', '🏙 城', '❄ 雪原', '🏜 大漠', '🛸 太空'];
+const THEMES_EN = ['⛰ MTN', '🌊 SEA', '🏙 CITY', '❄ SNOW', '🏜 DESERT', '🛸 SPACE'];
 function updTheme() { themeBtn.textContent = lang === 'zh' ? THEMES[theme] : THEMES_EN[theme]; }
 themeBtn.addEventListener('click', () => {
-  theme = (theme + 1) % 3;
+  theme = (theme + 1) % 6;
   updTheme(); saveStateSoon();
 });
 
@@ -1226,6 +1451,8 @@ sndBtn.addEventListener('click', () => {
   sndOn = !sndOn;
   if (master) master.gain.setTargetAtTime(sndOn ? 0.6 : 0, AC.currentTime, 0.3);
   updSnd();
+  if (sndOn) { initAudio(); startMusic(); }
+  else stopMusic();
 });
 
 /* 语言 */
@@ -1237,6 +1464,56 @@ document.getElementById('langBtn').addEventListener('click', () => {
   if (!recorder) recBtn.textContent = lang === 'zh' ? '● 录' : '● REC';
   buildUI();
 });
+
+/* ---------- 环境音乐层：基于声道状态生成五声音阶旋律 ---------- */
+/* 不只是噪声——音符选择和时长由当前声道状态调制 */
+let musicTimer = null;
+const SCALES = {
+  pentatonic: [220, 247.5, 293.33, 330, 391.5, 440, 495, 586.66],  // A 大调五声
+  minorPenta: [220, 261.63, 293.66, 329.63, 392, 440, 523.25, 587.33], // A 小调五声
+  japanese:   [220, 233.08, 293.66, 311.13, 392, 440, 466.16, 587.33]  // 日本音阶（阴翳）
+};
+function themeScale() {
+  return theme === 3 ? SCALES.minorPenta   // 雪原：小调（清冷）
+       : theme === 4 ? SCALES.pentatonic    // 大漠：大调（开阔）
+       : theme === 5 ? SCALES.japanese      // 太空：日本音阶（疏离）
+       : SCALES.pentatonic;                  // 山/海/城：大调
+}
+function ambientNote() {
+  if (!AC || !sndOn) return;
+  const scale = themeScale();
+  /* 声道影响音符选择 */
+  const warmth = S.fire * 0.5 + S.stream * 0.3;     // 火/溪 → 低音区
+  const energy = S.wind * 0.4 + S.rain * 0.3;       // 风/雨 → 高音区
+  const idx = Math.floor((0.2 + energy * 0.6 + (Math.random() - 0.5) * 0.3) * scale.length);
+  const fq = scale[clamp(idx, 0, scale.length - 1)] * (warmth > 0.4 ? 0.5 : 1);  // 温暖时降八度
+  /* 声道影响音符时长 */
+  const dur = 1.5 + S.bell * 3 + (1 - S.rain) * 1;   // 远钟→长音，雨大→短音
+  const ac2 = AC;
+  const o = ac2.createOscillator(), g = ac2.createGain();
+  const f = ac2.createBiquadFilter();
+  f.type = 'lowpass';
+  f.frequency.value = 1200 + energy * 2000;
+  o.type = 'sine';
+  o.frequency.value = fq;
+  /* 慢 attack + 慢 release = 环境感 */
+  const t0 = ac2.currentTime;
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(0.025, t0 + dur * 0.3);
+  g.gain.linearRampToValueAtTime(0, t0 + dur);
+  o.connect(f); f.connect(g); g.connect(master);
+  o.start(t0); o.stop(t0 + dur + 0.1);
+  /* 下一次音符间隔 */
+  const gap = (2 + Math.random() * 3) * (1 - S.rain * 0.3);
+  musicTimer = setTimeout(ambientNote, gap * 1000);
+}
+function startMusic() {
+  if (musicTimer) return;
+  ambientNote();
+}
+function stopMusic() {
+  if (musicTimer) { clearTimeout(musicTimer); musicTimer = null; }
+}
 
 /* ---------- 聆听时长统计（门户读取 scape-stats.minutes） ---------- */
 let listenSec = 0;
@@ -1261,6 +1538,8 @@ let clockAcc = 0;
 document.addEventListener('visibilitychange', () => {
   pageHidden = document.hidden;
   if (!pageHidden) prev = performance.now();
+  if (pageHidden) stopMusic();
+  else if (sndOn && AC) startMusic();
 });
 function loop(now) {
   requestAnimationFrame(loop);
@@ -1311,7 +1590,7 @@ window.addEventListener('keydown', e => {
     toast(lang === 'zh' ? `今日气象 · ${ds.name}` : `today · ${ds.nameEn}`);
   }
   /* T = 主题切换 */
-  else if (k === 't') { theme = (theme + 1) % 3; updTheme(); saveStateSoon(); }
+  else if (k === 't') { theme = (theme + 1) % 6; updTheme(); saveStateSoon(); }
   /* M = 心境随机 */
   else if (k === 'm') { document.getElementById('moodBtn').click(); }
   /* F = 时光流转 */
@@ -1331,6 +1610,7 @@ if (!recorder && lang === 'en') recBtn.textContent = '● REC';
 // 首次手势解锁音频
 document.addEventListener('pointerdown', function once() {
   initAudio();
+  if (sndOn) startMusic();
   document.removeEventListener('pointerdown', once);
 }, { once: true });
 requestAnimationFrame(loop);

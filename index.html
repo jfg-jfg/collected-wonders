@@ -363,6 +363,21 @@ function applyI18n() {
     ? `此端共：聆听 <b>${totalMin}</b> 分钟 · 读信 <b>${totalLetters}</b> 封 · 通关/存画 <b>${totalClears}</b> 次`
     : `this terminal: <b>${totalMin}</b> min listened · <b>${totalLetters}</b> letters read · <b>${totalClears}</b> clears/saves`;
   grid.appendChild(gs);
+  // 今日行：日期种子与褶皱/造境同源——今日星球与今日气象在门口互相看见
+  {
+    const d = new Date();
+    const k = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    let h = 0;
+    for (const ch of k) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    const scenes = ['雪夜炉火', '山雨欲来', '海雾清晨', '樱花午后', '极夜深城', '炉边听风', '山涧清晨', '城市黄昏'];
+    const scenesEn = ['Fire & Snow', 'Storm Coming', 'Sea Fog Dawn', 'Petal Afternoon', 'Polar Night City', 'Fireside', 'Dawn', 'City Dusk'];
+    const dl = document.createElement('div');
+    dl.className = 'global-stat';
+    dl.innerHTML = lang === 'zh'
+      ? `今日：造境气象 <b>${scenes[h % 8]}</b> · 褶皱星球已就位 <b>☄</b>`
+      : `today: scape weather <b>${scenesEn[h % 8]}</b> · fold planet is waiting <b>☄</b>`;
+    grid.appendChild(dl);
+  }
 }
 function workStat(en) {
   try {

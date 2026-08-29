@@ -1200,6 +1200,47 @@ document.addEventListener('pointerdown', function once() {
   document.removeEventListener('pointerdown', once);
 }, { once: true });
 requestAnimationFrame(loop);
+
+/* #capture：极夜场景自录（约 14 秒 webm，画面+声音） */
+if (location.hash.includes('capture')) {
+  const CAPT = 14;
+  applyState({ rain: .25, wind: .28, snow: .88, bell: .32, cricket: .3, time: 23, th: 2 });
+  theme = 2; updTheme();
+  const st = document.createElement('div');
+  st.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:99;background:#20242c;color:#fff;font:12px monospace;padding:6px 12px;border-radius:6px';
+  st.textContent = 'CAP …';
+  document.body.appendChild(st);
+  setTimeout(() => {
+    try {
+      initAudio();
+      const stream = cv.captureStream(30);
+      if (recDest) recDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+      const mime = pickMime();
+      const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      const chunks = [];
+      rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+      rec.onstop = () => {
+        const blob = new Blob(chunks, { type: mime || 'video/webm' });
+        const a = document.createElement('a');
+        a.download = 'scape-demo.' + ((mime || '').includes('mp4') ? 'mp4' : 'webm');
+        a.href = URL.createObjectURL(blob);
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        st.textContent = 'CAP saved ✓';
+        setTimeout(() => window.close(), 1500);
+      };
+      rec.start(300);
+      const t0 = performance.now();
+      const tick = () => {
+        const el = (performance.now() - t0) / 1000;
+        if (el > CAPT) { st.textContent = 'CAP saved ✓'; rec.stop(); return; }
+        st.textContent = 'CAP ' + el.toFixed(1) + 's';
+        setTimeout(tick, 200);
+      };
+      tick();
+    } catch (e) { st.textContent = 'CAP err ' + e.message; }
+  }, 600);
+}
 </script>
 </body>
 </html>

@@ -375,11 +375,11 @@ function setPath(obj, path, val) {
 }
 modalSheet.addEventListener('input', e => {
   const p = e.target.dataset.p;
-  if (p && ED) setPath(ED, p, e.target.value);
+  if (p && ED) setPath(ED, p, e.target.type === 'checkbox' ? e.target.checked : e.target.value);
 });
 modalSheet.addEventListener('change', e => {
   const p = e.target.dataset.p;
-  if (p && ED) setPath(ED, p, e.target.value);
+  if (p && ED) setPath(ED, p, e.target.type === 'checkbox' ? e.target.checked : e.target.value);
 });
 
 /* ---------- 选集屏 ---------- */
@@ -966,8 +966,16 @@ function edNewDraft() {
   return {
     title: '', kicker: '', desc: '', styleIdx: 0,
     nodes: [{ year: '', title: '', text: '', replies: [{ label: '', to: 'E1' }] }],
-    endings: [{ title: '', text: '' }]
+    endings: [{ title: '', text: '' }],
+    hiddenOn: false, hiddenId: 2, hiddenRep: 1, hiddenReq: [], custom: null
   };
+}
+/* hex 明暗微调（自定纸色时派生 paper2） */
+function shade(hex, k) {
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return hex;
+  const ch = i => Math.max(0, Math.min(255, Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 + k))))
+    .toString(16).padStart(2, '0');
+  return '#' + ch(1) + ch(3) + ch(5);
 }
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
 
@@ -1034,6 +1042,16 @@ function renderEditor() {
     <div class="ed-sec">
       <div class="sec-t">${T('二 · 纸与笔', '2 · PAPER & PEN')}</div>
       <div class="stylechips">${chips}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;font-size:12px;color:var(--dim)">
+        <span>${T('自定', 'Custom')}：</span>
+        <label style="display:flex;align-items:center;gap:4px">${T('纸', 'paper')}
+          <input type="color" data-p="custom.paper" value="${(ED.custom && ED.custom.paper) || STYLE_PRESETS[ED.styleIdx].style.paper}" style="width:30px;height:24px;border:none;background:none;padding:0;cursor:pointer"></label>
+        <label style="display:flex;align-items:center;gap:4px">${T('墨', 'ink')}
+          <input type="color" data-p="custom.ink" value="${(ED.custom && ED.custom.ink) || STYLE_PRESETS[ED.styleIdx].style.ink}" style="width:30px;height:24px;border:none;background:none;padding:0;cursor:pointer"></label>
+        <label style="display:flex;align-items:center;gap:4px">${T('印', 'seal')}
+          <input type="color" data-p="custom.seal" value="${(ED.custom && ED.custom.seal) || STYLE_PRESETS[ED.styleIdx].style.seal}" style="width:30px;height:24px;border:none;background:none;padding:0;cursor:pointer"></label>
+        ${ED.custom ? `<button class="ed-del" style="padding:1px 7px" onclick="edClrCustom()" title="${T('恢复预设颜色', 'reset to preset')}">↺</button>` : ''}
+      </div>
     </div>
 
     <div class="ed-sec">
@@ -1046,6 +1064,22 @@ function renderEditor() {
       <div class="sec-t">${T('四 · 结局', '4 · ENDINGS')}</div>
       ${endCards}
       <button class="ed-add" onclick="edAddEnd()">＋ ${T('添加结局', 'add an ending')}</button>
+      <div style="margin-top:14px;padding:10px 12px;border:1px dashed var(--line);border-radius:8px;font-size:12px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--dim)">
+          <input type="checkbox" ${ED.hiddenOn ? 'checked' : ''} onchange="edHiddenToggle(this)">
+          ${T('✦ 隐藏结局', '✦ Hidden ending')}
+        </label>
+        ${ED.hiddenOn ? `
+        <div style="margin-top:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:var(--dim)">
+          ${T('结局', 'Ending')}
+          <select data-p="hiddenId" style="padding:2px 6px">${ED.endings.map((_, i) => `<option value="${i + 1}" ${ED.hiddenId === i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}</select>
+          ${T('在玩家读过', 'when the player has read')}
+          ${ED.nodes.map((_, i) => `<label style="display:inline-flex;align-items:center;gap:2px;margin:0 4px;cursor:pointer"><input type="checkbox" data-p="hiddenReq.${i}" ${ED.hiddenReq && ED.hiddenReq[i] ? 'checked' : ''}>${T('第', '#')}${i + 1}${T('封', '')}</label>`).join('')}
+          ${T('时，替换', '— replaces')}
+          <select data-p="hiddenRep" style="padding:2px 6px">${ED.endings.map((_, i) => `<option value="${i + 1}" ${ED.hiddenRep === i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}</select>
+        </div>
+        <div class="hint" style="margin-top:8px">${T('两条路都走到的人，才看得到结局的另一面。', 'Only those who walked both paths see the other face of the ending.')}</div>` : ''}
+      </div>
     </div>
 
     <div class="ed-sec">
@@ -1072,6 +1106,8 @@ function edClose() {
   showSelect();
 }
 function edStyle(i) { ED.styleIdx = i; renderEditor(); }
+function edHiddenToggle(el) { ED.hiddenOn = el.checked; renderEditor(); }
+function edClrCustom() { ED.custom = null; renderEditor(); }
 function edAddNode() {
   ED.nodes.push({ year: '', title: '', text: '', replies: [{ label: '', to: 'E1' }] });
   renderEditor();
@@ -1099,7 +1135,13 @@ function edDelEnd(i) {
   renderEditor();
 }
 function edBuild() {
-  const st = STYLE_PRESETS[ED.styleIdx].style;
+  const st = { ...STYLE_PRESETS[ED.styleIdx].style };
+  // 自定颜色：在预设骨架上覆盖纸/墨/印，纸2 由纸色加深派生
+  if (ED.custom) {
+    if (ED.custom.paper) { st.paper = ED.custom.paper; st.paper2 = shade(ED.custom.paper, -0.07); }
+    if (ED.custom.ink) st.ink = ED.custom.ink;
+    if (ED.custom.seal) st.seal = ED.custom.seal;
+  }
   const lettersZh = {}, endingsZh = {};
   ED.nodes.forEach((n, i) => {
     const id = 'n' + (i + 1);
@@ -1115,7 +1157,7 @@ function edBuild() {
   ED.endings.forEach((e2, i) => {
     endingsZh['E' + (i + 1)] = { title: e2.title || (T('结局', 'Ending') + ' ' + (i + 1)), text: e2.text || '…' };
   });
-  return {
+  const p = {
     id: 'my-' + Date.now().toString(36),
     title: ED.title.trim() || T('我的故事', 'My Story'),
     kicker: ED.kicker.trim(),
@@ -1125,6 +1167,12 @@ function edBuild() {
     letters: { zh: lettersZh },
     endings: { zh: endingsZh }
   };
+  if (ED.hiddenOn) {
+    const req = (ED.hiddenReq || []).map((v, i) => v ? 'n' + (i + 1) : null).filter(Boolean);
+    if (req.length && +ED.hiddenId !== +ED.hiddenRep)
+      p.hiddenEnding = { id: 'E' + (+ED.hiddenId), require: req, replace: 'E' + (+ED.hiddenRep) };
+  }
+  return p;
 }
 function edValidate(p) {
   const errs = [];
@@ -1139,6 +1187,10 @@ function edValidate(p) {
     });
   });
   ED.endings.forEach((e2, i) => { if (!e2.text.trim()) errs.push(T(`结局 ${i + 1} 还是空的`, `Ending ${i + 1} is empty`)); });
+  if (ED.hiddenOn) {
+    if (+ED.hiddenId === +ED.hiddenRep) errs.push(T('隐藏结局不能替换它自己', 'The hidden ending cannot replace itself'));
+    if (!(ED.hiddenReq || []).some(Boolean)) errs.push(T('隐藏结局至少要勾选一封触发信', 'Check at least one trigger letter for the hidden ending'));
+  }
   return errs;
 }
 function edSave() {
@@ -1189,9 +1241,29 @@ function edRemix() {
   });
   let styleIdx = 0;
   STYLE_PRESETS.forEach((p2, i) => { if (pack.style && p2.style.paper === pack.style.paper) styleIdx = i; });
+  // 往返：隐藏结局与自定颜色一并载回编辑器
+  let hiddenOn = false, hiddenId = 2, hiddenRep = 1, hiddenReq = [];
+  if (pack.hiddenEnding) {
+    const mh = /^E(\d+)$/.exec(pack.hiddenEnding.id);
+    const mr = /^E(\d+)$/.exec(pack.hiddenEnding.replace);
+    if (mh && mr) {
+      hiddenOn = true; hiddenId = +mh[1]; hiddenRep = +mr[1];
+      const arr = [];
+      (pack.hiddenEnding.require || []).forEach(r => {
+        const mn = /^n(\d+)$/.exec(r);
+        if (mn) arr[+mn[1] - 1] = true;
+      });
+      hiddenReq = arr;
+    }
+  }
+  let custom = null;
+  const pst = STYLE_PRESETS[styleIdx].style;
+  if (pack.style && pack.style.paper !== pst.paper)
+    custom = { paper: pack.style.paper, ink: pack.style.ink, seal: pack.style.seal };
   ED = {
     title: pack.title + T(' · 改', ' · remix'), kicker: pack.kicker || '', desc: (pack.desc || '').replace(/<br>/g, ' '),
-    styleIdx, nodes: nodes.length ? nodes : edNewDraft().nodes, endings: endings.length ? endings : edNewDraft().endings
+    styleIdx, nodes: nodes.length ? nodes : edNewDraft().nodes, endings: endings.length ? endings : edNewDraft().endings,
+    hiddenOn, hiddenId, hiddenRep, hiddenReq, custom
   };
   renderEditor();
   toast(T('已载入底稿，随便改', 'Draft loaded — remix away'));

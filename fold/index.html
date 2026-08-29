@@ -182,46 +182,6 @@ void main(){ gl_Position = vec4(verts[gl_VertexID], 0.0, 1.0); }`;
 
 /* 双精度模拟（double-single）曼德博：Dekker/Knuth 技术
    使缩放可达 ~10^13 而不糊成像素 */
-const FRAG = `#version 300 es
-precision highp float;
-out vec4 fragColor;
-uniform vec2 uCenterX;   // (hi, lo)
-uniform vec2 uCenterY;
-uniform float uScale;    // 视野半高
-uniform float uAspect;
-uniform float uIter;     // 最大迭代
-uniform float uPhase;    // 调色相位
-
-/* df64 核心 */
-vec2 ds_add(vec2 a, vec2 b) {
-  float t1 = a.x + b.x;
-  float e = t1 - a.x;
-  float t2 = ((b.x - e) + (a.x - (t1 - e))) + a.y + b.y;
-  vec2 r;
-  r.x = t1 + t2;
-  r.y = t2 - (r.x - t1);
-  return r;
-}
-vec2 ds_mul(vec2 a, vec2 b) {
-  const float SPLIT = 8193.0;
-  float ca = SPLIT * a.x, cb = SPLIT * b.x;
-  float a_hi = ca - (ca - a.x), b_hi = cb - (cb - b.x);
-  float a_lo = a.x - a_hi, b_lo = b.x - b_hi;
-  float c11 = a.x * b.x;
-  float c21 = a_lo * b_lo + (a_lo * b_hi + a_hi * b_lo) * SPLIT + (a_hi - a_hi * 1.0) * 0.0;
-  float t1 = c11 + c21;
-  vec2 r;
-  r.x = t1;
-  r.y = c21 - (t1 - c11);
-  return r;
-}
-
-void main() {
-  vec2 uv = gl_FragCoord.xy / vec2(uIter * 0.0 + 1.0);  // placeholder, replaced below
-  fragColor = vec4(0.0);
-}`;
-
-/* 上面的 uv 写法不便，直接内联完整主函数 */
 const FRAG_MAIN = `#version 300 es
 precision highp float;
 out vec4 fragColor;
@@ -252,8 +212,10 @@ vec2 ds_mul(vec2 a, vec2 b) {
   float ca = SPLIT * a.x, cb = SPLIT * b.x;
   float a_hi = ca - (ca - a.x), b_hi = cb - (cb - b.x);
   float a_lo = a.x - a_hi, b_lo = b.x - b_hi;
-  float c11 = a.x * b.x;
-  float c21 = a_lo * b_lo + (a_lo * b_hi + a_hi * b_lo) * SPLIT;
+  float c11 = a_hi * b_hi;
+  /* 修正项 = 交叉和 + 低位积（~2^-13 量级）——绝不可乘 SPLIT：
+     旧版此处误乘 8193 把修正项放大到主项量级，渲染的是错误映射 */
+  float c21 = (a_hi * b_lo + a_lo * b_hi) + a_lo * b_lo;
   float t1 = c11 + c21;
   vec2 r;
   r.x = t1;

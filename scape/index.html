@@ -714,6 +714,29 @@ function draw(dt) {
       ctx.lineWidth = i % 2 ? 1.2 : 1.4;
       ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 45, y - 2.5, x + 100, y); ctx.stroke();
     }
+    // 生物荧光（夜间海浪蓝光涌动——与陆地萤火遥相呼应）
+    const bioA = Math.max(0, 0.25 - L) * 2.5;
+    if (bioA > 0.03) {
+      for (let i = 0; i < 8; i++) {
+        const y = hor + 8 + (i / 8) * (H - hor) * 0.7;
+        const speed = 12 + i * 4 + S.wind * 20;
+        const x = ((frameTime * speed + i * 137) % (W + 180)) - 90;
+        const pulse = 0.3 + 0.7 * Math.sin(frameTime * 1.8 + i * 2.4);
+        const a = bioA * pulse * (1 - i / 10);
+        if (a < 0.02) continue;
+        const bw2 = 30 + i * 8;
+        const bg3 = ctx.createLinearGradient(x, y, x + bw2, y);
+        bg3.addColorStop(0, `rgba(60,200,220,0)`);
+        bg3.addColorStop(0.5, `rgba(80,220,240,${a.toFixed(3)})`);
+        bg3.addColorStop(1, `rgba(60,200,220,0)`);
+        ctx.strokeStyle = bg3;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + bw2 * 0.5, y - 2, x + bw2, y);
+        ctx.stroke();
+      }
+    }
     // 白鹤礁灯塔（夜）：与回声/纸间同一座
     // 联动：有人触到褶皱十万亿之底（fold-stats.bottom）→ 灯常明且更亮
     const lhA = foldBottomLit ? 1 : clamp((0.35 - L) / 0.3, 0, 1);

@@ -1120,7 +1120,7 @@ function splashBurst(x, y, scale) {
     const amt = inkDensity * (0.25 + Math.random() * 0.6) * scale;
     splat(px, py,
       Math.cos(a) * (60 + Math.random() * 220) * 0.16,
-      Math.sin(a) * (60 + Math.random() * 220) * 0.16 + 30,
+      Math.sin(a) * (60 + Math.random() * 220) * 0.16 + 55 + Math.random() * 45,   // 沉降：墨点带坠势
       amt, 0.28 + Math.random() * 0.3, undefined, 0.6 * scale);
   }
 }

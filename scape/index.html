@@ -35,8 +35,7 @@
   .masthead .clock { margin-top: 4px; font-size: 15px; letter-spacing: 0.3em; color: var(--dim); }
   .topright { position: fixed; top: 24px; right: 28px; z-index: 6; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
   .btn {
-    border: 1.5px solid var(--line); background: var(--dock); -webkit-backdrop-filter: blur(10px);
- backdrop-filter: blur(10px);
+    border: 1.5px solid var(--line); background: var(--dock); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
     color: var(--txt); font-family: inherit; font-size: 13px; letter-spacing: 0.1em;
     padding: 8px 14px; border-radius: 999px; cursor: pointer; font-weight: 600;
     transition: color .2s, border-color .2s;
@@ -50,8 +49,7 @@
   }
   .presets { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
   .chip {
-    border: 1.5px solid var(--line); background: var(--dock); -webkit-backdrop-filter: blur(10px);
- backdrop-filter: blur(10px);
+    border: 1.5px solid var(--line); background: var(--dock); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
     color: var(--txt); font-family: inherit; font-size: 13px; letter-spacing: 0.12em;
     padding: 8px 18px; border-radius: 999px; cursor: pointer; font-weight: 600;
   }
@@ -59,8 +57,7 @@
   .board {
     display: flex; gap: 6px; align-items: stretch; flex-wrap: wrap; justify-content: center;
     padding: 14px 16px 12px; border: 1.5px solid var(--line); border-radius: 16px;
-    background: var(--dock); -webkit-backdrop-filter: blur(14px);
- backdrop-filter: blur(14px);
+    background: var(--dock); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
     box-shadow: 0 12px 44px rgba(0,0,0,0.55);
   }
   .ch { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 80px; padding: 4px 2px; }
@@ -912,7 +909,6 @@ const PRESETS = {
 };
 const PRESET_ZH = { rainy: '雨夜读书', morning: '山涧清晨', fireside: '炉边听风', valley: '午后山谷', winter: '冬夜围炉', blossom: '花信风' };
 const PRESET_EN = { rainy: 'Rainy Night', morning: 'Dawn', fireside: 'Fireside', valley: 'Valley', winter: 'Winter', blossom: 'Blossom' };
-const ledEls = {};
 
 function buildUI() {
   // 预设

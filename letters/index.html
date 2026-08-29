@@ -98,8 +98,7 @@
   .en-text { font-size:clamp(15px,2.2vw,17px); line-height:2.4; letter-spacing:0.08em; color:rgba(236,229,210,0.85); max-width:560px; white-space:pre-line; text-align:left; }
 
   /* ---------- 通用弹层 ---------- */
-  .modal { position:fixed; inset:0; z-index:12; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(5,8,11,0.72); -webkit-backdrop-filter:blur(4px);
- backdrop-filter:blur(4px); }
+  .modal { position:fixed; inset:0; z-index:12; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(5,8,11,0.72); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
   .modal.show { display:flex; }
   .sheet { width:min(680px,94vw); max-height:86vh; overflow-y:auto; overscroll-behavior:contain; background:linear-gradient(170deg,#17222c,#101820); border:1px solid rgba(217,181,124,0.28); border-radius:10px; padding:26px 28px 30px; color:#ece5d2; box-shadow:0 30px 90px rgba(0,0,0,0.7); }
   .sheet h3 { font-size:19px; letter-spacing:0.3em; font-weight:600; color:var(--gold); margin-bottom:6px; }
@@ -1254,7 +1253,7 @@ document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
 loadPack(BUILTIN_STORIES[0]);
 // hash 直达：#p=<id> 或 #p=<id>&n=<node>；#dbg=editor/ai/import/stack 供自检
 {
-  const hm = location.hash.match(/^#p=(\w+)(?:&n=(\w+))?/);
+  const hm = location.hash.match(/^#p=([\w-]+)(?:&n=(\w+))?/);
   const dm = location.hash.match(/dbg=(\w+)/);
   if (hm) {
     const p = [...BUILTIN_STORIES, ...imports].find(x => x.id === hm[1]);

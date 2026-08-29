@@ -1221,7 +1221,7 @@ let visits = null;      // 逐格访问计数（通关热力回放）
 let winParticles = [];  // 通关金色粒子
 let niches = null;      // 壁龛：死路格，玩家的躲避处
 let lastPingCell = null;   // 游魂的趋向目标
-let hasKey = false, needKey = false, keyCell = null;   // 钥匙与天光之门
+let hasKey = false, needKey = false, keyCell = null, keySeen = false;   // 钥匙与天光之门
 let pingPower = 0, chargeStart = 0;                    // 蓄力声呐的声浪余威
 let breath = 1, breathHeld = 0, breathSpent = false;   // 壁龛屏息：藏身气息有限
 let breathThumpT = 0;
@@ -1516,7 +1516,7 @@ function loadLevel(i, daily) {
   visits = new Float32Array(cols * rows);
   findNiches();
   lastPingCell = null;
-  hasKey = false; needKey = false; keyCell = null; chargeStart = 0; pingPower = 0;
+  hasKey = false; needKey = false; keyCell = null; keySeen = false; chargeStart = 0; pingPower = 0;
   breath = 1; breathHeld = 0; breathSpent = false; breathThumpT = 0;
   // 塔层与无尽每五层：天光之门上锁
   if (!isCustom && !isDaily && (li === 9 || li === 10 || li === 11 ||
@@ -1893,7 +1893,7 @@ function enterCustomPlay(map, parVal, name, ghostCount) {
   visits = new Float32Array(cols * rows);
   findNiches();
   lastPingCell = null;
-  hasKey = false; needKey = false; keyCell = null; chargeStart = 0; pingPower = 0;
+  hasKey = false; needKey = false; keyCell = null; keySeen = false; chargeStart = 0; pingPower = 0;
   breath = 1; breathHeld = 0; breathSpent = false; breathThumpT = 0;
   litWalls = new Set();
   totalWalls = 0;
@@ -2324,6 +2324,16 @@ function render(dt) {
       mctx2.beginPath();
       mctx2.arc(mox + (g.x + 0.5) * ms, moy + (g.y + 0.5) * ms, Math.max(1.2, ms * 0.34), 0, Math.PI * 2);
       mctx2.fill();
+    }
+    // 钥匙：曾被声波照到后，标记在小地图上（拾取前）
+    if (keyCell) {
+      if (lights[keyCell[1] * cols + keyCell[0]] > 0.25) keySeen = true;
+      if (keySeen) {
+        mctx2.fillStyle = 'rgba(232,192,122,0.95)';
+        mctx2.font = `${Math.max(8, Math.round(ms * 1.5))}px serif`;
+        mctx2.textAlign = 'center'; mctx2.textBaseline = 'middle';
+        mctx2.fillText('🗝', mox + (keyCell[0] + 0.5) * ms, moy + (keyCell[1] + 0.5) * ms);
+      }
     }
     // 边框
     mctx2.strokeStyle = 'rgba(157,176,201,0.2)';

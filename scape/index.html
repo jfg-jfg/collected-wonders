@@ -919,11 +919,44 @@ const PRESETS = {
 };
 const PRESET_ZH = { rainy: '雨夜读书', morning: '山涧清晨', fireside: '炉边听风', valley: '午后山谷', winter: '冬夜围炉', blossom: '花信风' };
 const PRESET_EN = { rainy: 'Rainy Night', morning: 'Dawn', fireside: 'Fireside', valley: 'Valley', winter: 'Winter', blossom: 'Blossom' };
+/* 每日气象：日期种子选一处境（与褶皱每日星球同机制，全城同日同境） */
+const DAILY_SCENES = [
+  { name: '雪夜炉火', nameEn: 'Fire & Snow', s: { fire: .8, snow: .9, wind: .15, time: 21.5, theme: 0 } },
+  { name: '山雨欲来', nameEn: 'Storm Coming', s: { rain: .5, wind: .4, thunder: .3, time: 16, theme: 0 } },
+  { name: '海雾清晨', nameEn: 'Sea Fog Dawn', s: { rain: .15, wind: .3, stream: .5, birds: .4, time: 6.5, theme: 1 } },
+  { name: '樱花午后', nameEn: 'Petal Afternoon', s: { wind: .25, stream: .3, birds: .5, petal: .85, time: 14, theme: 0 } },
+  { name: '极夜深城', nameEn: 'Polar Night City', s: { rain: .3, wind: .3, snow: .8, bell: .3, time: 23, theme: 2 } },
+  { name: '炉边听风', nameEn: 'Fireside', s: { rain: .3, wind: .28, fire: .75, bell: .15, time: 20.5, theme: 0 } },
+  { name: '山涧清晨', nameEn: 'Dawn', s: { wind: .12, stream: .6, cricket: .35, birds: .4, time: 6.2, theme: 0 } },
+  { name: '城市黄昏', nameEn: 'City Dusk', s: { wind: .2, birds: .3, time: 18.2, theme: 2 } }
+];
+function dailyScene() {
+  const d = new Date();
+  const k = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  let h = 0;
+  for (const ch of k) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return DAILY_SCENES[h % DAILY_SCENES.length];
+}
 
 function buildUI() {
   // 预设
   const pr = document.getElementById('presets');
   pr.innerHTML = '';
+  // 每日气象（日期种子，置首）
+  {
+    const ds = dailyScene();
+    const db = document.createElement('button');
+    db.className = 'chip';
+    db.textContent = '☄ ' + (lang === 'zh' ? ds.name : ds.nameEn);
+    db.addEventListener('click', () => {
+      applyState(ds.s);
+      curPreset = null;
+      pr.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+      db.classList.add('on');
+      toast(lang === 'zh' ? `今日气象 · ${ds.name}` : `today's weather · ${ds.nameEn}`);
+    });
+    pr.appendChild(db);
+  }
   Object.keys(PRESETS).forEach(key => {
     const b = document.createElement('button');
     b.className = 'chip' + (key === curPreset ? ' on' : '');

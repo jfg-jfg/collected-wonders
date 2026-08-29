@@ -1996,6 +1996,13 @@ function render(dt) {
     mctx2.beginPath();
     mctx2.arc(mox + (px + 0.5) * ms, moy + (py + 0.5) * ms, Math.max(1.5, ms * 0.5), 0, Math.PI * 2);
     mctx2.fill();
+    // 游魂（微弱红点，随移动刷新——空间感知但不剧透照亮规则）
+    for (const g of ghosts) {
+      mctx2.fillStyle = 'rgba(224,122,95,0.75)';
+      mctx2.beginPath();
+      mctx2.arc(mox + (g.x + 0.5) * ms, moy + (g.y + 0.5) * ms, Math.max(1.2, ms * 0.34), 0, Math.PI * 2);
+      mctx2.fill();
+    }
     // 边框
     mctx2.strokeStyle = 'rgba(157,176,201,0.2)';
     mctx2.lineWidth = 1;

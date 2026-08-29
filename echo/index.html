@@ -427,6 +427,11 @@ const I18N = {
       '水声很近了。像有人在耳边翻动一页纸。',
       '再往下，连黑暗也是一种光。'
     ],
+    ghostHints: {
+      hunter: '👻 趋声魂循声而来——安静潜行，或用一声回声把它引开。',
+      wanderer: '👻 游荡魂对你的声音充耳不闻，只循自己的路线漂移。',
+      warden: '👻 守灯魂徘徊在碎片与出口旁——取物之前，先看清它的巡界。'
+    },
     locked: '未至', best: '最佳',
     lvSub: ['你从一场不属于你的梦中醒来，井口是唯一的出口。', '水声在石壁间折返。你开始怀疑，回应你的不是回声。', '这里曾有人居住。他们留下的不是废墟，是一封封寄不出的信。', '你走过一条路，它就消失一条。迷津记得每一个放弃的人。', '巨殿的柱子刻满了名字。你的指尖抚过时，有一个位置是空的。', '你开始辨认方向了。这座城认得你——它在你身上留下了记号。', '钟声从遥远的上方传来。十二下。这座城在被谁计时？', '街道尽头是海。海的那边是光。你忽然明白了为什么信寄不出去。', '门没有锁。你推开它的那一刻，听见了第一个真正的声音——自己的呼吸。', '门后没有海，是旋梯。你往上数台阶——九十九级。守灯人的日记里写过这个数字。', '油路堵着，焦黑的灯芯卡在管口。你把它抽出来，像从时间里抽出一截烧尽的芯。', '天窗推开的那刻，海在很远的下面，静得像睡着了。你替谁点了一下头。然后，你醒了。'],
     daily: '每 日 深 潜', dailyDone: '今日已抵达 · 明日再来', dailyTitle: '每日深潜', dailySub: '同一日，全城同一个迷宫。',
@@ -481,6 +486,11 @@ const I18N = {
       'The water is very near now. Like someone turning a page at your ear.',
       'Farther down, even the dark is a kind of light.'
     ],
+    ghostHints: {
+      hunter: '👻 A listener hunts by your sound — move quiet, or lure it away with a ping.',
+      wanderer: '👻 A drifter is deaf to your echoes; it follows only its own route.',
+      warden: '👻 A warden circles the fragments and the exit — read its beat before you reach.'
+    },
     locked: 'locked', best: 'best',
     lvSub: ['You wake from a dream that was never yours. The well mouth is the only exit.', 'Water echoes between stone walls. You begin to wonder if it is echo that answers.', 'People lived here once. What they left behind is not ruins, but letters that cannot be sent.', 'The path vanishes behind you as you walk. The labyrinth remembers everyone who gave up.', 'The pillars of the great hall are carved with names. One space is empty — the right size for yours.', 'You can read the walls now. This city knows you — it has left its mark inside your bones.', 'A bell tolls from far above. Twelve times. Who is counting down for this city?', 'The street ends at the sea. Beyond the sea, light. You suddenly understand why the letters never arrived.', 'The gate has no lock. As you push it open, you hear the first true sound — your own breathing.', 'Beyond the gate, no sea — a spiral stair. You count the steps upward. Ninety-nine. The keeper\'s diary counted them first.', 'The oil line is choked, a charred wick jammed in the pipe. You draw it out like a burned length of time.', 'As the skylight swings open, the sea lies far below, still as sleep. You nod, once, for someone. Then — you wake.'],
     daily: 'DAILY DIVE', dailyDone: 'ARRIVED TODAY · COME BACK TOMORROW', dailyTitle: 'Daily Dive', dailySub: 'One maze per day, same for everyone.',
@@ -1094,14 +1104,31 @@ let visits = null;      // 逐格访问计数（通关热力回放）
 let winParticles = [];  // 通关金色粒子
 let niches = null;      // 壁龛：死路格，玩家的躲避处
 let lastPingCell = null;   // 游魂的趋向目标
-function ghostCountFor(level, daily) {
-  if (daily) return 1;
-  if (level >= 10) return 4;
-  if (level >= 6) return 3;
-  if (level >= 4) return 2;
-  if (level >= 2) return 1;
-  return 0;
+/* 游魂分型：趋声魂（循声）/ 游荡魂（充耳不闻，自行漂移）/ 守灯魂（守在碎片与出口旁） */
+const GHOST_KINDS = {
+  hunter:   { near: '214,72,72',  core: '236,110,96',  map: '224,122,95' },
+  wanderer: { near: '122,152,188', core: '156,184,214', map: '130,160,195' },
+  warden:   { near: '204,162,72',  core: '232,196,112', map: '212,172,92' }
+};
+const KIND_STEP = { hunter: 0.65, wanderer: 0.9, warden: 0.75 };       // 步进间隔（秒）
+const KIND_STEP_NEAR = { hunter: 1.3, wanderer: 1.6, warden: 1.4 };     // 玩家 3 格内减速
+function ghostMix(level, daily) {
+  if (daily) return ['hunter'];
+  if (level >= LEVELS.length) {
+    // 无底之井：越深魂越多（每 4 层 +1 趋声魂，封顶 7）
+    const extra = Math.min(3, Math.floor((level - LEVELS.length) / 4));
+    return ['hunter', 'hunter', 'wanderer', 'warden', ...Array(extra).fill('hunter')];
+  }
+  if (level >= 10) return ['hunter', 'hunter', 'wanderer', 'warden'];
+  if (level >= 6) return ['hunter', 'wanderer', 'warden'];
+  if (level >= 4) return ['hunter', 'wanderer'];
+  if (level >= 2) return ['hunter'];
+  return [];
 }
+function ghostMixForCount(n) {  // 自造井 / 名井：按数量混编
+  return ['hunter', 'wanderer', 'warden', 'hunter'].slice(0, Math.max(0, n));
+}
+function ghostCountFor(level, daily) { return ghostMix(level, daily).length; }
 /* 壁龛识别：只有一个开放邻居的格子 = 躲避处 */
 function findNiches() {
   niches = new Set();
@@ -1114,18 +1141,40 @@ function findNiches() {
   }
 }
 function isNiche(x, y) { return niches && niches.has(x + ',' + y); }
-function spawnGhosts() {
+let curGhostMix = null;   // 本次对局的分型混编（被撞后重生沿用）
+function spawnGhosts(mixOverride) {
   ghosts = [];
-  const n = ghostCountFor(li, isDaily);
-  let guard = 0;
-  while (ghosts.length < n && guard++ < 500) {
-    const x = 1 + Math.floor(Math.random() * (cols - 2));
-    const y = 1 + Math.floor(Math.random() * (rows - 2));
+  const mix = mixOverride || (isCustom && curGhostMix ? curGhostMix : ghostMix(li, isDaily));
+  curGhostMix = mix;
+  // 守灯魂的锚点：优先未拾取的碎片，否则出口
+  const anchors = FRAG_CELLS.filter(([x, y]) => !fragTakenSet.has(x + ',' + y));
+  let gx = 1, gy = 1;
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++)
+    if (grid[y][x] === 'G') { gx = x; gy = y; }
+  let guard = 0, idx = 0;
+  while (idx < mix.length && guard++ < 500) {
+    const kind = mix[idx];
+    let x, y;
+    if (kind === 'warden' && anchors.length) {
+      // 在锚点附近落位（±3 格）
+      const [ax, ay] = anchors[idx % anchors.length];
+      let tries = 0;
+      do {
+        x = Math.max(1, Math.min(cols - 2, ax + Math.floor(Math.random() * 7) - 3));
+        y = Math.max(1, Math.min(rows - 2, ay + Math.floor(Math.random() * 7) - 3));
+      } while (tries++ < 40 && (G(x, y) === '#' || G(x, y) === 'G' || G(x, y) === '*' || isNiche(x, y)));
+    } else {
+      x = 1 + Math.floor(Math.random() * (cols - 2));
+      y = 1 + Math.floor(Math.random() * (rows - 2));
+    }
     if (G(x, y) === '#' || G(x, y) === 'G' || G(x, y) === '*') continue;
     if (Math.hypot(x - px, y - py) < 6) continue;
     if (isNiche(x, y)) continue;
     if (ghosts.some(g => Math.hypot(g.x - x, g.y - y) < 5)) continue;
-    ghosts.push({ x, y, dx: 0, dy: 1, t: 0, phase: Math.random() * 10, trail: [] });
+    const anchor = kind === 'warden' ? (anchors[idx % anchors.length] || [gx, gy]) : null;
+    ghosts.push({ x, y, dx: 0, dy: 1, t: 0, phase: Math.random() * 10, trail: [], kind,
+                  ax: anchor ? anchor[0] : gx, ay: anchor ? anchor[1] : gy });
+    idx++;
   }
 }
 /* 游魂 AI v3：「礼貌 haunting」——永不堵路 */
@@ -1168,9 +1217,11 @@ function moveGhosts(dt) {
   for (const g of ghosts) {
     g.t += dt;
     g.phase += dt;
-    // 近距减速：玩家 3 格内游魂速度减半
+    // 分型步频 + 近距减速（玩家 3 格内）；无底之井越深步频越快（封顶 -0.22s）
     const pd = Math.hypot(g.x - px, g.y - py);
-    const interval = pd < 3 ? 1.3 : 0.65;
+    const kind = g.kind || 'hunter';
+    const rush = li >= LEVELS.length ? Math.min(0.22, (li - LEVELS.length) * 0.02) : 0;
+    const interval = Math.max(0.4, (pd < 3 ? KIND_STEP_NEAR[kind] : KIND_STEP[kind]) - rush);
     if (g.t < interval) continue;
     g.t = 0;
     const dirs = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => {
@@ -1186,18 +1237,25 @@ function moveGhosts(dt) {
       return true;
     });
     if (!dirs.length) continue;
-    // 评分制选择方向
+    // 评分制选择方向（按分型加权）
     let best = null, bestScore = -Infinity;
     for (const [dx, dy] of dirs) {
       const nx = g.x + dx, ny = g.y + dy;
       let score = 0;
       // 偏好开阔区（+2）
       if (isOpenArea(nx, ny)) score += 2;
-      // 趋声（+1.5，朝最近回声）
-      if (lastPingCell) {
+      // 趋声：趋声魂全权重，守灯魂微弱，游荡魂充耳不闻
+      if (lastPingCell && kind !== 'wanderer') {
         const dNew = Math.hypot(nx - lastPingCell[0], ny - lastPingCell[1]);
         const dCur = Math.hypot(g.x - lastPingCell[0], g.y - lastPingCell[1]);
-        if (dNew < dCur) score += 1.5;
+        if (dNew < dCur) score += kind === 'hunter' ? 1.5 : 0.6;
+      }
+      // 守灯魂：守在锚点旁——离岗则回，不追出防区
+      if (kind === 'warden') {
+        const da = Math.hypot(g.x - g.ax, g.y - g.ay);
+        const daN = Math.hypot(nx - g.ax, ny - g.ay);
+        if (da > 3 && daN < da) score += 2.2;
+        if (daN > 5.5) score -= 2.4;
       }
       // 远离玩家（+1，保持威胁但不贴脸）
       const pdNew = Math.hypot(nx - px, ny - py);
@@ -1205,8 +1263,8 @@ function moveGhosts(dt) {
       if (pdNew > pdCur && pdCur < 4) score += 1;
       // 不走回头路（+0.5）
       if (dx !== -g.dx || dy !== -g.dy) score += 0.5;
-      // 随机扰动
-      score += Math.random() * 0.8;
+      // 随机扰动：游荡魂漂移感更强
+      score += Math.random() * (kind === 'wanderer' ? 1.7 : 0.8);
       if (score > bestScore) { bestScore = score; best = [dx, dy]; }
     }
     if (best) {
@@ -1243,8 +1301,11 @@ function updateGhostHum(now) {
   }
   if (now - lastHumCheck < 200) return;
   lastHumCheck = now;
-  let minD = 99;
-  for (const g of ghosts) minD = Math.min(minD, Math.hypot(g.x - px, g.y - py));
+  let minD = 99, minKind = 'hunter';
+  for (const g of ghosts) {
+    const d = Math.hypot(g.x - px, g.y - py);
+    if (d < minD) { minD = d; minKind = g.kind || 'hunter'; }
+  }
   const prox = Math.max(0, 1 - minD / 2.5);
   if (!ghostHum && prox > 0.05) {
     const o = AC.createOscillator(), o2 = AC.createOscillator(), g2 = AC.createGain();
@@ -1256,6 +1317,12 @@ function updateGhostHum(now) {
     o.connect(f); o2.connect(f); f.connect(g2); g2.connect(AC.destination);
     o.start(); o2.start();
     ghostHum = [o, o2]; ghostHumG = g2;
+  }
+  if (ghostHum) {
+    // 分型音高：趋声 52 / 游荡 46（更钝）/ 守灯 61（更亮，像铜器）
+    const base = minKind === 'warden' ? 61 : minKind === 'wanderer' ? 46 : 52;
+    ghostHum[0].frequency.setTargetAtTime(base, AC.currentTime, 0.4);
+    ghostHum[1].frequency.setTargetAtTime(base * 0.987, AC.currentTime, 0.4);
   }
   if (ghostHumG) {
     const vol = prox * 0.06 * (0.7 + 0.3 * Math.sin(now / 350));
@@ -1320,15 +1387,30 @@ function showLevelCard() {
   const nm = isDaily ? T().dailyTitle : lvName(li);
   const sb = isCustom ? T().ed.playSub
     : isDaily ? T().dailySub
-    : endless ? T().endlessSubs[(li - 10) % T().endlessSubs.length]
+    : endless ? T().endlessSubs[(li - LEVELS.length) % T().endlessSubs.length]
     : T().lvSub[li];
+  const CN = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+  const ROM = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
   const no = isCustom ? '◈ DIY'
     : isDaily ? '◈ ' + todayKey()
-    : endless ? '∞ ' + (li - 9)
-    : ['一', '二', '三', '四', '五', '六', '七', '八', '九'][li] + ' / 九';
-  lc.innerHTML = `<div class="no">${no}</div><div class="nm">${nm.split(' · ')[isDaily || endless ? 0 : 1] || nm}</div><div class="sb">${sb}</div>`;
+    : endless ? '∞ ' + (li - LEVELS.length + 1)
+    : (lang === 'zh' ? CN[li] + ' / 十二' : ROM[li] + ' / XII');
+  // 首遇新游魂分型：介绍一行（按 hunter → wanderer → warden 顺序）
+  let hint = '';
+  if (!isCustom) {
+    save.kindIntro = save.kindIntro || {};
+    const kinds = new Set(ghostMix(li, isDaily));
+    for (const k of ['hunter', 'wanderer', 'warden']) {
+      if (kinds.has(k) && !save.kindIntro[k] && T().ghostHints[k]) {
+        save.kindIntro[k] = 1; persist();
+        hint = `<div class="sb" style="margin-top:12px;color:rgba(232,150,110,0.9)">${T().ghostHints[k]}</div>`;
+        break;
+      }
+    }
+  }
+  lc.innerHTML = `<div class="no">${no}</div><div class="nm">${nm.split(' · ')[isDaily || endless ? 0 : 1] || nm}</div><div class="sb">${sb}</div>${hint}`;
   lc.classList.add('show');
-  setTimeout(() => lc.classList.remove('show'), 3600);
+  setTimeout(() => lc.classList.remove('show'), 4200);
 }
 
 function layout() {
@@ -1635,17 +1717,8 @@ function enterCustomPlay(map, parVal, name, ghostCount) {
   totalWalls = 0;
   for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++)
     if (grid[y][x] === '#') totalWalls++;
-  // 游魂（名井可带）
-  ghosts = [];
-  let guard = 0;
-  const gcount = ghostCount || 0;
-  while (ghosts.length < gcount && guard++ < 500) {
-    const x = 1 + Math.floor(Math.random() * (cols - 2));
-    const y = 1 + Math.floor(Math.random() * (rows - 2));
-    if (G(x, y) === '#' || G(x, y) === 'G' || G(x, y) === '*') continue;
-    if (Math.hypot(x - px, y - py) < 6) continue;
-    ghosts.push({ x, y, dx: 0, dy: 1, t: 0, phase: Math.random() * 10, trail: [] });
-  }
+  // 游魂（名井可带）：按数量混编三型
+  spawnGhosts(ghostMixForCount(ghostCount || 0));
   state = 'play';
   editor.on = false;
   document.getElementById('edBar').classList.remove('show');
@@ -1777,7 +1850,9 @@ document.getElementById('edImport').addEventListener('click', () => {
 /* ================= 涟漪照明 ================= */
 function propagate(dt) {
   for (const rp of ripples) rp.r += 9.5 * dt;
-  for (let i = 0; i < lights.length; i++) lights[i] *= Math.exp(-dt * 1.1);
+  // 无底之井越深，回光熄得越快（每层 +0.08，封顶 +0.9）
+  const decay = 1.1 + (li >= LEVELS.length ? Math.min(0.9, (li - LEVELS.length) * 0.08) : 0);
+  for (let i = 0; i < lights.length; i++) lights[i] *= Math.exp(-dt * decay);
   if (save.recall) {
     // 余像：记录曾经照亮的峰值
     for (let i = 0; i < afterglow.length; i++)
@@ -1835,8 +1910,9 @@ function render(dt) {
     }
   }
 
-  // 游魂：暗红微光 + 尾迹粒子
+  // 游魂：分型微光 + 尾迹粒子
   for (const g of ghosts) {
+    const KC = GHOST_KINDS[g.kind] || GHOST_KINDS.hunter;
     const d = Math.hypot(g.x - px, g.y - py);
     const near = Math.max(0, 1 - d / 3.2);
     const lit = lights[g.y * cols + g.x] * 0.9;
@@ -1846,13 +1922,22 @@ function render(dt) {
       g.trail.unshift([g.x, g.y]);
       if (g.trail.length > 6) g.trail.pop();
     }
+    // 守灯魂：可见时显出巡界光环（金色呼吸圈）
+    if (g.kind === 'warden' && a > 0.05) {
+      const acx = ox + (g.ax + 0.5) * cell, acy = oy + (g.ay + 0.5) * cell;
+      ctx.strokeStyle = `rgba(204,162,72,${(a * (0.1 + 0.07 * Math.sin(time * 2.4))).toFixed(3)})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(acx, acy, cell * 4.5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     // 尾迹粒子
     for (let ti = g.trail.length - 1; ti >= 0; ti--) {
       const [tx2, ty2] = g.trail[ti];
       const fade = (1 - ti / g.trail.length) * a * 0.3;
       if (fade < 0.01) continue;
       const tcx = ox + (tx2 + 0.5) * cell, tcy = oy + (ty2 + 0.5) * cell;
-      ctx.fillStyle = `rgba(214,72,72,${fade.toFixed(3)})`;
+      ctx.fillStyle = `rgba(${KC.near},${fade.toFixed(3)})`;
       ctx.beginPath();
       ctx.arc(tcx + Math.sin(time * 4 + ti) * cell * 0.06, tcy, cell * 0.07 * (1 - ti / g.trail.length), 0, Math.PI * 2);
       ctx.fill();
@@ -1861,15 +1946,18 @@ function render(dt) {
     const gcx = ox + (g.x + 0.5) * cell, gcy = oy + (g.y + 0.5) * cell;
     const wob = Math.sin(g.phase * 3.1) * cell * 0.08;
     const gg = ctx.createRadialGradient(gcx, gcy, 0, gcx, gcy, cell * 1.1);
-    gg.addColorStop(0, `rgba(214,72,72,${(a * 0.5).toFixed(3)})`);
-    gg.addColorStop(1, 'rgba(214,72,72,0)');
+    gg.addColorStop(0, `rgba(${KC.near},${(a * 0.5).toFixed(3)})`);
+    gg.addColorStop(1, `rgba(${KC.near},0)`);
     ctx.fillStyle = gg;
     ctx.fillRect(gcx - cell * 1.2, gcy - cell * 1.2, cell * 2.4, cell * 2.4);
-    ctx.fillStyle = `rgba(236,110,96,${(a * (0.55 + 0.25 * Math.sin(g.phase * 5))).toFixed(3)})`;
-    ctx.shadowColor = 'rgba(214,72,72,0.9)';
+    ctx.fillStyle = `rgba(${KC.core},${(a * (0.55 + 0.25 * Math.sin(g.phase * 5))).toFixed(3)})`;
+    ctx.shadowColor = `rgba(${KC.near},0.9)`;
     ctx.shadowBlur = 9 * a;
     ctx.beginPath();
-    ctx.ellipse(gcx + wob, gcy, cell * 0.14, cell * 0.22, 0, 0, Math.PI * 2);
+    // 游荡魂更扁更飘，守灯魂更瘦更高
+    const rx = g.kind === 'wanderer' ? 0.18 : g.kind === 'warden' ? 0.11 : 0.14;
+    const ry = g.kind === 'wanderer' ? 0.17 : g.kind === 'warden' ? 0.26 : 0.22;
+    ctx.ellipse(gcx + wob, gcy, cell * rx, cell * ry, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
   }
@@ -2004,9 +2092,9 @@ function render(dt) {
     mctx2.beginPath();
     mctx2.arc(mox + (px + 0.5) * ms, moy + (py + 0.5) * ms, Math.max(1.5, ms * 0.5), 0, Math.PI * 2);
     mctx2.fill();
-    // 游魂（微弱红点，随移动刷新——空间感知但不剧透照亮规则）
+    // 游魂（分型微点，随移动刷新——空间感知但不剧透照亮规则）
     for (const g of ghosts) {
-      mctx2.fillStyle = 'rgba(224,122,95,0.75)';
+      mctx2.fillStyle = `rgba(${(GHOST_KINDS[g.kind] || GHOST_KINDS.hunter).map},0.75)`;
       mctx2.beginPath();
       mctx2.arc(mox + (g.x + 0.5) * ms, moy + (g.y + 0.5) * ms, Math.max(1.2, ms * 0.34), 0, Math.PI * 2);
       mctx2.fill();
@@ -2156,7 +2244,7 @@ function levelClear() {
   else save.best[keyOf()].exp = Math.max(save.best[keyOf()].exp, exp);
   if (!isDaily && li >= LEVELS.length) {
     save.best.endless = save.best.endless || { s: 0 };
-    save.best.endless.s = Math.max(save.best.endless.s, li - 5);
+    save.best.endless.s = Math.max(save.best.endless.s, li - LEVELS.length + 1);
   }
   persist();
 
@@ -2182,7 +2270,7 @@ function levelClear() {
   document.getElementById('clearStats').innerHTML =
     `${T().steps}：${steps}　·　${T().pings}：${pings}　·　${T().time}：${fmtTime(elapsed)}<br>` +
     `${T().exp}：${exp}%　·　${nm}`;
-  if (!isDaily && li >= 10) award('abyss');
+  if (!isDaily && li >= LEVELS.length + 9) award('abyss');   // 无底之井第十层
   document.getElementById('nextBtn').textContent =
     isDaily ? T().toMenu
     : li >= LEVELS.length ? T().next
@@ -2296,7 +2384,7 @@ window.addEventListener('keydown', e => {
     if (state === 'play') { tryMove(...map[k]); moveCooldown = 0.11; }
   } else if (k === ' ') {
     e.preventDefault();
-    ping();
+    if (!e.repeat) ping();   // 长按不连发（也避免误触三体彩蛋）
   } else if (k === 'Enter' && state === 'menu') {
     loadLevel(0);
   } else if ((k === 'x' || k === 'X') && state === 'menu') {

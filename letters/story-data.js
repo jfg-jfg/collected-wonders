@@ -1,4 +1,4 @@
-/* 拾遗·纸间 故事数据 v5 —— 五内置故事 + 导入规范
+/* 拾遗·纸间 故事数据 v6 —— 六内置故事 + 导入规范
    本文件同时是「AI 生成故事」的 schema 参考实现 */
 'use strict';
 
@@ -509,4 +509,85 @@ const STORY_OBS = {
   }
 };
 
-const BUILTIN_STORIES = [STORY_LIGHTHOUSE, STORY_TRAIN, STORY_RADIO, STORY_CLOCK, STORY_OBS];
+/* ============ 故事六：拾遗号（含隐藏结局；与《守灯人》互文） ============ */
+const STORY_WRECK = {
+  id: 'wreck',
+  title: '拾遗号', titleEn: 'The Shiyi',
+  kicker: '名册上少了一个名字', kickerEn: 'A NAME MISSING FROM THE ROSTER',
+  desc: '白鹤礁渔船「拾遗号」，一九八九年十月四日夜沉没。<br>三十七年后，沉船存物柜起获入库：<br>四封没有署名的信，和一份只有六个名字的名册。',
+  descEn: 'The fishing boat Shiyi went down off White Crane Reef, October 4th, 1989.<br>Thirty-seven years later her locker surfaces:<br>four unsigned letters, and a roster of six names.',
+  order: ['n1','n2','n3','n4','n5','n6','n7','n8','E1','E2','E3','E4','E5'],
+  hiddenEnding: { id: 'E5', require: ['n2','n5','n6'], replace: 'E1' },
+  style: {
+    font: '"Songti SC","STSong","SimSun","Noto Serif SC",Georgia,serif',
+    paper: '#e5dcc8', paper2: '#d8ccb0',
+    ink: '#4a4438', seal: '#8a5a3a', gold: '#b89858',
+    ruling: 'rgba(120,100,60,0.08)', bg1: '#1a150e', bg2: '#262019'
+  },
+  letters: {
+    zh: {
+      n1: { year: '二〇二六 · 十月四日', title: '入库单', age: 0.05, text: `入库单 No.2026-1004，附注栏写着一行铅笔字：恰在三十七周年。\n你是海事档案馆的整理员。今天入库的，是白鹤礁水域起获的沉船存物柜——渔船「拾遗号」，一九八九年十月四日夜沉没，参保六人，生还一人。\n柜中三样东西：\n一叠保险卷宗，牛皮纸都脆了；一份船员名册，六行名字，第六行职务栏写着「杂役（无名）」；还有四封信，没有署名，没有邮票，信封上只有一个字：囡。\n卷宗首页贴着便签，是前任整理员留的：\n"名册登记七人（船长1+轮机1+水手3+杂役1），实列六名。杂役无名。Survivor statement 残缺。此案勿并档。——1991"\n从哪件开始？`, replies: [
+        { label: '先读那四封没有署名的信。', flag: 'warm', to: 'n2' },
+        { label: '先核名册与保险卷宗。', flag: 'probe', to: 'n3' }
+      ]},
+      n2: { year: '一九八九 · 秋（未寄出）', title: '四封信（无名者手笔）', age: 0.5, text: `字很拙，一笔一画像用尽了力气。四封信，都写给「囡囡」。\n"囡囡：船上的阿弟教你写的名字，爹练了三天，先写给你看。\n爹在一条叫拾遗号的船上做工。船东人好，管饭，管一床旧棉被。\n夜里爹不睡，看灯。白鹤礁的灯一亮一亮，像有人在很远的地方眨眼。灯在，船就在。\n等鱼汛完了，爹给你带一只海螺。大的。贴在耳朵上，就有海的声音，爹不在，海替爹陪你。"\n第二封只提了一句："囡囡要好好吃饭。爹这边一切都好。"\n第三封："灯昨夜灭了小半刻，又亮了。船长说不要紧。爹看了半宿。"\n第四封没有写完。只有一行：\n"囡囡，灯又灭了。这一回，爹好像看见有人提着灯从船上——"`, cont: '放下信，去核那份名册与卷宗', contTo: 'n4' },
+      n3: { year: '一九八九 · 十一月', title: '保险卷宗（抄）', age: 0.45, text: `卷宗编号 890047。结论页三行：\n"一、灯塔于 21:41—21:45 熄灭四分钟，系守灯人擅离职守所致。\n二、渔船拾遗号触礁沉没，六人落水，五人殁，一人获救。\n三. 保险责任不予认定。"\n五个名字后面都注了"殁"。第六行，杂役（无名），什么也没注——没有名字的人，连"殁"字都轮不上。\n生还者证词装在单独的纸袋里。你抽出来——A4 纸从中间被撕去了下半页，撕口很旧，是三十七年前的手劲。\n上半页只有一句话能读：\n"灯灭了……不，不对。浪里有一盏灯在朝我来——"`, cont: '从名册查起：第六行的杂役是谁', contTo: 'n4' },
+      n4: { year: '一九八九 · 十月五日（残页）', title: '生还者证词（残）', age: 0.48, text: `证词署名：陈潮生，十九岁，水手。\n上半页全文如下——\n"浪把我从甲板上掀下去的时候，我以为完了。水那么冷，一沉一沉的。\n后来我看见灯。不是塔上的灯——塔上的灯灭着。是浪里有一盏灯，一晃一晃，朝我过来。\n我听见有人喊，让我抓住礁石。我抓住了。那盏灯在水面亮了很久，久到我以为天亮了。然后它一点一点矮下去，灭了。"\n（下半页于 1989 年 11 月被撕除。撕口旁有保险公司的红章：证词存疑，不予采信。）\n名册第六行在你手边。职务：杂役。姓名：空白。\n一位十九岁的水手，说他在浪里看见一盏移动的灯。`, replies: [
+        { label: '查借阅卡——被撕掉的下半页，总得有人撕。', flag: 'probe', to: 'n5' },
+        { label: '验四封信的笔迹，比对船上记录。', flag: 'warm', to: 'n6' }
+      ]},
+      n5: { year: '借阅记录', title: '三十七年前的一次外借', text: `证词袋的封底贴着借阅卡，一共两行。\n第一行：1989.11.20，保险公司，经办人签章（模糊）。\n第二行：1989.11.23，陈潮生。借由：「补全证词」。\n归还日期栏是空的。也就是说——下半页不是保险公司撕的，是生还者自己借走、没有还。\n他拿着那半页纸，活了三十七年。\n档案馆的旧通讯录里还能查到：陈潮生，白鹤礁镇，1970 年生。每年清明，往白鹤礁灯塔旧址寄一张明信片，三十年，一张没断。\n收信人一栏，永远写着：灯。`, cont: '去验那四封信的笔迹', contTo: 'n7' },
+      n6: { year: '鉴定附页', title: '信纸角上的小星', text: `笔迹比对结果：四封信出自同一人，非船上任何一名在册船员。\n但鉴定员在附页补了一句闲话，字很小：\n"每封信的信纸右上角，都有一颗用铅笔画的小五角星，位置、大小完全一致——不是随手涂的，是这个人的记号。轮机日志上有同样的星：机舱物品栏，'旧棉被一条（星）'。"\n一颗星。一九八九年秋天的黄昏，白鹤礁海面上第一颗亮起来的星。\n老水手管它叫长庚星：天黑了，它先亮；别的灯都灭了，它还在。\n名册第六行的"杂役（无名）"，用一颗星给自己签了名。`, cont: '信封里还夹着别的东西', contTo: 'n7' },
+      n7: { year: '汇款单存根 · 一九八八', title: '囡囡', age: 0.35, postcard: true, text: `四封信的信封背面，都贴着同一张汇款单的存根——他大概怕丢，贴了四遍。\n收款人：李杏。潮州，归湖镇。\n金额栏的字被海水泡开了，只剩一个"叁"字和三个模糊的圈。附言：囡囡学费。\n如果她还活着，今年五十六岁。她爹留给她的，是一句"爹这边一切都好"，和四封没能寄出的信。\n档案整理到这一步，剩下的不是卷宗了。`, replies: [
+        { label: '补名。把「李长庚」写进名册第七行，然后寄信。', flag: 'warm', to: 'n8' },
+        { label: '按「无名杂役，殁」结案。有些名字，让海替他收着。', flag: 'letgo', to: 'E2' }
+      ]},
+      n8: { year: '二〇二六 · 十月', title: '补名备忘（草）', age: 0.05, text: `你在备忘里写：\n"经笔迹鉴定与物证互证，拾遗号杂役应为李长庚（约 1931—1989），潮州人。船员名册应补第七行。\n另：1989 年证词残页所述'浪中移动之灯'，与白鹤礁灯塔值班记录 21:41 熄灯、守灯人周远失踪于救助行动一事相符。建议并档。"\n写完最后四个字，你停住了。\n这案子追到最深处，牵出的不是一条船，是一座灯——那晚浪里的灯，是守灯人提下去的；而名册上无名的杂役，看了一辈子那座灯。\n两个没被记下名字的人，隔着一场风暴，互相成了对方的证词。\n备忘怎么归档，你来定——`, replies: [
+        { label: '正式提交：补名，寄信潮州。', flag: 'light', to: 'E1' },
+        { label: '申请公展：「无名者的信」。', flag: 'keep', to: 'E3' },
+        { label: '封存。信从未寄出，就让它保持未寄出。', flag: 'letgo', to: 'E4' }
+      ]}
+    },
+    en: {
+      n1: { year: '2026 · OCTOBER 4', title: 'Intake Form', age: 0.05, text: `Intake No. 2026-1004. In the notes column, one line in pencil: thirty-seven years, to the day.\nYou are the archivist. Today's intake: the locker raised from the wreck off White Crane Reef — the fishing boat Shiyi, lost the night of October 4th, 1989. Six insured, one survivor.\nThree things in the locker:\nAn insurance file, its kraft paper gone brittle; a crew roster, six lines, the sixth reading "deckhand (no name)"; and four letters — unsigned, unstamped, one character on each envelope: Nann.\nA sticky note from your predecessor, dated 1991:\n"Roster lists seven (1 skipper, 1 engineer, 3 hands, 1 deckhand). Six named. Deckhand unnamed. Survivor statement incomplete. Do not merge this file."\nWhere to begin?`, replies: [
+        { label: 'Read the four unsigned letters first.', flag: 'warm', to: 'n2' },
+        { label: 'Check the roster and the insurance file first.', flag: 'probe', to: 'n3' }
+      ]},
+      n2: { year: '1989 · AUTUMN (UNSENT)', title: 'Four Letters (an Unnamed Hand)', age: 0.5, text: `The script is clumsy, every stroke drawn with its whole strength. Four letters, all to "Nann".\n"Nann: the young brother on the boat taught Papa your name — Papa practiced three days, so you see it first.\nPapa works on a boat called the Shiyi. The owner is kind: meals, and an old quilt to sleep under.\nAt night Papa doesn't sleep. He watches the light. The light at White Crane Reef blinks like someone far away winking. As long as the light is there, the boat is there.\nWhen the season ends, Papa will bring you a conch. A big one. Hold it to your ear and the sea is in it — when Papa can't be there, the sea will keep you company for him."\nThe second letter says only: "Nann must eat well. Papa is fine here."\nThe third: "The light went out for a while last night, then came back. The skipper says it's nothing. Papa watched till morning."\nThe fourth was never finished. One line:\n"Nann, the light has gone out again. And this time, Papa thinks he saw someone coming off the light with a lamp—"`, cont: 'Set the letters down; turn to the roster', contTo: 'n4' },
+      n3: { year: '1989 · NOVEMBER', title: 'The Insurance File (Copied)', age: 0.45, text: `File No. 890047. The findings page, three lines:\n"1. The lighthouse went dark 21:41–21:45 through the keeper's abandonment of post.\n2. The fishing boat Shiyi struck the reef and sank; six overboard, five dead, one rescued.\n3. Insurance liability: not recognized."\nAfter the five names, the word "lost". On the sixth line — deckhand (no name) — nothing at all. A man without a name does not even rate the word.\nThe survivor's statement is in its own envelope. You draw it out — an A4 page, its lower half torn away. The tear is old; thirty-seven years old.\nOne sentence survives on the upper half:\n"The light went out… no. No — there was a light in the waves, and it was coming toward me—"`, cont: 'Start from the roster: who was the sixth line?', contTo: 'n4' },
+      n4: { year: '1989 · OCTOBER 5 (FRAGMENT)', title: "Survivor's Statement (Partial)", age: 0.48, text: `Signed: Chen Chaosheng, nineteen, deckhand.\nThe surviving half, in full —\n"When the wave took me off the deck I thought that was it. The water so cold, sinking and sinking.\nThen I saw a light. Not the tower — the tower was dark. A light in the waves, swaying, coming for me.\nSomeone shouted to hold the rock. I held. That light stayed on the water for so long I thought morning had come. Then it sank, little by little, and went out."\n(The lower half removed November 1989. Beside the tear, the insurer's red stamp: statement doubtful, not admitted.)\nThe roster's sixth line lies under your hand. Position: deckhand. Name: blank.\nA nineteen-year-old, saying he saw a moving light in the waves.`, replies: [
+        { label: 'Pull the lending card — someone tore that half-page.', flag: 'probe', to: 'n5' },
+        { label: "Match the letters' handwriting against the ship's records.", flag: 'warm', to: 'n6' }
+      ]},
+      n5: { year: 'LENDING RECORD', title: 'A Loan, Thirty-Seven Years Ago', text: `On the back of the statement envelope, a lending card. Two lines.\nLine one: 1989.11.20, the insurance company, agent's seal (smudged).\nLine two: 1989.11.23, Chen Chaosheng. Purpose: "to complete the statement."\nThe return-date column is empty. The lower half was not torn away by the insurer — the survivor borrowed it himself, and never gave it back.\nHe has carried that half-page for thirty-seven years.\nThe archive's old directory still lists him: Chen Chaosheng, White Crane Reef town, born 1970. Every Qingming, a postcard to the old lighthouse site. Thirty years, not one missed.\nThe addressee line always reads: the light.`, cont: 'Have the letters examined', contTo: 'n7' },
+      n6: { year: 'EXAMINATION NOTE', title: 'The Little Star on the Corner', text: `Handwriting result: all four letters by one hand — not that of any named crewman.\nBut the examiner added a marginal note, very small:\n"Each sheet bears a small pencil star, upper right corner — identical position, identical size. Not idle doodling: a mark. The engine log carries the same star — stores column: 'one quilt, used (star).'"\nA star. The first star of an autumn dusk over White Crane Reef.\nOld sailors call it the Evening Star: first to light when the sky darkens; still there when every other lamp is out.\nThe roster's sixth line — deckhand (no name) — had signed himself with a star.`, cont: 'Something else was folded in the envelopes', contTo: 'n7' },
+      n7: { year: 'REMITTANCE STUB · 1988', title: 'Nann', age: 0.35, postcard: true, text: `On the back of each envelope, the same remittance stub — pasted four times over, as if he feared losing it.\nPayee: Li Xing. Guihu town, Chaozhou.\nThe amount has bloomed away in seawater; a "three" and three blurred circles. Note: Nann's school fees.\nIf she is alive, she is fifty-six this year. What her father left her is one "Papa is fine here," and four letters that never left.\nThe file has carried you past paperwork.`, replies: [
+        { label: 'Enter the name. Write "Li Changgeng" on the roster’s seventh line, and post the letters.', flag: 'warm', to: 'n8' },
+        { label: 'Close the case: unnamed deckhand, lost. Some names, the sea keeps for him.', flag: 'letgo', to: 'E2' }
+      ]},
+      n8: { year: '2026 · OCTOBER', title: 'Memorandum (Draft)', age: 0.05, text: `You write:\n"By handwriting and physical evidence, the Shiyi's deckhand was Li Changgeng (c. 1931–1989), of Chaozhou. The roster's seventh line should be restored.\nFurther: the 'moving light in the waves' of the 1989 statement is consistent with the lighthouse log — light out 21:41; keeper Zhou Yuan lost in the course of a rescue. Recommend merging the files."\nAt the last words you stop.\nFollowed to its depth, this case is not about a boat but a light — the light in the waves that night was carried down by the keeper; and the nameless deckhand had watched that light all his life.\nTwo unrecorded men, one storm apart, became each other's witness.\nHow to file it — your call—`, replies: [
+        { label: 'File it formally: restore the name, and post the letters to Chaozhou.', flag: 'light', to: 'E1' },
+        { label: 'Petition a public exhibition: "Letters of the Nameless."', flag: 'keep', to: 'E3' },
+        { label: 'Seal it. The letters were never sent; let them stay unsent.', flag: 'letgo', to: 'E4' }
+      ]}
+    }
+  },
+  endings: {
+    zh: {
+      E1: { title: '第七行', text: `补名备忘正式归档那天，档案馆的打印机卡了两次纸，像这桩案子不甘心默默通过。\n名册第七行：李长庚。职务：杂役。备注：殁于难。一笔一画，三十七年迟到。\n四封信按存根地址寄往潮州归湖镇。\n回信来得很慢。信封里没有信——只有一张白纸，托着一支海螺。海螺口用红绳缠了一圈。\n白纸背面一行字：\n"收到。爹的字，我认得。他写信从来不敢落款——他说，没名没姓的人，落了款也是白落。\n现在他有名字了。\n李杏"\n你把海螺放在档案馆的窗台上，朝着海的方向。` },
+      E2: { title: '海收着', text: `你在结案栏盖了章：无名杂役，殁。\n卷宗合上之前，你把四封信按原样放回存物柜，信口朝里——像它们三十七年来一直的那样，没有寄出，也没有被退回。\n下班路过海边，天擦黑。白鹤礁方向没有灯了，塔二〇二〇年就拆了。\n你在栏杆上站了一会儿，想起信里那句：灯在，船就在。\n有些名字，你替海记着。海也替他收着。两不相欠。` },
+      E3: { title: '无名者的信', text: `特展申请批得出奇地快——策展人只回了一个字：展。\n展柜里，四封信摊开在射灯下，右上角的小星看得分明。展签只有一行：\n"李长庚（约1931—1989），拾遗号杂役。名册无名，以星为记。"\n开展第二周，留言本写满了三本。最多的一句是：我想起我爷爷/外公/舅公，他也一辈子没上过一张表。\n撤展那天，一个白发的女人在柜前站到闭馆。她没有留名。\n工作人员后来清点，展柜边多了一支海螺，用红绳缠着口。` },
+      E4: { title: '未寄出', text: `你最终没有提交补名备忘。\n四封信原样封存，档案编号你私自多打了一位：2026-1004-长庚。\n按规矩，编号里不该有字。你打完才想起，也没有改。\n有的信是写给一个人的，落款是"爹"；有的名字是写给海的，记号是一颗星。\n它们都没打算被全世界知道。它们等的就是一个囡囡，和一颗先亮起来的星。\n柜子入库的时候，你轻轻推了一下，让"囡"字朝上。` },
+      E5: { title: '长庚', text: `备忘归档那天下午，档案馆来了一位老人。白头发，晒黑的手，指节像船缆。\n"我叫陈潮生。"他说，"我来还一样东西。借了三十七年。"\n他从怀里取出一个油纸包，一层一层打开——证词的下半页。\n"保险公司说，浪里有灯是不可能的，证词不能收。我说，那我自己收。\n这半页纸在我枕头底下放了三十七年。昨天镇上通知我，说档案馆在查拾遗号。\n我就知道，它到该回家的时候了。"\n下半页只有两行，铅笔字，被海水洇过，看得出写的人手在抖：\n"提灯的先生把我推上礁石，自己没有上来。他的灯在浪里亮了很久很久，我看着他一点一点沉下去。\n后来船上又下来一个人，没有灯，是摸黑凫水来的。他抓住了我另一只手。两个人，一个在浪里，一个在水底，把我就这么——托了上去。"\n天黑透了。你送陈潮生出门，他指着西边天上第一颗星：\n"我们水上人管它叫长庚。天一黑它就亮，别的灯都灭了，它还在。"\n两个无名的人，那晚互相成了对方的证词；三十七年后，两个名字一起回到了名册上。\n一周后，潮州回信。信里一支海螺，一行字：\n"收到。每年清明，我会朝白鹤礁的方向点一盏灯。\n灯在，人就在。"` }
+    },
+    en: {
+      E1: { title: 'The Seventh Line', text: `The printer jammed twice the day the memorandum was filed — as if the case refused to pass in silence.\nRoster, seventh line: Li Changgeng. Position: deckhand. Note: lost at sea. Stroke by stroke, thirty-seven years late.\nFour letters posted to Guihu town, Chaozhou, per the stub.\nThe reply was slow in coming. No letter inside — a single white sheet, and on it, a conch, its mouth wound with red cord.\nOn the back of the sheet, one line:\n"Received. I know Papa's hand. He never dared sign his letters — a man with no name, he said, signs for nothing.\nNow he has a name.\nLi Xing"\nYou set the conch on the archive windowsill, facing the sea.` },
+      E2: { title: 'The Sea Keeps Them', text: `You stamp the closing line: unnamed deckhand, lost.\nBefore the file shut, you laid the four letters back in the locker as they had lain for thirty-seven years — never sent, never returned.\nPast the sea on your way home, dusk. No light toward White Crane Reef now; the tower came down in 2020.\nYou stood a while at the rail, and remembered: as long as the light is there, the boat is there.\nSome names you keep for the sea. And the sea keeps them for him. Fair between you.` },
+      E3: { title: 'Letters of the Nameless', text: `The exhibition petition passed unusually fast — the curator replied with one word: yes.\nUnder the spots, four letters lie open, the little stars plain in the corners. The label reads:\n"Li Changgeng (c. 1931–1989), deckhand of the Shiyi. Nameless on the roster; signed with a star."\nBy the second week, three comment books were full. The most common line: I am thinking of my grandfather, who also never made it onto a form.\nOn the last day, a white-haired woman stood at the case until closing. She left no name.\nAfterward the staff found, beside the case, a conch wound with red cord.` },
+      E4: { title: 'Unsent', text: `You never filed the memorandum.\nThe four letters were sealed as found — but you added one character of your own to the archive number: 2026-1004-Changgeng.\nAgainst the rules, a name inside a file number. You realized only after; you did not change it.\nSome letters are written for one reader, signed "Papa." Some names are written for the sea, signed with a star.\nThey never asked to be known by the world. They were waiting for one Nann, and one first star.\nAs the box went in, you turned it so the character for "Nann" faced up.` },
+      E5: { title: 'The Evening Star', text: `The afternoon the memorandum was filed, an old man came to the archive. White hair, sea-dark hands, knuckles like mooring cable.\n"My name is Chen Chaosheng," he said. "I've come to return something. Thirty-seven years on loan."\nFrom his coat he drew an oilpaper packet, unwrapped it layer by layer — the lower half of the statement.\nThe insurer said a light in the waves was impossible; the statement could not stand. I said: then I will keep it myself.\nIt has been under my pillow thirty-seven years. Yesterday the town told me the archive was asking about the Shiyi.\nSo I knew — it was time it came home."\nTwo lines in pencil, sea-blurred, the hand of a man shaking:\n'The gentleman with the lamp pushed me onto the rock and did not come up. His light burned in the waves a long, long time; I watched it sink, little by little.\nThen another man came down from the boat — no lamp, swimming blind. He caught my other hand. Two men, one in the waves, one beneath, and they lifted me — like that — out of the water.'\nFull dark. Walking him out, Chen Chaosheng pointed to the first star in the western sky:\n"We boat people call it Changgeng, the Evening Star. First to light when the sky turns; still there when every other lamp is out."\nTwo nameless men, each the other's witness that night; thirty-seven years on, two names restored to one roster, together.\nA week later, the reply from Chaozhou. Inside, a conch — and one line:\n"Received. Every Qingming, I will light a lamp toward White Crane Reef.\nAs long as the light is there, the people are."` }
+    }
+  }
+};
+
+const BUILTIN_STORIES = [STORY_LIGHTHOUSE, STORY_TRAIN, STORY_RADIO, STORY_CLOCK, STORY_OBS, STORY_WRECK];

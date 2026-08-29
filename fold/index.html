@@ -829,9 +829,10 @@ function render() {
   updateCoords();
 }
 /* ---------- 深潜拉丝：缩放越快拖影越长，静止即锐利 ---------- */
-let trailPrevS = 1, trailFilled = false, trailPivot = [0, 0];
+let trailPrevS = 1, trailFilled = false, trailPivot = [0, 0], trailIdleFrames = 0;
 function renderTrail() {
   const k = trailPrevS / view.s;   /* >1 = 正在下潜 */
+  const zooming = k > 0.998 || k < 1.002;   /* ±0.2% 内视为正在缩放 */
   if (trailFilled && k > 1.0015 && k < 1.6) {
     gl.useProgram(progTrail);
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -846,12 +847,13 @@ function renderTrail() {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.disable(gl.BLEND);
   }
-  /* 前帧拷贝（下一拉丝的素材） */
-  if (prevTex) {
+  /* 前帧拷贝（下一拉丝的素材）——静止 5 帧后跳过以省 GPU 带宽 */
+  if (prevTex && (zooming || !trailFilled || (trailIdleFrames || 0) < 5)) {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, prevTex);
     gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 0, 0, canvas.width, canvas.height);
     trailFilled = true;
+    trailIdleFrames = zooming ? 0 : (trailIdleFrames || 0) + 1;
   }
   trailPrevS = view.s;
 }
@@ -1768,6 +1770,44 @@ if (jm) {
   target.x = 0; target.y = 0; target.s = 1.6;
 }
 render();
+// #bench：性能基准——不同深度的帧时间写入 DOM
+if (location.hash.includes('bench')) {
+  const depths = [
+    { s: 0.01, label: '1e2·float' },
+    { s: 1e-5, label: '1e5·float' },
+    { s: 1e-8, label: '1e8·df64' },
+    { s: 1e-11, label: '1e11·df64' },
+    { s: 1e-14, label: '1e14·perturb' },
+    { s: 1e-17, label: '1e17·perturb' }
+  ];
+  const results = [];
+  let di = 0;
+  function benchNext() {
+    if (di >= depths.length) {
+      const el = document.createElement('div');
+      el.style.cssText = 'position:fixed;top:8px;left:8px;z-index:99;background:#000;color:#0f0;font:11px monospace;padding:6px;white-space:pre;pointer-events:none';
+      el.textContent = 'BENCH\n' + results.map(r => `${r.label}: ${r.ms.toFixed(1)}ms`).join('\n');
+      document.body.appendChild(el);
+      return;
+    }
+    const d = depths[di];
+    view.x = -0.7435; view.y = 0.1314; view.s = d.s;
+    view.xl = 0; view.yl = 0;
+    target.x = view.x; target.y = view.y; target.s = d.s;
+    // 渲染 5 次取平均
+    const times = [];
+    for (let r = 0; r < 5; r++) {
+      const t0 = performance.now();
+      renderIter();
+      renderColor();
+      times.push(performance.now() - t0);
+    }
+    results.push({ label: d.label, ms: times.reduce((a, b) => a + b, 0) / times.length });
+    di++;
+    setTimeout(benchNext, 50);
+  }
+  benchNext();
+}
 // #newton：牛顿分形直达
 if (location.hash.includes('newton')) {
   newtonMode = true;

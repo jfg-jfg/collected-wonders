@@ -489,7 +489,7 @@ function showEnvelope(nextId) {
     <div class="env-body"></div>
     <div class="env-peek"></div>
     <div class="env-flap"></div>
-    <div class="seal">${(pack.title || '信')[0]}</div>
+    <div class="seal">${eggSeal || (pack.title || '信')[0]}</div>
     <div class="env-hint">${T('点 击 拆 封', 'CLICK TO UNSEAL')}</div>`;
   stage.appendChild(env);
   env.addEventListener('click', () => {
@@ -502,6 +502,43 @@ function showEnvelope(nextId) {
 }
 
 let revealTimers = [];
+/* 彩蛋：键入 ikun → 火漆变鸡 */
+let eggSeal = '';
+let keyBuf = '';
+function foundEgg(site) {
+  try {
+    const e = JSON.parse(localStorage.getItem('toy-eggs') || '{}');
+    if (!e[site]) { e[site] = Date.now(); localStorage.setItem('toy-eggs', JSON.stringify(e)); }
+  } catch (err) {}
+}
+function chirpIkun() {
+  const c = ac(); if (!c) return;
+  [[0, 990, 1320], [0.16, 1180, 880]].forEach(([dl, f0, f1]) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'square';
+    const t0 = c.currentTime + dl;
+    o.frequency.setValueAtTime(f0, t0);
+    o.frequency.exponentialRampToValueAtTime(f1, t0 + 0.13);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(0.05, t0 + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.15);
+    o.connect(g); g.connect(c.destination);
+    o.start(t0); o.stop(t0 + 0.17);
+  });
+}
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key.length !== 1) return;
+  keyBuf = (keyBuf + e.key.toLowerCase()).slice(-8);
+  if ((keyBuf.endsWith('ikun') || keyBuf.endsWith('jntm')) && !eggSeal) {
+    eggSeal = '🐔';
+    chirpIkun();
+    toast('你干嘛～哎哟');
+    foundEgg('letters');
+    const cur = document.querySelector('.envelope .seal');
+    if (cur) cur.textContent = '🐔';
+  }
+});
 function showLetter(id, reread) {
   revealTimers.forEach(clearTimeout); revealTimers = [];
   setBack(true, reread ? T('← 信 堆', '← STACK') : T('← 信 箱', '← BOX'));

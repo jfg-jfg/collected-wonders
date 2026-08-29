@@ -616,6 +616,9 @@ function draw(dt) {
   ctx.drawImage(ridges[0], 0, 0);
   ctx.drawImage(ridges[1], 0, 0);
 
+  // 彩蛋：滑稽显圣（十全十美后 7 秒，山脊之上）
+  if (hjqT > 0) drawHjq(Math.min(1, hjqT / 1.2, (7 - hjqT) / 0.6));
+
   // 远寺（山主题 + 远钟）：第三层山脊上
   if (theme === 0) {
     const px = W * 0.16, py = H * 0.735;
@@ -942,6 +945,11 @@ function buildUI() {
       initAudio(); updateAudio();
       updLed(k);
       saveStateSoon();
+      if (CH.every(c => S[c] >= 0.995) && hjqT <= 0) {
+        hjqT = 7;
+        toast(T('十全十美 · 世界名画', 'PERFECT TEN · a masterpiece'));
+        foundEgg('scape');
+      }
     });
     bd.appendChild(d);
     updLed(k);
@@ -965,6 +973,44 @@ function updLed(k) {
   if (el) el.classList.toggle('on', S[k] > 0.02);
 }
 function updLeds() { CH.forEach(updLed); }
+/* ---------- 彩蛋：十全十美（十声道全满 → 天空浮现滑稽） ---------- */
+let hjqT = 0;   /* 滑稽显现的剩余时间 */
+function foundEgg(site) {
+  try {
+    const e = JSON.parse(localStorage.getItem('toy-eggs') || '{}');
+    if (!e[site]) { e[site] = Date.now(); localStorage.setItem('toy-eggs', JSON.stringify(e)); }
+  } catch (err) {}
+}
+function drawHjq(a) {
+  const r = H * 0.20;
+  const cx = W / 2, cy = H * 0.24;
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.fillStyle = '#f5d442';
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#c99a1d'; ctx.lineWidth = r * 0.045;
+  ctx.stroke();
+  /* 坏笑眯眼：两道下弯粗弧 */
+  ctx.strokeStyle = '#3a2c10'; ctx.lineWidth = r * 0.075;
+  ctx.lineCap = 'round';
+  for (const ex of [-1, 1]) {
+    ctx.beginPath();
+    ctx.arc(cx + ex * r * 0.38, cy - r * 0.12, r * 0.16, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.stroke();
+  }
+  /* 咧嘴坏笑 */
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(cx, cy + r * 0.28, r * 0.42, 0.08 * Math.PI, 0.92 * Math.PI);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#3a2c10'; ctx.lineWidth = r * 0.055; ctx.stroke();
+  /* 舌头 */
+  ctx.fillStyle = '#d96a5a';
+  ctx.beginPath();
+  ctx.arc(cx, cy + r * 0.55, r * 0.17, Math.PI, 0);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
 
 let curPreset = null;
 function applyState(st) {
@@ -1174,6 +1220,7 @@ function loop(now) {
   draw(dt);
   schedule();
   updateAudio(2);
+  if (hjqT > 0) hjqT -= dt;
   // 睡眠定时：到点后 8 秒渐弱至无声
   if (sleepAt && Date.now() > sleepAt && !sleepFading) {
     sleepFading = true;

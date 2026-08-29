@@ -444,7 +444,7 @@ uniform float uPal;
 uniform float uStratum;   /* 0 浅 … 1 深（log10(mag)/13）：地质层 */
 
 vec3 palette(float t) {
-  /* 四套调色板：0墨 1极光 2炉火 3素宣 */
+  /* 四套调色板：0墨 1极光 2炉火 3素宣 | 4 滑稽（Konami 隐藏） */
   if (uPal < 0.5) {
     vec3 a = vec3(0.16, 0.14, 0.20), b = vec3(0.42, 0.36, 0.30), d = vec3(0.10, 0.20, 0.38);
     return a + b * cos(6.28318 * (t + d));
@@ -454,8 +454,11 @@ vec3 palette(float t) {
   } else if (uPal < 2.5) {
     vec3 a = vec3(0.18, 0.08, 0.05), b = vec3(0.42, 0.26, 0.12), d = vec3(0.02, 0.12, 0.24);
     return a + b * cos(6.28318 * (t + d));
-  } else {
+  } else if (uPal < 3.5) {
     vec3 a = vec3(0.16, 0.15, 0.13), b = vec3(0.34, 0.32, 0.30), d = vec3(0.0, 0.04, 0.08);
+    return a + b * cos(6.28318 * (t + d));
+  } else {
+    vec3 a = vec3(0.52, 0.42, 0.08), b = vec3(0.36, 0.30, 0.14), d = vec3(0.02, 0.06, 0.16);
     return a + b * cos(6.28318 * (t + d));
   }
 }
@@ -582,7 +585,7 @@ let juliaOn = false, juliaC = { x: -0.7269, y: 0.1889 };
 let shipMode = false;
 let palIdx = 0;
 let phaseT = 0;
-const PAL_NAMES = { zh: ['墨', '极光', '炉火', '素宣'], en: ['INK', 'AURORA', 'EMBER', 'PLAIN'] };
+const PAL_NAMES = { zh: ['墨', '极光', '炉火', '素宣', '滑稽'], en: ['INK', 'AURORA', 'EMBER', 'PLAIN', 'MEME'] };
 
 function split64(v) {
   const hi = Math.fround(v);
@@ -1287,11 +1290,34 @@ setInterval(() => {
 }, 160);
 const palBtn = document.getElementById('palBtn');
 palBtn.addEventListener('click', () => {
-  palIdx = (palIdx + 1) % 4;
+  palIdx = palIdx === 4 ? 0 : (palIdx + 1) % 4;
   palBtn.textContent = T().palette + ' ' + PAL_NAMES[lang][palIdx];
   palBtn.title = T().palTip;
   requestColor();
   updateCoords();
+});
+/* 彩蛋：Konami 码 ↑↑↓↓←→←→BA → 滑稽调色板 */
+const KONAMI = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+let konamiPos = 0;
+function foundEgg(site) {
+  try {
+    const e = JSON.parse(localStorage.getItem('toy-eggs') || '{}');
+    if (!e[site]) { e[site] = Date.now(); localStorage.setItem('toy-eggs', JSON.stringify(e)); }
+  } catch (err) {}
+}
+window.addEventListener('keydown', ev => {
+  if (ev.target.tagName === 'INPUT') return;
+  const k = ev.key.length === 1 ? ev.key.toLowerCase() : ev.key;
+  konamiPos = (k === KONAMI[konamiPos]) ? konamiPos + 1 : (k === KONAMI[0] ? 1 : 0);
+  if (konamiPos === KONAMI.length) {
+    konamiPos = 0;
+    palIdx = 4;
+    palBtn.textContent = T().palette + ' ' + PAL_NAMES[lang][4];
+    requestColor();
+    updateCoords();
+    showToast(lang === 'zh' ? '↑↑↓↓←→←→BA · 滑稽显圣' : '↑↑↓↓←→←→BA · meme mode', 4200);
+    foundEgg('fold');
+  }
 });
 const shotBtn = document.getElementById('shotBtn');
 /* 明信片导出：邮票边 + 圆形邮戳 + 竖排题款 + 朱印（与墨装裱/纸间明信片成信物体系） */

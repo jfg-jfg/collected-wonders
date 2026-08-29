@@ -182,6 +182,27 @@
 
   #errbox { position: fixed; inset: auto 0 0 0; z-index: 99; background: #401414; color: #ffb4b4; font-size: 12px; padding: 8px 12px; display: none; }
 
+  /* 彩蛋：三体警告 */
+  .noans { position: fixed; inset: 0; z-index: 30; display: none; place-items: center; background: rgba(4,6,10,0.6); pointer-events: none; }
+  .noans.show { display: grid; }
+  .noans div {
+    position: absolute; width: 100%; text-align: center;
+    font-size: clamp(22px, 4.6vw, 44px); letter-spacing: 0.34em; text-indent: 0.34em;
+    color: #e8c07a; text-shadow: 0 0 26px rgba(232,192,122,0.55);
+    opacity: 0; animation: noansIn 3.6s ease-out forwards;
+  }
+  .noans div:nth-child(1) { top: 34%; }
+  .noans div:nth-child(2) { top: 46%; animation-delay: 0.45s; }
+  .noans div:nth-child(3) { top: 58%; animation-delay: 0.9s; }
+  @keyframes noansIn {
+    0% { opacity: 0; transform: scale(0.86); filter: blur(6px); }
+    14% { opacity: 1; transform: scale(1.04); filter: blur(0); }
+    24% { transform: scale(1); }
+    78% { opacity: 1; }
+    100% { opacity: 0; transform: scale(1.02); }
+  }
+  @media (prefers-reduced-motion: reduce) { .noans div { animation-duration: 0.01ms; opacity: 1; } }
+
   /* ---------- 造井编辑器 ---------- */
   .ed-bar {
     position: fixed; left: 50%; top: 20px; transform: translateX(-50%);
@@ -357,6 +378,7 @@
 
 <div class="levelcard" id="levelcard"></div>
 <div class="frag" id="frag"></div>
+<div class="noans" id="noans"><div>不要回答！</div><div>不要回答！</div><div>不要回答！</div></div>
 <div class="ach-toast" id="achToast"></div>
 <a class="home-link" href="../index.html" title="拾遗 · 序">序</a>
 <div id="errbox"></div>
@@ -1355,6 +1377,42 @@ function ping(cx, cy) {
   lastPingCell = [gx, gy];   // 游魂闻声而动
   award('first');
   updateHud();
+  /* 彩蛋：3 秒内连发 8 次声呐 → 三体警告 */
+  const now2 = performance.now();
+  pingBurst = pingBurst.filter(t => now2 - t < 3000);
+  pingBurst.push(now2);
+  if (pingBurst.length >= 8) { pingBurst.length = 0; noAnswer(); }
+}
+let pingBurst = [];
+function foundEgg(site) {
+  try {
+    const e = JSON.parse(localStorage.getItem('toy-eggs') || '{}');
+    if (!e[site]) { e[site] = Date.now(); localStorage.setItem('toy-eggs', JSON.stringify(e)); }
+  } catch (err) {}
+}
+function sndNoAnswer() {
+  const ac = audio(); if (!ac || !save.snd) return;
+  [[0, 96], [0.45, 84], [0.9, 72]].forEach(([dl, fq]) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'triangle';
+    const t0 = ac.currentTime + dl;
+    o.frequency.setValueAtTime(fq, t0);
+    o.frequency.exponentialRampToValueAtTime(fq * 0.55, t0 + 0.4);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(0.14, t0 + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.5);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t0); o.stop(t0 + 0.55);
+  });
+}
+function noAnswer() {
+  const el = document.getElementById('noans');
+  if (!el) return;
+  el.classList.add('show');
+  el.querySelectorAll('div').forEach(d => { d.style.animation = 'none'; void d.offsetWidth; d.style.animation = ''; });
+  setTimeout(() => el.classList.remove('show'), 4200);
+  sndNoAnswer();
+  foundEgg('echo');
 }
 
 /* ================= 造井编辑器 ================= */

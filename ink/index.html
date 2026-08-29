@@ -1214,6 +1214,33 @@ function wash() {
   renderSeals();
 }
 document.getElementById('washBtn').addEventListener('click', wash);
+/* 彩蛋：洗纸五连击 → 真香金印 */
+let washBurst = [];
+document.getElementById('washBtn').addEventListener('click', () => {
+  const now2 = performance.now();
+  washBurst = washBurst.filter(t => now2 - t < 2500);
+  washBurst.push(now2);
+  if (washBurst.length >= 5) {
+    washBurst.length = 0;
+    const st = document.createElement('div');
+    st.textContent = '真香';
+    st.style.cssText = 'position:fixed;right:12vw;bottom:22vh;z-index:9;width:86px;height:86px;border-radius:10px;' +
+      'background:radial-gradient(circle at 36% 30%, #e8c14f, #b8860b 72%);color:#fff8e0;' +
+      'display:grid;place-items:center;font:600 30px/1 "Songti SC","STSong","SimSun",serif;' +
+      'letter-spacing:2px;transform:rotate(-8deg) scale(2.4);opacity:0;box-shadow:0 8px 30px rgba(0,0,0,0.4);' +
+      'border:3px solid rgba(255,246,214,0.55);transition:transform .28s cubic-bezier(.2,2.2,.4,1),opacity .2s;pointer-events:none';
+    document.body.appendChild(st);
+    requestAnimationFrame(() => { st.style.transform = 'rotate(-8deg) scale(1)'; st.style.opacity = '1'; });
+    setTimeout(() => { st.style.opacity = '0'; setTimeout(() => st.remove(), 500); }, 6000);
+    hintEl.textContent = lang === 'zh' ? '王境泽认证 · 真香' : 'certified: zhen xiang';
+    hintEl.classList.remove('gone');
+    setTimeout(() => hintEl.classList.add('gone'), 2400);
+    try {
+      const e = JSON.parse(localStorage.getItem('toy-eggs') || '{}');
+      if (!e.ink) { e.ink = Date.now(); localStorage.setItem('toy-eggs', JSON.stringify(e)); }
+    } catch (err) {}
+  }
+});
 
 /* ---------------- 印章（视图跟随 + 可上传图章） ---------------- */
 const overlay = document.getElementById('overlay');

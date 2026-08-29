@@ -217,6 +217,7 @@
     <h1 data-t="title"></h1>
     <div class="h-sub" data-t="sub"></div>
     <div class="h-note" data-t="note"></div>
+    <div class="h-note" id="eggLine" style="display:none;color:rgba(217,181,124,0.8);letter-spacing:0.3em"></div>
   </header>
 
   <main class="grid" id="grid"></main>
@@ -316,6 +317,19 @@ function applyI18n() {
       <div class="c-stat">${workStat(w.en)}</div>
       <div class="c-go">${lang === 'zh' ? '进 入 →' : 'ENTER →'}</div>`;
     grid.appendChild(a);
+  }
+  // 彩蛋收集：五站梗物集齐点亮
+  {
+    const el = document.getElementById('eggLine');
+    let eggs = {};
+    try { eggs = JSON.parse(localStorage.getItem('toy-eggs') || '{}'); } catch (e) {}
+    const got = ['ink', 'echo', 'scape', 'fold', 'letters'].filter(k => eggs[k]).length;
+    if (got > 0) {
+      el.style.display = '';
+      el.textContent = lang === 'zh'
+        ? (got >= 5 ? '🥚×5 彩蛋猎人 · 五梗归一' : `🥚×${got} ……还有 ${5 - got} 个梗没被找到`)
+        : (got >= 5 ? '🥚×5 EGG HUNTER · all five found' : `🥚×${got} …${5 - got} meme${got === 4 ? '' : 's'} still hiding`);
+    }
   }
   // 全局统计行
   const gs = document.createElement('div');

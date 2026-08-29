@@ -505,11 +505,12 @@ precision highp float;
 in vec2 vUv; in vec2 vL; in vec2 vR; in vec2 vT; in vec2 vB; out vec4 fragColor;
 uniform sampler2D uTarget;
 uniform float aspectRatio;
-uniform vec3 color;
+uniform vec3 color;      /* 染料：预乘密度后的颜料 RGB */
 uniform vec2 point;
 uniform float radius;
 uniform vec2 uDir;
 uniform float uAniso;
+uniform float uWet;      /* 湿度（写入 A 通道，供湿边/积墨） */
 void main(){
   vec2 p = vUv - point; p.x *= aspectRatio;
   // 各向异性：沿运笔方向拉伸（硬笔出锋）
@@ -519,9 +520,9 @@ void main(){
   float pb = -p.x * d.y + p.y * d.x;
   pa /= uAniso;
   vec2 q = vec2(pa, pb);
-  vec3 splat = exp(-dot(q,q) / radius) * color;
-  vec3 base = texture(uTarget, vUv).xyz;
-  fragColor = vec4(base + splat, 1.0);
+  float g = exp(-dot(q,q) / radius);
+  vec4 base = texture(uTarget, vUv);
+  fragColor = vec4(base.rgb + g * color, min(base.a + g * uWet, 1.5));
 }`;
 
 const FRAG_ADVECT = `#version 300 es
@@ -547,8 +548,8 @@ void main(){
   vec2 coord = vUv - dt * bilerp(uVelocity, vUv, texelSize).xy * texelSize;
   vec4 result = bilerp(uSource, coord, sourceTexelSize);
   float decay = 1.0 + dissipation * dt;
-  /* 湿度（B 通道）独立快速蒸发——湿感只留在落笔后的片刻 */
-  result.z /= 1.0 + uWetDecay * dt;
+  /* 湿度（A 通道）独立快速蒸发——湿感只留在落笔后的片刻 */
+  result.w /= 1.0 + uWetDecay * dt;
   fragColor = max(result, vec4(0.0)) / decay;
 }`;
 
@@ -648,10 +649,6 @@ uniform vec3 paperTint;
 uniform float uZoom;
 uniform vec2 uViewC;
 
-vec3 pigment(float t){
-  /* 256×1 LUT 纹理：JS 侧生成，八驻点可由用户长按色点自定 */
-  return texture(uLut, vec2(clamp(t, 0.001, 0.999), 0.5)).rgb;
-}
 void main(){
   /* 视图变换：屏幕 uv → 纸面 uv */
   vec2 uv = (vUv - vec2(0.5)) / uZoom + uViewC;
@@ -665,16 +662,17 @@ void main(){
   vec4 sT = texture(uDye, clamp(T, vec2(0.001), vec2(0.999)));
   vec4 sB = texture(uDye, clamp(B, vec2(0.001), vec2(0.999)));
 
-  float d = s.x;
-  float grad = abs(sL.x - sR.x) + abs(sT.x - sB.x);
-  /* 湿边：潮湿处（B 通道）墨随水缘聚集——密度梯度加深，干后定格成积边 */
-  float wet = s.z;
+  /* 真颜料：染料 RGB 按密度预乘。密度 ≈ 均值×0.833 标定回旧刻度（阈值曲线不变）；
+     色相 = rgb/密度——叠墨是真实颜料相加，不再途经一维色带中间色 */
+  float d = dot(s.rgb, vec3(0.8333));
+  float grad = abs(dot(sL.rgb - sR.rgb, vec3(0.8333))) + abs(dot(sT.rgb - sB.rgb, vec3(0.8333)));
+  /* 湿边：潮湿处（A 通道）墨随水缘聚集——密度梯度加深，干后定格成积边 */
+  float wet = s.w;
   d *= 1.0 + smoothstep(0.0, 0.6, grad) * (0.55 + smoothstep(0.05, 0.45, wet) * 0.6);
   /* 积墨颗粒：浓墨且潮湿时，颜料随纸纹沉淀析出 */
   float gran = smoothstep(0.35, 1.1, d) * smoothstep(0.06, 0.4, wet);
 
-  float t = clamp(s.y / (s.x + 1e-5), 0.0, 1.0);
-  vec3 hue = pigment(t);
+  vec3 hue = clamp(s.rgb / max(d, 1e-5), 0.0, 1.0);
 
   vec3 wash = mix(hue + vec3(0.34), hue, 0.35);
   vec3 heavy = hue * 0.24;
@@ -1056,6 +1054,18 @@ function updateUndoBtn() {
 }
 
 /* ---------------- Splat ---------------- */
+/* JS 侧颜料查询：与 LUT 纹理同插值（驻点 smoothstep），供染料 RGB 预乘 */
+function pigmentJS(t) {
+  const x = Math.min(1, Math.max(0, t));
+  for (let s = 0; s < PIG_STOPS.length - 1; s++) {
+    const a = PIG_STOPS[s], b = PIG_STOPS[s + 1];
+    if (x >= a.t && x <= b.t) {
+      const k = smooth01(a.t, b.t, x);
+      return [a.c[0] + (b.c[0] - a.c[0]) * k, a.c[1] + (b.c[1] - a.c[1]) * k, a.c[2] + (b.c[2] - a.c[2]) * k];
+    }
+  }
+  return PIG_STOPS[PIG_STOPS.length - 1].c.slice();
+}
 function splat(x, y, dx, dy, dyeAmt, radiusScale, tint, wet) {
   const r = brushRadius() * (radiusScale || 1);
   const tt = tint === undefined ? INKS[inkIdx].tint : tint;
@@ -1074,6 +1084,7 @@ function splat(x, y, dx, dy, dyeAmt, radiusScale, tint, wet) {
   gl.uniform1f(progSplat.uni.aspectRatio, aspect);
   gl.uniform2f(progSplat.uni.point, x, y);
   gl.uniform3f(progSplat.uni.color, dx * BRUSHES[brushType].force * paperForce, dy * BRUSHES[brushType].force * paperForce, 0);
+  gl.uniform1f(progSplat.uni.uWet, 0);
   gl.uniform1f(progSplat.uni.radius, r * 0.6);
   gl.uniform2f(progSplat.uni.uDir, dirX, dirY);
   gl.uniform1f(progSplat.uni.uAniso, aniso);
@@ -1081,8 +1092,11 @@ function splat(x, y, dx, dy, dyeAmt, radiusScale, tint, wet) {
 
   gl.uniform2f(progSplat.uni.texelSize, dye.texelSizeX, dye.texelSizeY);
   gl.uniform1i(progSplat.uni.uTarget, dye.read.attach(0));
-  /* B 通道 = 湿度：供显示层做湿边加深与积墨颗粒（随 uWetDecay 蒸发） */
-  gl.uniform3f(progSplat.uni.color, amt * P.splatMul, amt * P.splatMul * tt, wet || 0);
+  /* 真颜料：染料 = 颜料RGB × 墨量（预乘密度）——叠墨为真实颜料相加 */
+  const pc = pigmentJS(tt);
+  const amtp = amt * P.splatMul;
+  gl.uniform3f(progSplat.uni.color, amtp * pc[0], amtp * pc[1], amtp * pc[2]);
+  gl.uniform1f(progSplat.uni.uWet, wet || 0);   /* 湿度写 A 通道 */
   gl.uniform1f(progSplat.uni.radius, r);
   blit(dye.write); dye.swap();
 }
@@ -1603,33 +1617,43 @@ async function idbDel(key) {
     tx.oncomplete = res; tx.onerror = () => rej(tx.error);
   });
 }
-/* 染料降采样快照（供自动存档与画册共用） */
+/* 染料降采样快照（供自动存档与画册共用；v2=RGB 三通道真颜料） */
 function snapshotDyeSmall() {
   const w = dye.width, h = dye.height;
   const full = new Float32Array(w * h * 4);
   gl.bindFramebuffer(gl.FRAMEBUFFER, dye.read.fbo);
   gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, full);
   const dw = w >> 1, dh = h >> 1;
-  const small = new Float32Array(dw * dh * 2);
+  const small = new Float32Array(dw * dh * 3);
   for (let y = 0; y < dh; y++) for (let x = 0; x < dw; x++) {
-    let r = 0, g = 0;
+    let r = 0, g = 0, b = 0;
     for (let oy = 0; oy < 2; oy++) for (let ox = 0; ox < 2; ox++) {
       const i = ((y * 2 + oy) * w + (x * 2 + ox)) * 4;
-      r += full[i]; g += full[i + 1];
+      r += full[i]; g += full[i + 1]; b += full[i + 2];
     }
-    const o = (y * dw + x) * 2;
-    small[o] = r * 0.25; small[o + 1] = g * 0.25;
+    const o = (y * dw + x) * 3;
+    small[o] = r * 0.25; small[o + 1] = g * 0.25; small[o + 2] = b * 0.25;
   }
-  return { w: dw, h: dh, data: small };
+  return { v: 3, w: dw, h: dh, data: small };
 }
-/* 从快照恢复染料 */
+/* 从快照恢复染料（v2=RGB；旧 2 通道档按色相坐标迁移为颜料 RGB） */
 function restoreDye(rec) {
   const dw = rec.w, dh = rec.h, w = dw * 2, h = dh * 2;
+  const v3 = rec.v === 3;
+  const stride = v3 ? 3 : 2;
   const up = new Float32Array(w * h * 4);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const s = (Math.min(dh - 1, y >> 1) * dw + Math.min(dw - 1, x >> 1)) * 2;
+    const s = (Math.min(dh - 1, y >> 1) * dw + Math.min(dw - 1, x >> 1)) * stride;
     const o = (y * w + x) * 4;
-    up[o] = rec.data[s]; up[o + 1] = rec.data[s + 1]; up[o + 2] = 0; up[o + 3] = 1;
+    if (v3) {
+      up[o] = rec.data[s]; up[o + 1] = rec.data[s + 1]; up[o + 2] = rec.data[s + 2]; up[o + 3] = 1;
+    } else {
+      /* 旧档：R=密度 G=密度×色相 → 查 LUT 迁移为颜料 RGB */
+      const dens = rec.data[s] || 0;
+      const t = dens > 0 ? (rec.data[s + 1] || 0) / dens : 0;
+      const pc = pigmentJS(t);
+      up[o] = dens * pc[0]; up[o + 1] = dens * pc[1]; up[o + 2] = dens * pc[2]; up[o + 3] = 1;
+    }
   }
   /* 尺寸同步：存档分辨率与当前 dye 不一致时（如切换极速档后载入），
      重建 write 侧并同步尺寸记录——否则读写 FBO 错位导致画面 texel 混乱 */
@@ -2075,23 +2099,31 @@ if (location.hash.includes('lab')) {
         gl.readPixels(Math.min(dye.width - 1, Math.round(u * dye.width)),
                       Math.min(dye.height - 1, Math.round(v * dye.height)),
                       1, 1, gl.RGBA, gl.FLOAT, px);
-        return [px[0], px[1], px[2]];
+        return [px[0], px[1], px[2], px[3]];
       };
-      // 1) 湿度写入 + 藤黄落色
-      splat(0.5, 0.5, 0, 0, 0.8, 2.2, 0.57, 1.0);
+      // 1) 湿度写入（A 通道）+ 朱砂落色（RGB 预乘）
+      splat(0.5, 0.5, 0, 0, 0.8, 2.2, 1.0, 1.0);
       step(0.016);
       const d1 = dyeRead(0.5, 0.5);
-      results.push(`wet0=${d1[2].toFixed(3)}`, `dye=${d1[0].toFixed(3)}`);
-      const okWet = d1[2] > 0.05 && d1[0] > 0.05;
+      results.push(`wet0=${d1[3].toFixed(3)}`, `dye=${d1[0].toFixed(3)}`);
+      const okWet = d1[3] > 0.05 && d1[0] > 0.05;
       // 2) 湿度独立蒸发（模拟 2.2s；染料几乎不衰减）
       for (let i = 0; i < 22; i++) step(0.1);
       const d2 = dyeRead(0.5, 0.5);
-      results.push(`wet2.2s=${d2[2].toFixed(3)}`, `dye2.2s=${d2[0].toFixed(3)}`);
-      const okDecay = d2[2] < d1[2] * 0.5 && d2[0] > d1[0] * 0.8;
-      // 3) LUT 色相映射：G/R 应≈tint(0.57)
-      const hue = d2[1] / (d2[0] + 1e-6);
-      results.push(`hue=${hue.toFixed(2)}~0.57`);
-      const okHue = Math.abs(hue - 0.57) < 0.07;
+      results.push(`wet2.2s=${d2[3].toFixed(3)}`, `dye2.2s=${d2[0].toFixed(3)}`);
+      const okDecay = d2[3] < d1[3] * 0.5 && d2[0] > d1[0] * 0.8;
+      // 3) 颜料色相：朱砂 (0.64,0.21,0.15) → r 占比 ≈0.64
+      const rs = d2[0] / (d2[0] + d2[1] + d2[2] + 1e-6);
+      results.push(`rShare=${rs.toFixed(2)}~0.64`);
+      const okHue = rs > 0.5 && rs < 0.75;
+      // 3b) 真混色：再叠玄墨(0.44,0.46,0.53) → g/b≈1.0；
+      //     旧一维色带中点（赭石）g/b=1.5——偏离色带即真实颜料混合的数值证据
+      splat(0.5, 0.5, 0, 0, 0.8, 2.2, 0.0, 0);
+      step(0.016);
+      const dm = dyeRead(0.5, 0.5);
+      const gb = dm[1] / (dm[2] + 1e-6);
+      results.push(`mixG/B=${gb.toFixed(2)}~1`);
+      const okMix = Math.abs(gb - 1) < 0.35;
       // 4) LUT 驻点改写与重建（自定色路径）
       const orig = PIG_STOPS[5].c;
       PIG_STOPS[5].c = [0.9, 0.1, 0.1];
@@ -2099,7 +2131,7 @@ if (location.hash.includes('lab')) {
       PIG_STOPS[5].c = orig;
       rebuildLut();
       results.push('lutRebuild=ok');
-      out.textContent = 'LAB ' + (okWet && okDecay && okHue ? 'PASS' : 'FAIL') + '  ' + results.join('  ');
+      out.textContent = 'LAB ' + (okWet && okDecay && okHue && okMix ? 'PASS' : 'FAIL') + '  ' + results.join('  ');
     } catch (e) {
       out.textContent = 'LAB ERR ' + e.message;
     }

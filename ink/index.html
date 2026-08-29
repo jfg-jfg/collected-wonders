@@ -288,6 +288,7 @@
     <div><span class="k" data-i18n="hAutoK"></span><span data-i18n="hAuto"></span></div>
   <div><span class="k" data-i18n="hZoomK"></span><span data-i18n="hZoom"></span></div>
   <div><span class="k">W / S</span><span data-i18n="hWash"></span></div>
+  <div><span class="k">E</span><span data-i18n="hEco"></span></div>
   </div>
 </div>
 
@@ -365,6 +366,7 @@ const I18N = {
     help: '助', helpTitle: '指 南 · GUIDE',
     hDrawK: '运笔', hDraw: '按住拖动，落笔成墨',
     hSpeedK: '笔速', hSpeed: '缓行则浓，疾书则淡（飞白）',
+    hEco: '极速模式开/关（小屏自动开启）',
     hBrushK: '笔刷', hBrush: '圆笔晕染 · 硬笔勾勒 · 泼墨洒点 · 水笔洗墨',
     hWaterK: '水笔', hWater: '蘸水行笔可洗开墨迹（破墨法）',
     hSealK: '印章', hSeal: '印章模式下点画布落款',
@@ -1969,6 +1971,7 @@ window.addEventListener('keydown', e => {
   else if (k === 'z') { undo(); }
   else if (k === 'c') { inkIdx = (inkIdx + 1) % INKS.length; buildChips(); }
   else if (k === 'w') wash();
+  else if (k === 'e' || k === 'E') setEco(!ecoMode);
   else if (k === 's') saveArtwork();
 });
 

@@ -396,7 +396,13 @@ function updateAudio(smooth = 0.5) {
     set(audioNodes.rain.g.gain, S.rain * 0.42);
     set(audioNodes.rain.f.frequency, 500 + S.rain * 2800);
   }
-  if (audioNodes.wind) set(audioNodes.wind.g.gain, S.wind * 0.5);
+  if (audioNodes.wind) {
+    set(audioNodes.wind.g.gain, S.wind * 0.5);
+    /* 主题音色：沙漠干燥嘶鸣 / 雪原低沉呼啸 / 太空机械嗡鸣 / 默认 */
+    const wf = theme === 4 ? 650 : theme === 3 ? 150 : theme === 5 ? 80 : 300;
+    set(audioNodes.wind.f.frequency, wf + S.wind * 200);
+    audioNodes.wind.f.Q.value = theme === 4 ? 2.5 : theme === 5 ? 4.0 : 0.7;
+  }
   if (audioNodes.fire) set(audioNodes.fire.g.gain, S.fire * 0.3);
   if (audioNodes.stream) set(audioNodes.stream.g.gain, S.stream * 0.26);
   if (audioNodes.cricket) set(audioNodes.cricket.g.gain, S.cricket * 0.16);

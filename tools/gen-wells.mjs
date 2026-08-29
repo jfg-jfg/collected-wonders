@@ -20,9 +20,8 @@ const { mulberry32, genLevel, validateLevel, finishLevel } = make;
 
 /* 新井规格：风格/尺寸/游魂各异；种子扫range内挑首个过验证且指标合适的 */
 const specs = [
-  { name: '乱石井', nameEn: 'Scree Well', w: 17, h: 13, style: 'random', ghosts: 1, seed: 41000, minPath: 24 },
-  { name: '长巷井', nameEn: 'Long Lane Well', w: 25, h: 17, style: 'streets', ghosts: 2, seed: 52000 },
-  { name: '回音壁', nameEn: 'Echo Wall', w: 21, h: 15, style: 'comb', ghosts: 1, seed: 63000 }
+  { name: '同心井', nameEn: 'Concentric Well', w: 23, h: 17, style: 'rings', ghosts: 2, seed: 81000, minPath: 30 },
+  { name: '石阵井', nameEn: 'Pillar Garden', w: 19, h: 15, style: 'pillars', ghosts: 1, seed: 94000, minPath: 26 }
 ];
 
 for (const s of specs) {

@@ -679,6 +679,27 @@ function genLevel(w, h, rng, style) {
       }
       break;
     }
+    case 'rings': {
+      // 回环：同心环墙 + 交错缺口——声波在环间层层折返
+      const cx = Math.floor(w / 2), cy = Math.floor(h / 2);
+      const maxR = Math.floor(Math.min(w, h) / 2) - 1;
+      for (let r = 3; r <= maxR; r += 2) {
+        const baseA = rng() * Math.PI * 2;
+        const gaps = [baseA, baseA + Math.PI * (0.7 + rng() * 0.6)];
+        for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+          if (Math.abs(Math.hypot(x - cx, y - cy) - r) < 0.85) {
+            const a = Math.atan2(y - cy, x - cx);
+            const nearGap = gaps.some(ga => {
+              let da = Math.abs(a - ga) % (Math.PI * 2);
+              if (da > Math.PI) da = Math.PI * 2 - da;
+              return da < 0.5;
+            });
+            if (!nearGap) wall(x, y);
+          }
+        }
+      }
+      break;
+    }
   }
 
   // 确保起点和终点周围开阔
@@ -901,12 +922,16 @@ const WELL_PACK = [
   { name: "长巷井", nameEn: "Long Lane Well", par: 54, ghosts: 2,
     code: "IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwojLi4uLi4uLi4uLiojLi4uLiMuLi4uIy4jCiMuLi4jIyMjIyMjIy4uLi4uLiMjIyMjIyMKIy4uLi4uLi4uLi4uLi4uLi4jLi4uLiMuIwojLi4uLi4uIy4uLi4uLi4uLiMuLi4uIy4jCiMuLi4uLi4jLi4uLiMuLi4uIy4uLi4jLiMKIyMuIy4uLi4jIyMjIyMjIy4jLiMjIyMjIwojLiMuLi4uIy4uLi4jLi4uLiMuLi4uIy4jCiMuIy4uLi4jLi4uLiMuLi4uIy4uLi4jLiMKIy4jLi4uLiMuLi4uIy4uLi4jLi4uLiMuIwojIyMjLi4uIyMjIyMjIy4uLiMjIyMjLiMjCiMuIy4uLi4jLi4uLiMuLi4uLi4uLi4uLiMKIy4jLi4uLiMuLi4uIy4uLi4uLi4uLi4uIwojLiMuLi4uIy4uLi4jLi4uLi4uLi4uLi4jCiMuIyouLi4qIyMjIyMjIyMjLiMjIy5TLiMKIy4jRy4uLiMuLi4uIy4uLi4jLi4uLi4uIwojIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj" },
   { name: "回音壁", nameEn: "Echo Wall", par: 66, ghosts: 1,
-    code: "IyMjIyMjIyMjIyMjIyMjIyMjIyMjCiMuLi4uIy4uLi4uIy4uLi4uIypHIwojLlMuLiMuLi4uLiMuLi4uLiMuLiMKIy4uLi4jLi4uLi4jLi4uLi4jLi4jCiMuLi4uIy4uLi4uIy4uIy4uIy4qIwojLi4uLiMuLiMuLiMuLiMuLiMuLiMKIy4uLi4jLi4jLi4jLi4jLi4jLi4jCiMuLi4uIy4uIy4uIy4uIy4uIy4uIwojLi4uLi4uLiMuLiMuLiMuLiMuLiMKIy4uLi4uLi4jLi4uLi4jLi4uLi4jCiMuLi4uLi4uIy4uLi4uIy4uLi4uIwojLi4uLi4uLiMuLi4uLiMuLi4uLiMKIy4uLi4uLi4jLi4uLi4jLi4uLi4jCiMuLi4uLi4uIy4uLi4uIy4uLi4qIwojIyMjIyMjIyMjIyMjIyMjIyMjIyM=" }];
+    code: "IyMjIyMjIyMjIyMjIyMjIyMjIyMjCiMuLi4uIy4uLi4uIy4uLi4uIypHIwojLlMuLiMuLi4uLiMuLi4uLiMuLiMKIy4uLi4jLi4uLi4jLi4uLi4jLi4jCiMuLi4uIy4uLi4uIy4uIy4uIy4qIwojLi4uLiMuLiMuLiMuLiMuLiMuLiMKIy4uLi4jLi4jLi4jLi4jLi4jLi4jCiMuLi4uIy4uIy4uIy4uIy4uIy4uIwojLi4uLi4uLiMuLiMuLiMuLiMuLiMKIy4uLi4uLi4jLi4uLi4jLi4uLi4jCiMuLi4uLi4uIy4uLi4uIy4uLi4uIwojLi4uLi4uLiMuLi4uLiMuLi4uLiMKIy4uLi4uLi4jLi4uLi4jLi4uLi4jCiMuLi4uLi4uIy4uLi4uIy4uLi4qIwojIyMjIyMjIyMjIyMjIyMjIyMjIyM=" },
+  { name: "同心井", nameEn: "Concentric Well", par: 40, ghosts: 2,
+    code: "IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKIy4uLi4uLi4jIyMuIyMjLi4uLi4uLiMKIy4uLi4uLiMjIy4uLiMjIyMuLi4uLiMKIy4uLi4uLi4uLiMjIyMjIyMjLi4uLiMKIy4uLi4uLi4uLi4uLiMjIyMjLi4uLiMKIy4uLi4uLi4uIyMjLi4jIyMjIy4uLiMKIy4uLi4uLi4jIyMuLi4uIy4jIy4uLiMKIy4uLi4uIy4jIy4uLi4jLi4uIy4uLiMKIy4uLi4uIy4jLi4uLi4jLi4uLi4uLiMKIy4uLiMuIy4uIy4uLiMjLi4uLi4uLiMKIy4uLiMuIyMjKi4uLiojLi4uLi4uLiMKIy4uLiMjIyMjIy4uLiMjIy4uLi4uLiMKIy4uLi4uIyMjI0cqLiMjIy4uLi4uLiMKIy4uLi4jIyMjIyMjIyMjLi4uLi4uLiMKIy5TLi4uIyMjIy4uLiMuLi4uLi4uLiMKIy4uLi4uLi4jIyMjIyMjLi4uLi4uLiMKIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyM=" },
+  { name: "石阵井", nameEn: "Pillar Garden", par: 38, ghosts: 1,
+    code: "IyMjIyMjIyMjIyMjIyMjIyMjIwojLi4uLi4uLi4uLi4uLi4uKkcjCiMuLi4uIy4uLi4uLi4jIyMuLiMKIy4uLiMjIy4jLi4uLi4uLi4uIwojLi4jLiMjLiMjLi4jIy4uLiojCiMuLiMuLiMuLiMuLi4uLi4uLiMKIy4uLiMjIyMjLiMuLi4uLi4uIwojLi4uLi4uLi4uLi4uLi4uLi4jCiMuLi4uLi4uLi4uLi4jIyMuLiMKIy4uLi4uLi4uLiMjLi4uLi4uIwojLi4jLi4uLi4uLi4jLi4uLi4jCiMuIy4uLiMjIy4uIyMuIy4uLiMKIy5TIy4uIyMuLiMuLi4jLi4uIwojLi4uLi4uLi4uIy4uLiMuLiojCiMjIyMjIyMjIyMjIyMjIyMjIyM=" }];
 
 /* 无尽层：通关全部主线后解锁，尺寸与密度随深度增长 */
 function buildEndless(di) {
   const w = Math.min(29, 21 + di * 2), h = Math.min(21, 15 + di);
-  const styles = ['pillars','comb','rooms','random','spiral','streets'];
+  const styles = ['pillars','comb','rooms','random','spiral','streets','rings'];
   const style = styles[di % styles.length];
   for (let a = 0; a < 20; a++) {
     const rng = mulberry32(7700 + di * 137 + a * 7919);
@@ -927,7 +952,7 @@ function todayKey() {
 function buildDaily() {
   let s = 0;
   for (const ch of todayKey()) s = (s * 31 + ch.charCodeAt(0)) >>> 0;
-  const styles = ['pillars','comb','rooms','random','spiral','streets'];
+  const styles = ['pillars','comb','rooms','random','spiral','streets','rings'];
   const style = styles[s % styles.length];
   for (let a = 0; a < 20; a++) {
     const rng = mulberry32(s + a * 7919);

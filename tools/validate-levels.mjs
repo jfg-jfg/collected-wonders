@@ -40,8 +40,8 @@ LEVELS.forEach((fin, li) => {
 let stressFail = 0;
 for (let s = 1; s <= 40; s++) {
   const rng = make.mulberry32(s * 131);
-  const styles = ['pillars','comb','rooms','random','spiral','streets'];
-  const g = make.genLevel(19, 13, rng, styles[s % 6]);
+  const styles = ['pillars','comb','rooms','random','spiral','streets','rings'];
+  const g = make.genLevel(19, 13, rng, styles[s % 7]);
   const fin = make.finishLevel(g);
   if (!validateLevel(fin.map, 19, 13).valid) stressFail++;
 }

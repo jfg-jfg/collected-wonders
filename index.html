@@ -290,7 +290,7 @@ const I18N = {
         desc: '一支笔，一汪水。手写流体力学引擎让墨在宣纸上晕开——缓行则浓，疾书则淡。画完盖一枚朱印，带走它。',
         ac: 'var(--ink-accent)' },
       { zh: '回声', en: 'ECHO', tag: '游戏 · 解谜', href: 'echo/',
-        desc: '无光的沉没之城，你只有声音。十二层迷宫×六种结构，三种游魂各怀心思——趋声的、游荡的、守灯的；每日深潜、成就墙、造井编辑器——凭记忆走到天光那里。',
+        desc: '无光的沉没之城，你只有声音。十二层迷宫×七种结构，三种游魂各怀心思——趋声的、游荡的、守灯的；钥匙、蓄力声呐、屏息藏身；每日深潜、八口名井、造井编辑器——凭记忆走到天光那里。',
         ac: 'var(--echo-accent)' },
       { zh: '造境', en: 'SCAPE', tag: '工具 · 声景', href: 'scape/',
 desc: '十声道纯数学生成：雨/风/篝火/溪流/夜虫/远雷/鸟鸣/远钟/雪/落花。时光流转、每日气象、场景分享链接、录制 webm——调一个属于你的世界。',
@@ -314,7 +314,7 @@ desc: '十声道纯数学生成：雨/风/篝火/溪流/夜虫/远雷/鸟鸣/远
         desc: 'A brush, a pool of water. A hand-written fluid dynamics engine lets ink bloom across rice paper — slow strokes run heavy, fast ones fly white. Finish with a red seal, and take it home.',
         ac: 'var(--ink-accent)' },
       { zh: '回声', en: 'ECHO', tag: 'GAME · PUZZLE', href: 'echo/',
-        desc: 'A drowned city with no light; you have only sound. Twelve depths × six structures, three breeds of ghosts — listeners, drifters, wardens; daily dive, achievements, well editor — navigate by memory to the daylight.',
+        desc: 'A drowned city with no light; you have only sound. Twelve depths × seven structures, three breeds of ghosts — listeners, drifters, wardens; keys, charged pings, held breath; daily dive, eight wells, a well editor — navigate by memory to the daylight.',
         ac: 'var(--echo-accent)' },
       { zh: '造境', en: 'SCAPE', tag: 'TOOL · SOUNDSCAPE', href: 'scape/',
         desc: 'Ten channels of pure math: rain/wind/fire/stream/crickets/thunder/birds/bell/snow/petals. Time flow, daily weather, scene share links, webm recording — compose a world.',
@@ -436,7 +436,7 @@ function workStat(en) {
         const c = (s.statsExt && s.statsExt.clears) || 0;
         const a = s.ach ? Object.keys(s.ach).length : 0;
         const w = s.wells ? Object.keys(s.wells).length : 0;
-        return lang === 'zh' ? `通关 ${c} 次 · 灯 ${a}/13 · 名井 ${w}/3` : `${c} clears · ${a}/13 lamps · ${w}/3 wells`;
+        return lang === 'zh' ? `通关 ${c} 次 · 灯 ${a}/13 · 名井 ${w}/8` : `${c} clears · ${a}/13 lamps · ${w}/8 wells`;
       }
       case 'SCAPE': {
         const s = JSON.parse(localStorage.getItem('scape-stats') || '{}');

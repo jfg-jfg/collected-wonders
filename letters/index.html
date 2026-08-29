@@ -515,6 +515,14 @@ function showTitle() {
   document.getElementById('tsStats').textContent =
     T(`${total()} 封信 · 你读过 ${Math.min(save.readEver || 0, total())} 封 · 结局 ${save.endings.length}/${totalEndings()}`,
       `${total()} letters · read ${Math.min(save.readEver || 0, total())} · endings ${save.endings.length}/${totalEndings()}`);
+  // 全结局仪式：一封信箱的所有结局都抵达过 → 盖一枚小金印
+  const es2 = document.getElementById('tsEndings');
+  if (es2 && totalEndings() > 0 && save.endings.length >= totalEndings()) {
+    const st = document.createElement('span');
+    st.style.cssText = 'margin-left:12px;color:var(--gold);font-size:12px;letter-spacing:0.3em;vertical-align:middle';
+    st.textContent = T('◈ 全结局', '◈ ALL ENDINGS');
+    es2.appendChild(st);
+  }
 }
 
 /* ---------- 信封 & 信纸 ---------- */

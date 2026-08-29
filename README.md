@@ -76,7 +76,7 @@ toy/
 - 故事验证：`node tools/validate-stories.mjs`（引用完整性 + 图可达性 + 隐藏结局）
 - 名井生成：`node tools/gen-wells.mjs`（与游戏内 v3 生成器同源）
 - 发帖物料：真浏览器打开 `ink/index.html#capture` / `scape/index.html#capture` 自录演示视频
-- 设计文档：`docs/DESIGN.md` · 发帖文案：`docs/POST-DRAFTS.md` · 真机清单：`docs/DEVICE-CHECK.md`
+- 设计文档：`docs/DESIGN.md` · 发帖文案：`docs/POST-DRAFTS.md` · 真机清单：`docs/DEVICE-CHECK.md` · 共享宇宙年表：`docs/UNIVERSE.md`
 
 ## 迭代史（节选）
 

@@ -68,7 +68,7 @@
   /* 观测手记 toast：深度里程碑 / 纪元跨越 */
   .toast {
     position: fixed; top: 72px; left: 50%; transform: translate(-50%, -8px);
-    z-index: 8; max-width: 86vw; text-align: center;
+    z-index: 8; max-width: 86vw; text-align: center; white-space: pre-line;
     color: var(--gold); font-size: 13px; letter-spacing: 0.24em; line-height: 1.9;
     text-shadow: 0 0 18px rgba(0,0,0,0.9);
     opacity: 0; transition: opacity 1.2s, transform 1.2s; pointer-events: none;
@@ -76,6 +76,36 @@
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
   button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  /* 航行日志面板 */
+  .modal { position: fixed; inset: 0; z-index: 12; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(3,4,8,0.72); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+  .modal.show { display: flex; }
+  .sheet {
+    width: min(560px, 94vw); max-height: 82vh; overflow-y: auto; overscroll-behavior: contain;
+    background: linear-gradient(170deg, #10131f, #0a0c14);
+    border: 1px solid rgba(201,166,217,0.3); border-radius: 12px;
+    padding: 24px 26px 20px; color: var(--txt);
+    box-shadow: 0 30px 90px rgba(0,0,0,0.7);
+  }
+  .sheet h3 { font-size: 16px; letter-spacing: 0.4em; color: #c9a6d9; font-weight: 600; margin-bottom: 12px; }
+  .close-x { float: right; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--dim); font-size: 13px; cursor: pointer; }
+  .close-x:hover { color: var(--gold); border-color: var(--gold); }
+  .logrow {
+    display: flex; gap: 12px; align-items: center; width: 100%; text-align: left;
+    background: rgba(223,230,239,0.05); border: 1px solid rgba(223,230,239,0.12);
+    border-radius: 8px; padding: 8px 12px; margin-bottom: 8px;
+    color: var(--txt); font-family: inherit; cursor: pointer;
+    transition: border-color .2s, transform .2s;
+  }
+  .logrow:hover { border-color: #c9a6d9; transform: translateX(4px); }
+  .logrow img { width: 72px; height: 48px; object-fit: cover; border-radius: 4px; background: #000; }
+  .logrow .li { flex: 1; min-width: 0; }
+  .logrow .ln { font-size: 13.5px; letter-spacing: 0.12em; }
+  .logrow .lm { font-size: 10.5px; color: var(--dim); letter-spacing: 0.1em; margin-top: 3px; font-family: Georgia, serif; }
+  .logempty { font-size: 12.5px; color: var(--dim); letter-spacing: 0.14em; padding: 18px 0; text-align: center; }
+  .logacts { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+  .logacts .place { font-size: 11.5px; padding: 6px 14px; }
+
 
   #errbox { position: fixed; inset: auto 0 0 0; z-index: 99; background: #401414; color: #ffb4b4; font-size: 12px; padding: 8px 12px; display: none; }
 
@@ -123,6 +153,7 @@
 
 <div class="hint" id="hint"></div>
 <div class="toast" id="toast"></div>
+<div class="modal" id="logOv"><div class="sheet" id="logSheet"></div></div>
 <a class="home-link" href="../index.html" title="拾遗 · 序">序</a>
 <div class="places" id="places"></div>
 <div id="errbox"></div>
@@ -155,7 +186,17 @@ const I18N = {
       { k: 'm9', mag: 1e9, line: '十亿。安静得能听见自己在数。' },
       { k: 'm12', mag: 1e12, line: '万亿。像有人在更深处，替你把数续上了。' }
     ],
-    badgeTip: '深度手记：1e3 / 1e6 / 1e9 / 1e2'
+    badgeTip: '深度手记：1e3 / 1e6 / 1e9 / 1e12',
+    daily: '☄ 今日', dailyDone: '今日已抵达 · 明日再来',
+    logBtn: '◈ 航志', logTitle: '航 行 日 志', logEmpty: '还没有停留过任何地方。',
+    logExport: '导出', logClear: '清空', logClear2: '确认清空？', logReach: '回访',
+    bottomLine: '灯还亮着。\n不知道是谁在添油。',
+    whispers: [
+      ['潮水进退，纹路相似。', '近岸的形状，远处也会再遇到。', '光在这里还很慷慨。'],
+      ['碎屑聚成带状，暂不散去。', '自相似出现：一小片像一大片。', '尘埃里有序，不多见。'],
+      ['墨迹停在这里，但从未干透。', '结构仍在。深处不空。', '回声一样的形状，隔层相认。'],
+      ['几乎全暗。几乎是芯。', '螺旋仍在缓缓旋转——那是光扫过的姿势。', '再往下，就是灯的内部。']
+    ]
   },
   en: {
     sub: 'Fractal Planet',
@@ -176,7 +217,17 @@ const I18N = {
       { k: 'm9', mag: 1e9, line: 'A billion. Quiet enough to hear yourself counting.' },
       { k: 'm12', mag: 1e12, line: 'A trillion. As if someone deeper down were counting on for you.' }
     ],
-    badgeTip: 'depth notes: 1e3 / 1e6 / 1e9 / 1e12'
+    badgeTip: 'depth notes: 1e3 / 1e6 / 1e9 / 1e12',
+    daily: '☄ TODAY', dailyDone: 'arrived today — come back tomorrow',
+    logBtn: '◈ LOG', logTitle: "CAPTAIN'S LOG", logEmpty: 'You have not lingered anywhere yet.',
+    logExport: 'EXPORT', logClear: 'CLEAR', logClear2: 'sure?', logReach: 'REVISIT',
+    bottomLine: 'The lamp is still lit.\nNo one knows who tends it.',
+    whispers: [
+      ['The tide comes and goes; the patterns rhyme.', 'Shapes near shore will be met again far out.', 'Light is still generous here.'],
+      ['Debris gathers into bands, holding for now.', 'Self-similarity: a small piece like the large one.', 'Order, in dust — not common.'],
+      ['The ink stopped here, yet never dried.', 'Structure remains. The deep is not empty.', 'Shapes like echoes, recognizing each other across layers.'],
+      ['Almost all dark. Almost the wick.', 'The spirals still turn — the way light swept the sea.', 'Further down: the inside of the lamp.']
+    ]
   }
 };
 let lang = localStorage.getItem('fold-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
@@ -521,6 +572,7 @@ function loadStats() {
   try { stats = JSON.parse(localStorage.getItem('fold-stats') || '{"maxMag":0,"badges":{}}'); }
   catch (e) { stats = { maxMag: 0, badges: {} }; }
   stats.badges = stats.badges || {};
+  stats.daily = stats.daily || {};
 }
 function saveStats() { try { localStorage.setItem('fold-stats', JSON.stringify(stats)); } catch (e) {} }
 loadStats();
@@ -549,6 +601,12 @@ function updateCoords() {
         showToast('◈ ' + b.line, 5200);
       }
     }
+  }
+  /* 触底：十万亿之底，灯还亮着（一次性） */
+  if (mag >= 1e13 && !stats.bottom) {
+    stats.bottom = true;
+    saveStats();
+    showToast(T().bottomLine, 9000);
   }
   const magStr = mag >= 1e8 ? (mag / 1e8).toFixed(1) + '×10⁸'
     : mag >= 1e4 ? (mag / 1e4).toFixed(1) + '×10⁴'
@@ -585,6 +643,25 @@ function h32(a, b, c) {
   h = Math.imul(h ^ (h >>> 13), 1103515245) | 0;
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
+/* 每日星球：日期种子从精选坐标池选一处（全城同日同地，零通信） */
+const DAILY_POOL = [
+  { x: -0.7436447860, y: 0.1318252536, s: 6e-7, h: '海马的尾涡里，卷着一整个海湾。', he: 'In the seahorse\'s tail-whorl, a whole bay is curled.' },
+  { x: -0.77568377, y: 0.13646737, s: 8e-6, h: '螺旋的浅滩，潮水退到第二圈。', he: 'Spiral shallows; the tide is out to the second ring.' },
+  { x: 0.28693186889504513, y: 0.014286693904085048, s: 8e-10, h: '双生的漩涡在此对望。', he: 'Twin vortices, gazing at each other.' },
+  { x: -1.7686112281649, y: 0.0017551024881, s: 4e-8, h: '一根银色的针，悬在雾中。去找它。', he: 'A silver needle, hanging in the fog. Go find it.' },
+  { x: -1.940157343, y: 8e-7, s: 3e-7, h: '驿站无人，尘埃成轨。', he: 'An empty waystation; dust settles into tracks.' },
+  { x: 0.2755, y: 0.0065, s: 0.008, h: '象群正涉过浅滩。', he: 'A herd of elephants fording the shallows.' },
+  { x: -0.16070135, y: 1.0375665, s: 1.2e-5, h: '最北的灯泡附近，藏着一座微缩的港。', he: 'Near the northernmost bulb, a miniature harbor hides.' },
+  { x: -1.7864402555, y: 0, s: 5e-7, h: '天线之海：一整排细针排向远方。', he: 'The antenna sea: a row of fine needles into the distance.' },
+  { x: -0.10109636384562, y: 0.95628651080914, s: 1e-6, h: '东北角有一枚生锈的齿轮。', he: 'In the northeast, a rusted cog.' },
+  { x: 0.432439, y: 0.226112, s: 2e-5, h: '花在这里开了一半。', he: 'A flower, half open.' },
+  { x: -0.743566931077659, y: 0.131358058468428, s: 2.4e-9, h: '海马的心脏，再往里三层。', he: 'The seahorse\'s heart, three layers in.' },
+  { x: -1.2568853, y: 0.3821567, s: 2e-6, h: '一座斜塔，与其影子互为扶壁。', he: 'A leaning tower buttressed by its own shadow.' },
+  { x: -0.88333, y: 0.23333, s: 1.5e-3, h: '小灯泡的弦上停着一只鸟。', he: 'On a small bulb\'s string, a bird is resting.' },
+  { x: -0.361811, y: 0.6062539, s: 5e-4, h: '海湾尽头，沙洲交错如掌纹。', he: 'At the bay\'s end, shoals cross like palm lines.' },
+  { x: -0.514723, y: 0.526514, s: 4e-4, h: '风把这里吹成了鳞片。', he: 'The wind has scaled this place.' },
+  { x: -0.747, y: 0.1075, s: 2.5e-4, h: '海马谷的入口，浪先碎成辫子。', he: 'The mouth of the valley; waves braid before they break.' }
+];
 function epochOf(mag) {
   if (mag >= 1e13) return 4;   // 触底
   if (mag >= 1e10) return 3;
@@ -696,6 +773,26 @@ function flyTo(p) {
 function buildPlaces() {
   const box = document.getElementById('places');
   box.innerHTML = '';
+  // 每日星球：日期种子选地，抵达盖戳
+  const dk = todayKey();
+  const arrived = stats.daily && stats.daily[dk];
+  const db = document.createElement('button');
+  db.className = 'place';
+  db.textContent = (arrived ? '✓ ' : '') + T().daily;
+  db.title = dailySpot().h;
+  db.addEventListener('click', () => {
+    const sp = dailySpot();
+    showToast((lang === 'zh' ? sp.h : sp.he), 4600);
+    dailyActive = { sp, since: 0 };
+    flyTo(sp);
+  });
+  box.appendChild(db);
+  // 航行日志
+  const lb = document.createElement('button');
+  lb.className = 'place';
+  lb.textContent = T().logBtn;
+  lb.addEventListener('click', openLog);
+  box.appendChild(lb);
   // 自定义书签（不再有预设地名）
   customSpots.forEach((p, i) => {
     const b = document.createElement('button');
@@ -730,6 +827,93 @@ function buildPlaces() {
   });
   box.appendChild(sb);
 }
+
+/* ============ 每日星球 & 航行日志 ============ */
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function dailySpot() {
+  let s = 0;
+  for (const ch of todayKey()) s = (s * 31 + ch.charCodeAt(0)) >>> 0;
+  return DAILY_POOL[s % DAILY_POOL.length];
+}
+let dailyActive = null;
+
+let log = [];
+try { log = JSON.parse(localStorage.getItem('fold-log') || '[]'); } catch (e) {}
+const saveLog = () => { try { localStorage.setItem('fold-log', JSON.stringify(log)); } catch (e) {} };
+
+function zoneNamePlain(mag, x, y, s) {
+  const ep = epochOf(mag);
+  if (ep < 0) return lang === 'zh' ? '母港' : 'Home Port';
+  if (ep === 4) return T().deepest;
+  const cell = Math.max(1.6 * s, 1e-13);
+  const ix = Math.floor(x / cell), iy = Math.floor(y / cell);
+  const pool = ZONE_POOLS[lang][ep];
+  const root = pool.roots[Math.floor(h32(Math.floor(ix / 12), Math.floor(iy / 12), ep) * pool.roots.length)];
+  const tail = pool.tails[Math.floor(h32(ix, iy, ep + 7) * pool.tails.length)];
+  return root + tail;
+}
+/* 停留记录：同一量化格+深度桶稳定 3 秒即入志（巡航亦计；纯待机深潜不计） */
+let dwellSig = '', dwellT0 = 0, lastLoggedSig = '';
+function dwellCheck(now) {
+  const mag = 1.4 / view.s;
+  if (mag < 100 || fly || dragStart) { dwellSig = ''; return; }
+  const cell = Math.max(1.6 * view.s, 1e-13);
+  const sig = `${Math.floor(view.x / cell)}|${Math.floor(view.y / cell)}|${Math.round(Math.log2(view.s))}|${epochOf(mag)}`;
+  if (sig !== dwellSig) { dwellSig = sig; dwellT0 = now; return; }
+  if (now - dwellT0 < 3000 || sig === lastLoggedSig) return;
+  if (now - lastInteractF > 60000 && !tourOn) return;   // 纯待机不记
+  lastLoggedSig = sig;
+  let img = '';
+  try {
+    const c = document.createElement('canvas');
+    c.width = 96; c.height = 64;
+    c.getContext('2d').drawImage(canvas, 0, 0, c.width, c.height);
+    img = c.toDataURL('image/jpeg', 0.55);
+  } catch (e) {}
+  log.push({ t: Date.now(), x: view.x, y: view.y, s: view.s, n: zoneNamePlain(mag, view.x, view.y, view.s), m: Math.round(Math.log10(mag)), img });
+  if (log.length > 60) log.shift();
+  saveLog();
+}
+function openLog() {
+  const ov = document.getElementById('logOv');
+  const sh = document.getElementById('logSheet');
+  const rows = log.slice().reverse().map(e => `
+    <button class="logrow" data-i="${e.t}">
+      ${e.img ? `<img src="${e.img}" alt="">` : ''}
+      <span class="li"><span class="ln">◈ ${e.n || '—'}</span>
+      <span class="lm">10^${e.m} · ${new Date(e.t).toLocaleDateString()} ${new Date(e.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></span>
+    </button>`).join('');
+  sh.innerHTML = `
+    <button class="close-x" onclick="document.getElementById('logOv').classList.remove('show')">✕</button>
+    <h3>${T().logTitle}</h3>
+    ${rows || `<div class="logempty">${T().logEmpty}</div>`}
+    <div class="logacts">
+      <button class="place" id="logExportBtn">${T().logExport}</button>
+      <button class="place" id="logClearBtn">${T().logClear}</button>
+    </div>`;
+  sh.querySelectorAll('.logrow').forEach(r => r.addEventListener('click', () => {
+    const e = log.find(x => String(x.t) === r.dataset.i);
+    if (e) { flyTo(e); document.getElementById('logOv').classList.remove('show'); }
+  }));
+  const ex = sh.querySelector('#logExportBtn');
+  if (ex) ex.addEventListener('click', () => {
+    const txt = JSON.stringify(log);
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => showToast('✓ ' + T().logExport, 2000), () => {});
+    else showToast(String(log.length), 2000);
+  });
+  const cl = sh.querySelector('#logClearBtn');
+  if (cl) cl.addEventListener('click', () => {
+    if (cl.dataset.arm) { log = []; saveLog(); openLog(); }
+    else { cl.dataset.arm = '1'; cl.textContent = T().logClear2; }
+  });
+  ov.classList.add('show');
+}
+document.getElementById('logOv').addEventListener('click', e => {
+  if (e.target.id === 'logOv') e.target.classList.remove('show');
+});
 
 /* ============ 分享 ============ */
 function writeHash() {
@@ -814,15 +998,29 @@ function findInterestingSpot() {
 }
 function tourNext() {
   if (!tourOn) return;
-  const spot = findInterestingSpot();
-  // 飞到有趣区域
+  /* 叙事巡航四段：扫掠（退远全景）→ 锁定 → 深潜 → 抵达（低语+命名） */
   fly = {
     x0: view.x, y0: view.y, s0: view.s,
-    x1: spot.x, y1: spot.y, s1: Math.max(spot.s, 1e-13),
-    t0: performance.now(), dur: 3000
+    x1: view.x, y1: view.y, s1: Math.max(view.s * 1.8, 0.3),
+    t0: performance.now(), dur: 2600
   };
-  // 停留 4 秒后继续
-  tourTimer = setTimeout(tourNext, 7000);
+  tourTimer = setTimeout(() => {
+    if (!tourOn) return;
+    const spot = findInterestingSpot();
+    fly = {
+      x0: view.x, y0: view.y, s0: view.s,
+      x1: spot.x, y1: spot.y, s1: Math.max(spot.s, 1e-13),
+      t0: performance.now(), dur: 3200
+    };
+    tourTimer = setTimeout(() => {
+      if (!tourOn) return;
+      const mag = 1.4 / view.s;
+      const ep = Math.max(0, Math.min(3, epochOf(mag)));
+      const ws = T().whispers[ep];
+      showToast(ws[Math.floor(Math.random() * ws.length)], 3800);
+      tourTimer = setTimeout(tourNext, 5200);
+    }, 3400);
+  }, 2800);
 }
 ['pointerdown', 'wheel', 'keydown'].forEach(ev =>
   window.addEventListener(ev, () => {
@@ -969,6 +1167,24 @@ function frame(now) {
       view.y += (target.y - view.y) * k;
       requestRender();
     }
+  }
+  // 停留入志（航行日志）
+  dwellCheck(now);
+  // 每日星球抵达判定：到位且稳定 1.5s 盖戳
+  if (dailyActive && !fly) {
+    const sp = dailyActive.sp;
+    const near = Math.abs(view.s - sp.s) / sp.s < 0.6 &&
+      Math.hypot(view.x - sp.x, view.y - sp.y) < sp.s * 0.6;
+    if (near) {
+      dailyActive.since = dailyActive.since || now;
+      if (now - dailyActive.since > 1500) {
+        stats.daily[todayKey()] = true;
+        saveStats();
+        showToast('✓ ' + T().dailyDone, 4200);
+        dailyActive = null;
+        buildPlaces();
+      }
+    } else dailyActive.since = 0;
   }
   // 空闲补帧：按需渲染下，长闲置后缓冲可能被回收（截图/标签页恢复时看到黑帧）
   if (now - lastRenderT > 800) render();

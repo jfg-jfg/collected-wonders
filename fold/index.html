@@ -506,6 +506,23 @@ function makeProgram(frag) {
 }
 const progIter = makeProgram(FRAG_ITER);
 const progColor = makeProgram(FRAG_COLOR);
+const FRAG_TRAIL = `#version 300 es
+precision highp float;
+out vec4 fragColor;
+uniform sampler2D uPrev;
+uniform vec2 uRes;
+uniform float uK;      /* 拉伸系数 >1 */
+uniform vec2 uPivot;   /* NDC 缩放锚点 */
+void main() {
+  vec2 uv = gl_FragCoord.xy / uRes;
+  vec2 suv = uPivot + (uv - uPivot) / uK;
+  vec3 p = texture(uPrev, suv).rgb;
+  float a = clamp((uK - 1.0) * 1.8, 0.0, 0.5);
+  fragColor = vec4(p, a);
+}`;
+const progTrail = makeProgram(FRAG_TRAIL);
+const UT = {};
+['uPrev', 'uRes', 'uK', 'uPivot'].forEach(n => UT[n] = gl.getUniformLocation(progTrail, n));
 const UI = {}, UC = {};
 ['uCenterX','uCenterY','uScale','uRes','uIter','uJulia','uCx','uCy','uMode','uTier','uOrbit','uOrbitN','uDRefX','uDRefY'].forEach(n => UI[n] = gl.getUniformLocation(progIter, n));
 /* 轨道采样器固定在单元 1，避免与 pass2 数据纹理（单元 0）形成渲染反馈环 */
@@ -514,10 +531,11 @@ gl.uniform1i(UI.uOrbit, 1);
 gl.useProgram(progColor);
 ['uData','uPhase','uPal','uStratum'].forEach(n => UC[n] = gl.getUniformLocation(progColor, n));
 
-/* ---------- 数据纹理 FBO ---------- */
-let dataTex = null, fbo = null;
+/* ---------- 数据纹理 FBO + 拉丝前帧纹理 ---------- */
+let dataTex = null, fbo = null, prevTex = null;
 function allocData() {
   if (dataTex) { gl.deleteTexture(dataTex); gl.deleteFramebuffer(fbo); }
+  if (prevTex) { gl.deleteTexture(prevTex); prevTex = null; }
   dataTex = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, dataTex);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -531,6 +549,14 @@ function allocData() {
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, dataTex, 0);
   if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error('fbo incomplete');
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  /* 拉丝前帧纹理（RGBA8 足够） */
+  prevTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, prevTex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, canvas.width, canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 }
 
 /* ============ 视图状态（中心坐标为双单 double-double，~31 位有效数字） ============ */
@@ -718,7 +744,35 @@ function renderColor() {
 function render() {
   renderIter();
   renderColor();
+  renderTrail();
   updateCoords();
+}
+/* ---------- 深潜拉丝：缩放越快拖影越长，静止即锐利 ---------- */
+let trailPrevS = 1, trailFilled = false, trailPivot = [0, 0];
+function renderTrail() {
+  const k = trailPrevS / view.s;   /* >1 = 正在下潜 */
+  if (trailFilled && k > 1.0015 && k < 1.6) {
+    gl.useProgram(progTrail);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, prevTex);
+    gl.uniform1i(UT.uPrev, 0);
+    gl.uniform2f(UT.uRes, canvas.width, canvas.height);
+    gl.uniform1f(UT.uK, Math.min(1.35, 1 + (k - 1) * 14));
+    gl.uniform2f(UT.uPivot, trailPivot[0], trailPivot[1]);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.disable(gl.BLEND);
+  }
+  /* 前帧拷贝（下一拉丝的素材） */
+  if (prevTex) {
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, prevTex);
+    gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 0, 0, canvas.width, canvas.height);
+    trailFilled = true;
+  }
+  trailPrevS = view.s;
 }
 
 /* ============ HUD ============ */
@@ -895,6 +949,7 @@ function zoomAt(cx, cy, f) {
   target.x = nx[0]; target.xl = nx[1];
   target.y = ny[0]; target.yl = ny[1];
   target.s = ns;
+  trailPivot = [(cx / innerWidth) * 2 - 1, 1 - (cy / innerHeight) * 2];
   requestRender();
 }
 canvas.addEventListener('dblclick', e => {

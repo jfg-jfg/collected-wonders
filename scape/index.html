@@ -1238,6 +1238,22 @@ document.getElementById('langBtn').addEventListener('click', () => {
   buildUI();
 });
 
+/* ---------- 聆听时长统计（门户读取 scape-stats.minutes） ---------- */
+let listenSec = 0;
+setInterval(() => {
+  if (document.hidden) return;
+  if (!sndOn) return;
+  listenSec += 5;
+  if (listenSec >= 60) {
+    try {
+      const sc = JSON.parse(localStorage.getItem('scape-stats') || '{"minutes":0}');
+      sc.minutes = (sc.minutes || 0) + Math.floor(listenSec / 60);
+      localStorage.setItem('scape-stats', JSON.stringify(sc));
+      listenSec %= 60;
+    } catch (e) {}
+  }
+}, 5000);
+
 /* ---------- 主循环 ---------- */
 let prev = performance.now();
 let pageHidden = false;

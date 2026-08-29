@@ -1272,6 +1272,41 @@ function loop(now) {
   }
 }
 
+/* ---------- 键盘快捷键 ---------- */
+window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const k = e.key.toLowerCase();
+  /* 1-7 预设 */
+  if (k >= '1' && k <= '6') {
+    const keys = Object.keys(PRESETS);
+    const idx = +k - 1;
+    if (keys[idx]) {
+      applyState(PRESETS[keys[idx]]);
+      curPreset = keys[idx];
+      document.querySelectorAll('#presets .chip').forEach((c, i) => c.classList.toggle('on', i === idx + 1)); /* +1 跳过每日 chip */
+    }
+  }
+  /* 0 = 每日气象 */
+  else if (k === '0') {
+    const ds = dailyScene();
+    applyState(ds.s);
+    curPreset = null;
+    document.querySelectorAll('#presets .chip').forEach((c, i) => c.classList.toggle('on', i === 0));
+    toast(lang === 'zh' ? `今日气象 · ${ds.name}` : `today · ${ds.nameEn}`);
+  }
+  /* T = 主题切换 */
+  else if (k === 't') { theme = (theme + 1) % 3; updTheme(); saveStateSoon(); }
+  /* M = 心境随机 */
+  else if (k === 'm') { document.getElementById('moodBtn').click(); }
+  /* F = 时光流转 */
+  else if (k === 'f') { document.getElementById('flowBtn').click(); }
+  /* R = 录制 */
+  else if (k === 'r') { document.getElementById('recBtn').click(); }
+  /* ←→ = 时刻 */
+  else if (e.key === 'ArrowLeft') { time = Math.max(0, time - 0.5); updateClock(); saveStateSoon(); }
+  else if (e.key === 'ArrowRight') { time = Math.min(24, time + 0.5); updateClock(); saveStateSoon(); }
+});
+
 /* ---------- 启动 ---------- */
 restoreState();
 document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';

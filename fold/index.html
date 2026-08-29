@@ -208,6 +208,9 @@ const I18N = {
     daily: '☄ 今日', dailyDone: '今日已抵达 · 明日再来',
     logBtn: '◈ 航志', logTitle: '航 行 日 志', logEmpty: '还没有停留过任何地方。',
     logExport: '导出', logClear: '清空', logClear2: '确认清空？', logReach: '回访',
+    logAscent: '↑ 倒航', logAscentTip: '从日志最深记录缓缓上浮回母港（60 秒）',
+    logImport: '捞漂流瓶', logImportOk: '✓ 捞起 {n} 条航志', logImportErr: '不是有效的航志 JSON',
+    vigilLine: n => `你不在时，它又深了 ${n} 层`,
     bottomLine: '灯还亮着。\n不知道是谁在添油。',
     whispers: [
       ['潮水进退，纹路相似。', '近岸的形状，远处也会再遇到。', '光在这里还很慷慨。'],
@@ -240,6 +243,9 @@ const I18N = {
     daily: '☄ TODAY', dailyDone: 'arrived today — come back tomorrow',
     logBtn: '◈ LOG', logTitle: "CAPTAIN'S LOG", logEmpty: 'You have not lingered anywhere yet.',
     logExport: 'EXPORT', logClear: 'CLEAR', logClear2: 'sure?', logReach: 'REVISIT',
+    logAscent: '↑ ASCEND', logAscentTip: 'slowly surface from deepest log entry back to home port (60s)',
+    logImport: 'FISH BOTTLE', logImportOk: '✓ picked up {n} entries', logImportErr: 'not a valid log JSON',
+    vigilLine: n => `while you were away, it went ${n} layers deeper`,
     bottomLine: 'The lamp is still lit.\nNo one knows who tends it.',
     whispers: [
       ['The tide comes and goes; the patterns rhyme.', 'Shapes near shore will be met again far out.', 'Light is still generous here.'],
@@ -1131,9 +1137,12 @@ function openLog() {
     <h3>${T().logTitle}</h3>
     ${rows || `<div class="logempty">${T().logEmpty}</div>`}
     <div class="logacts">
+      <button class="place" id="logAscentBtn" title="${T().logAscentTip}">${T().logAscent}</button>
+      <button class="place" id="logImportBtn">${T().logImport}</button>
       <button class="place" id="logExportBtn">${T().logExport}</button>
       <button class="place" id="logClearBtn">${T().logClear}</button>
-    </div>`;
+    </div>
+    <textarea id="logImportTa" rows="5" style="display:none;width:100%;margin-top:8px;background:rgba(5,7,13,0.8);color:var(--dim);border:1px solid var(--line);border-radius:6px;font:11px monospace;padding:8px;resize:vertical" placeholder="Paste log JSON here…"></textarea>`;
   sh.querySelectorAll('.logrow').forEach(r => r.addEventListener('click', () => {
     const e = log.find(x => String(x.t) === r.dataset.i);
     if (e) { flyTo(e); document.getElementById('logOv').classList.remove('show'); }
@@ -1148,6 +1157,51 @@ function openLog() {
   if (cl) cl.addEventListener('click', () => {
     if (cl.dataset.arm) { log = []; saveLog(); openLog(); }
     else { cl.dataset.arm = '1'; cl.textContent = T().logClear2; }
+  });
+  /* 倒航：从日志最深记录缓缓上浮回母港（60 秒仪式感） */
+  const asc = sh.querySelector('#logAscentBtn');
+  if (asc) asc.addEventListener('click', () => {
+    if (!log.length) return;
+    let deep = log[0];
+    for (const e of log) if ((e.m || 0) > (deep.m || 0)) deep = e;
+    document.getElementById('logOv').classList.remove('show');
+    flyTo(deep);
+    setTimeout(() => {
+      fly = { x0: deep.x, y0: deep.y, s0: deep.s, x0l: deep.xl || 0, y0l: deep.yl || 0,
+              x1: -0.6, y1: 0, s1: 1.4, x1l: 0, y1l: 0,
+              t0: performance.now(), dur: 60000 };
+    }, 2800);
+    showToast(T().logAscentTip, 5000);
+  });
+  /* 漂流瓶：粘贴他端导出的航志 JSON 合并 */
+  const imp = sh.querySelector('#logImportBtn');
+  if (imp) imp.addEventListener('click', () => {
+    const ta = sh.querySelector('#logImportTa');
+    if (!ta.style.display || ta.style.display === 'none') {
+      ta.style.display = '';
+      ta.focus();
+      return;
+    }
+    try {
+      const arr = JSON.parse(ta.value.trim());
+      if (!Array.isArray(arr)) throw new Error('not array');
+      const seen = new Set(log.map(e => e.t));
+      let n = 0;
+      for (const e of arr) {
+        if (e && typeof e.t === 'number' && typeof e.x === 'number' && !seen.has(e.t)) {
+          log.push(e); seen.add(e.t); n++;
+        }
+      }
+      log.sort((a, b) => a.t - b.t);
+      if (log.length > 60) log = log.slice(-60);
+      saveLog();
+      showToast(T().logImportOk.replace('{n}', n), 3000);
+      ta.style.display = 'none';
+      ta.value = '';
+      setTimeout(openLog, 600);
+    } catch (e) {
+      showToast(T().logImportErr, 2600);
+    }
   });
   ov.classList.add('show');
 }
@@ -1534,8 +1588,19 @@ setInterval(() => { if (sndOn) updDrone(); }, 2500);
 /* ============ 待机深潜 ============ */
 const REDUCED_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let lastInteractF = performance.now();
+let idleDiveMag0 = 0;   /* 待机深潜开始时的深度——回来时报告差值 */
 ['pointerdown', 'pointermove', 'wheel', 'keydown', 'touchstart'].forEach(ev =>
-  window.addEventListener(ev, () => { lastInteractF = performance.now(); }, { passive: true }));
+  window.addEventListener(ev, () => {
+    const wasIdle = performance.now() - lastInteractF > 30000;
+    lastInteractF = performance.now();
+    /* 待机守夜：回来时报告"你不在时，它又深了 X 层" */
+    if (wasIdle && idleDiveMag0 > 0) {
+      const now3 = Math.round(Math.log10(1.4 / view.s));
+      const then = Math.round(Math.log10(idleDiveMag0));
+      if (now3 - then >= 1) showToast(T().vigilLine(now3 - then), 5000);
+      idleDiveMag0 = 0;
+    }
+  }, { passive: true }));
 
 /* ============ 渲染循环 ============ */
 let renderPending = false, colorPending = false;
@@ -1579,6 +1644,7 @@ function frame(now) {
   } else {
     // 待机深潜：闲置 25s 缓缓深入（屏保）；reduced-motion 用户跳过
     if (!REDUCED_MOTION && now - lastInteractF > 25000) {
+      if (idleDiveMag0 === 0) idleDiveMag0 = 1.4 / view.s;
       target.s = Math.max(MAG_LIMIT * 1.4, target.s * Math.exp(-dt * 0.07));
     }
     // 平滑追踪：view 指数逼近 target（惯性缩放）

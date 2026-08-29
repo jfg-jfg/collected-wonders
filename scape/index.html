@@ -171,6 +171,12 @@ function mulberry32(seed) {
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 
 /* ---------- 场景数据 ---------- */
+/* 跨站联动缓存：褶皱触底 → 灯常明（低频刷新，避免每帧解析） */
+let foldBottomLit = false;
+setInterval(() => {
+  try { foldBottomLit = !!JSON.parse(localStorage.getItem('fold-stats') || '{}').bottom; } catch (e) {}
+}, 5000);
+try { foldBottomLit = !!JSON.parse(localStorage.getItem('fold-stats') || '{}').bottom; } catch (e) {}
 const S = { rain: 0, wind: 0.35, fire: 0, stream: 0.3, cricket: 0, thunder: 0, birds: 0.4, bell: 0, snow: 0, petal: 0 };
 const CH = ['rain','wind','fire','stream','cricket','thunder','birds','bell','snow','petal'];
 const CH_ZH = { rain:'雨', wind:'风', fire:'篝火', stream:'溪流', cricket:'夜虫', thunder:'雷', birds:'鸟鸣', bell:'远钟', snow:'雪', petal:'落花' };
@@ -684,7 +690,8 @@ function draw(dt) {
       ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 45, y - 2.5, x + 100, y); ctx.stroke();
     }
     // 白鹤礁灯塔（夜）：与回声/纸间同一座
-    const lhA = clamp((0.35 - L) / 0.3, 0, 1);
+    // 联动：有人触到褶皱十万亿之底（fold-stats.bottom）→ 灯常明且更亮
+    const lhA = foldBottomLit ? 1 : clamp((0.35 - L) / 0.3, 0, 1);
     if (lhA > 0.02) {
       const lx = W * 0.8, ly = hor;
       ctx.fillStyle = 'rgba(10,12,18,0.92)';

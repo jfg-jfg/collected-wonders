@@ -402,8 +402,10 @@ function workStat(en) {
       }
       case 'FOLD': {
         const s = JSON.parse(localStorage.getItem('fold-stats') || '{}');
+        /* 触底者：与回声/纸间共享宇宙的收束句 */
+        if (s.bottom) return lang === 'zh' ? '灯还亮着' : 'the lamp is still lit';
         const m = s.maxMag || 0;
-        const ms = m >= 1e8 ? (m / 1e8).toFixed(1) + '×10⁸' : m >= 1e4 ? (m / 1e4).toFixed(1) + '×10⁴' : (m || 0).toFixed(0);
+        const ms = m >= 1e16 ? (m / 1e16).toFixed(1) + '×10¹⁶' : m >= 1e8 ? (m / 1e8).toFixed(1) + '×10⁸' : m >= 1e4 ? (m / 1e4).toFixed(1) + '×10⁴' : (m || 0).toFixed(0);
         return lang === 'zh' ? `最深入 ${ms}` : `deepest ${ms}`;
       }
     }

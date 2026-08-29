@@ -77,6 +77,21 @@
 
   button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
+  /* 构图网格（G 键 / #grid=1）：三分线 + 黄金分割线 */
+  #grid {
+    position: fixed; inset: 0; z-index: 3; pointer-events: none; display: none;
+    background:
+      linear-gradient(90deg, transparent 33.33%, rgba(217,181,124,0.22) 33.33%, rgba(217,181,124,0.22) calc(33.33% + 1px), transparent calc(33.33% + 1px)),
+      linear-gradient(90deg, transparent 66.66%, rgba(217,181,124,0.22) 66.66%, rgba(217,181,124,0.22) calc(66.66% + 1px), transparent calc(66.66% + 1px)),
+      linear-gradient(0deg, transparent 33.33%, rgba(217,181,124,0.22) 33.33%, rgba(217,181,124,0.22) calc(33.33% + 1px), transparent calc(33.33% + 1px)),
+      linear-gradient(0deg, transparent 66.66%, rgba(217,181,124,0.22) 66.66%, rgba(217,181,124,0.22) calc(66.66% + 1px), transparent calc(66.66% + 1px)),
+      linear-gradient(90deg, transparent 38.2%, rgba(201,166,217,0.16) 38.2%, rgba(201,166,217,0.16) calc(38.2% + 1px), transparent calc(38.2% + 1px)),
+      linear-gradient(90deg, transparent 61.8%, rgba(201,166,217,0.16) 61.8%, rgba(201,166,217,0.16) calc(61.8% + 1px), transparent calc(61.8% + 1px)),
+      linear-gradient(0deg, transparent 38.2%, rgba(201,166,217,0.16) 38.2%, rgba(201,166,217,0.16) calc(38.2% + 1px), transparent calc(38.2% + 1px)),
+      linear-gradient(0deg, transparent 61.8%, rgba(201,166,217,0.16) 61.8%, rgba(201,166,217,0.16) calc(61.8% + 1px), transparent calc(61.8% + 1px));
+  }
+  #grid.on { display: block; }
+
   /* 航行日志面板 */
   .modal { position: fixed; inset: 0; z-index: 12; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(3,4,8,0.72); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
   .modal.show { display: flex; }
@@ -154,6 +169,7 @@
 
 <div class="hint" id="hint"></div>
 <div class="toast" id="toast"></div>
+<div id="grid"></div>
 <div class="modal" id="logOv"><div class="sheet" id="logSheet"></div></div>
 <a class="home-link" href="../index.html" title="拾遗 · 序">序</a>
 <div class="places" id="places"></div>
@@ -1210,9 +1226,16 @@ function findInterestingSpot() {
       scores.push({ sx, sy, score: variance + brightness * 0.1 });
     }
   }
-  // 选分数最高的区域
+  // 选分数最高的区域（黄金分割带内的候选加权——构图偏好，非纯随机）
   scores.sort((a, b) => b.score - a.score);
-  const best = scores[Math.floor(Math.random() * Math.min(3, scores.length))];  // 前3随机选
+  const top = scores.slice(0, 3);
+  top.forEach(s2 => {
+    const gx = Math.abs((s2.sx + 0.5) / SX - 0.382) < 0.12 || Math.abs((s2.sx + 0.5) / SX - 0.618) < 0.12;
+    const gy = Math.abs((s2.sy + 0.5) / SY - 0.382) < 0.15 || Math.abs((s2.sy + 0.5) / SY - 0.618) < 0.15;
+    if (gx && gy) s2.score *= 1.35;
+  });
+  top.sort((a, b) => b.score - a.score);
+  const best = top[Math.floor(Math.random() * Math.min(2, top.length))];  // 前二随机
   // 转换为坐标
   const u = (best.sx + 0.5) / SX - 0.5;
   const v = 0.5 - (best.sy + 0.5) / SY;
@@ -1418,6 +1441,7 @@ window.addEventListener('keydown', e => {
   else if (k === 'j' || k === 'J') juliaBtn.click();
   else if (k === 'p' || k === 'P') palBtn.click();
   else if (k === 's' || k === 'S') shotBtn.click();
+  else if (k === 'g' || k === 'G') { document.getElementById('grid').classList.toggle('on'); }
   if (k.startsWith('Arrow')) e.preventDefault();
 });
 document.getElementById('langBtn').addEventListener('click', () => {
@@ -1617,6 +1641,8 @@ if (jm) {
   target.x = 0; target.y = 0; target.s = 1.6;
 }
 render();
+// #grid=1：构图网格直达
+if (location.hash.includes('grid=1')) document.getElementById('grid').classList.add('on');
 // #dbg: 无头自检——读取像素证据写入 DOM（不影响正常使用）
 if (location.hash.includes('dbg')) {
   const px = new Uint8Array(4 * 100);

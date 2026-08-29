@@ -531,6 +531,7 @@ uniform vec2 texelSize;
 uniform vec2 sourceTexelSize;
 uniform float dt;
 uniform float dissipation;
+uniform float uWetDecay;
 vec4 bilerp(sampler2D sam, vec2 uv, vec2 tsize){
   vec2 st = uv / tsize - 0.5;
   vec2 iuv = floor(st); vec2 fuv = fract(st);
@@ -544,6 +545,8 @@ void main(){
   vec2 coord = vUv - dt * bilerp(uVelocity, vUv, texelSize).xy * texelSize;
   vec4 result = bilerp(uSource, coord, sourceTexelSize);
   float decay = 1.0 + dissipation * dt;
+  /* 湿度（B 通道）独立快速蒸发——湿感只留在落笔后的片刻 */
+  result.z /= 1.0 + uWetDecay * dt;
   fragColor = max(result, vec4(0.0)) / decay;
 }`;
 
@@ -675,7 +678,11 @@ void main(){
 
   float d = s.x;
   float grad = abs(sL.x - sR.x) + abs(sT.x - sB.x);
-  d *= 1.0 + smoothstep(0.0, 0.6, grad) * 0.55;
+  /* 湿边：潮湿处（B 通道）墨随水缘聚集——密度梯度加深，干后定格成积边 */
+  float wet = s.z;
+  d *= 1.0 + smoothstep(0.0, 0.6, grad) * (0.55 + smoothstep(0.05, 0.45, wet) * 0.6);
+  /* 积墨颗粒：浓墨且潮湿时，颜料随纸纹沉淀析出 */
+  float gran = smoothstep(0.35, 1.1, d) * smoothstep(0.06, 0.4, wet);
 
   float t = clamp(s.y / (s.x + 1e-5), 0.0, 1.0);
   vec3 hue = pigment(t);
@@ -688,7 +695,7 @@ void main(){
   float coverage = smoothstep(0.015, 0.42, d);
   vec3 paper = flatPaper > 0.5 ? vec3(1.0) : texture(uPaper, uv).rgb * paperTint;
   float grain = 0.88 + 0.24 * paper.g;
-  inkTone *= mix(1.0, grain, coverage * (1.0 - flatPaper));
+  inkTone *= mix(1.0, grain, clamp(coverage * (1.0 - flatPaper) + gran * 0.55, 0.0, 1.0));
 
   vec3 col = mix(paper, inkTone, coverage * 0.94);
 
@@ -903,7 +910,7 @@ function makePaper(size, seed, fiberStrength) {
   return c;
 }
 
-/* 纸质档案：影响流体手感与纹理 */
+/* 纸质档案：影响流体手感与纹理（force = 纸面阻力，越高越吃笔） */
 const PAPERS = [
   { seed: 20260821, fiber: 1.0,  curl: 22, force: 0.75, dyeDiss: 0.0002, splatMul: 1.0, tint: [1, 1, 1] },
   { seed: 7301,     fiber: 0.45, curl: 10, force: 0.4,  dyeDiss: 0.0001, splatMul: 0.8, tint: [1, 1, 1] },
@@ -991,11 +998,13 @@ function updateUndoBtn() {
 }
 
 /* ---------------- Splat ---------------- */
-function splat(x, y, dx, dy, dyeAmt, radiusScale, tint) {
+function splat(x, y, dx, dy, dyeAmt, radiusScale, tint, wet) {
   const r = brushRadius() * (radiusScale || 1);
   const tt = tint === undefined ? INKS[inkIdx].tint : tint;
   const amt = dyeAmt * BRUSHES[brushType].dyeMul;
   const P = PAPERS[paperIdx];
+  // 纸面阻力：生宣吃笔最顺（force 大 → 阻力小），熟宣涩，绢本居中
+  const paperForce = 1.15 - P.force;
   // 各向异性：硬笔沿运笔方向拉伸 2.4 倍（出锋）
   const aniso = brushType === 1 ? 2.4 : 1.0;
   const dl = Math.hypot(dx, dy);
@@ -1006,7 +1015,7 @@ function splat(x, y, dx, dy, dyeAmt, radiusScale, tint) {
   gl.uniform1i(progSplat.uni.uTarget, velocity.read.attach(0));
   gl.uniform1f(progSplat.uni.aspectRatio, aspect);
   gl.uniform2f(progSplat.uni.point, x, y);
-  gl.uniform3f(progSplat.uni.color, dx * BRUSHES[brushType].force, dy * BRUSHES[brushType].force, 0);
+  gl.uniform3f(progSplat.uni.color, dx * BRUSHES[brushType].force * paperForce, dy * BRUSHES[brushType].force * paperForce, 0);
   gl.uniform1f(progSplat.uni.radius, r * 0.6);
   gl.uniform2f(progSplat.uni.uDir, dirX, dirY);
   gl.uniform1f(progSplat.uni.uAniso, aniso);
@@ -1014,13 +1023,15 @@ function splat(x, y, dx, dy, dyeAmt, radiusScale, tint) {
 
   gl.uniform2f(progSplat.uni.texelSize, dye.texelSizeX, dye.texelSizeY);
   gl.uniform1i(progSplat.uni.uTarget, dye.read.attach(0));
-  gl.uniform3f(progSplat.uni.color, amt * P.splatMul, amt * P.splatMul * tt, 0);
+  /* B 通道 = 湿度：供显示层做湿边加深与积墨颗粒（随 uWetDecay 蒸发） */
+  gl.uniform3f(progSplat.uni.color, amt * P.splatMul, amt * P.splatMul * tt, wet || 0);
   gl.uniform1f(progSplat.uni.radius, r);
   blit(dye.write); dye.swap();
 }
 
 /* ---------------- 笔触 ---------------- */
 let pointerDown = false, lastX = 0, lastY = 0, lastT = 0;
+let strokeLen = 0, strokePhase = 0;   // 笔画累计长度 / 枯笔丝缕的随机相位
 let lastInteract = performance.now();
 const hintEl = document.getElementById('hint');
 const cursorEl = document.getElementById('brushCursor');
@@ -1052,7 +1063,7 @@ function splashBurst(x, y, scale) {
     splat(px, py,
       Math.cos(a) * (60 + Math.random() * 220) * 0.16,
       Math.sin(a) * (60 + Math.random() * 220) * 0.16 + 30,
-      amt, 0.28 + Math.random() * 0.3);
+      amt, 0.28 + Math.random() * 0.3, undefined, 0.6 * scale);
   }
 }
 function stats(nStrokes, nSaved) {
@@ -1070,6 +1081,7 @@ canvas.addEventListener('pointerdown', e => {
   pointerDown = true;
   const [x, y] = evtPos(e);
   lastX = x; lastY = y; lastT = performance.now();
+  strokeLen = 0; strokePhase = Math.random() * 100;
   lastInteract = performance.now();
   hintEl.classList.add('gone');
   snapshotDye();
@@ -1079,7 +1091,8 @@ canvas.addEventListener('pointerdown', e => {
     splashBurst(x, y, 0.5 + pr * 0.8);
   } else {
     const mul = brushType === 3 ? -0.7 : (brushType === 1 ? 0.8 : 0.55);
-    splat(x, y, 0, 0, inkDensity * mul * (0.45 + pr * 1.1), 0.8);
+    splat(x, y, 0, 0, inkDensity * mul * (0.45 + pr * 1.1), 0.8, undefined,
+          brushType === 3 ? 1.0 : 0.5);
   }
   canvas.setPointerCapture(e.pointerId);
 });
@@ -1095,19 +1108,33 @@ canvas.addEventListener('pointermove', e => {
   const speedNorm = Math.min(speed / 1.4, 1);
   const pr = pressureOf(e);
   const amt = inkDensity * (1.25 - speedNorm * 1.05) * (0.45 + pr * 1.1);
+  /* 提按笔锋：半径随压感与速度起伏——重按则饱、轻提则细、疾书则瘦 */
+  const rScale = brushType === 1
+    ? 0.5 + pr * 1.05                                   // 硬笔对压感最敏感
+    : brushType === 3
+      ? 0.9 + pr * 0.25                                 // 水笔保持宽幅
+      : 0.62 + pr * 0.5 + (1 - speedNorm) * 0.25;       // 圆笔：压感 + 慢笔更饱
+  const taper = Math.min(1, 0.35 + strokeLen / 0.045);  // 起笔渐入（尖锋入纸）
+  strokeLen += dist;
   const steps = Math.max(1, Math.ceil(dist / (brushRadius() * 0.55)));
   for (let i = 1; i <= steps; i++) {
     const t = i / steps;
     const m = brushType === 3 ? -0.85 : 1;
-    // 飞白：快速运笔时墨量骤降，随机留白（纸底透出）
+    // 飞白：快速运笔时墨量骤降；留白取笔画一维噪声——沿运笔方向连贯成丝缕（枯笔刮丝）
     const flying = speedNorm > 0.45 && brushType !== 3;
-    const flyFactor = flying ? (1 - speedNorm * 0.75) * (Math.random() < 0.35 ? 0.1 : 1) : 1;
+    let flyFactor = 1;
+    if (flying) {
+      const nx = (lastX + dxUv * t) * 137.0 + (lastY + dyUv * t) * 91.7 + strokePhase;
+      const streak = 0.5 + 0.5 * Math.sin(nx * 7.13) * Math.sin(nx * 23.7);
+      flyFactor = (1 - speedNorm * 0.75) * (streak < 0.3 ? 0.06 : 0.75 + streak * 0.25);
+    }
     // 数位笔倾斜偏移
     const [txOff, tyOff] = tiltOf(e);
     splat(lastX + dxUv * t + txOff, lastY + dyUv * t + tyOff,
           dxUv * config.SPLAT_FORCE * dt / steps,
           dyUv * config.SPLAT_FORCE * dt / steps,
-          amt * m * flyFactor / steps, 1);
+          amt * m * flyFactor / steps, rScale * taper,
+          undefined, brushType === 3 ? 1.0 : 0.4 + 0.35 * (1 - speedNorm));
     // 飞白散点：速度极高时甩出细小墨丝
     if (flying && speedNorm > 0.7 && Math.random() < 0.15) {
       const perpX = -dyUv / (dist + 1e-6);
@@ -1117,13 +1144,13 @@ canvas.addEventListener('pointermove', e => {
             lastY + dyUv * t + perpY * off,
             perpX * 60 + (Math.random() - 0.5) * 30,
             perpY * 60 + (Math.random() - 0.5) * 30,
-            amt * 0.18, 0.15 + Math.random() * 0.12);
+            amt * 0.18, 0.15 + Math.random() * 0.12, undefined, 0.15);
     }
     if (brushType === 2 && Math.random() < 0.22) {
       splat(lastX + dxUv * t + (Math.random() - 0.5) * brushRadius() * 2.4,
             lastY + dyUv * t + (Math.random() - 0.5) * brushRadius() * 2.4,
             (Math.random() - 0.5) * 40, 40 + Math.random() * 60,
-            amt * 0.5, 0.3 + Math.random() * 0.25);
+            amt * 0.5, 0.3 + Math.random() * 0.25, undefined, 0.5);
     }
   }
   lastX = x; lastY = y; lastT = now;
@@ -1512,6 +1539,17 @@ function restoreDye(rec) {
     const o = (y * w + x) * 4;
     up[o] = rec.data[s]; up[o + 1] = rec.data[s + 1]; up[o + 2] = 0; up[o + 3] = 1;
   }
+  /* 尺寸同步：存档分辨率与当前 dye 不一致时（如切换极速档后载入），
+     重建 write 侧并同步尺寸记录——否则读写 FBO 错位导致画面 texel 混乱 */
+  if (dye.width !== w || dye.height !== h) {
+    const nw = createFBO(w, h);
+    gl.deleteTexture(dye.write.texture); gl.deleteFramebuffer(dye.write.fbo);
+    dye.write = nw;
+    dye.width = w; dye.height = h;
+    dye.texelSizeX = 1 / w; dye.texelSizeY = 1 / h;
+    dye.read.width = w; dye.read.height = h;
+    dye.read.texelSizeX = 1 / w; dye.read.texelSizeY = 1 / h;
+  }
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, dye.read.texture);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, w, h, 0, gl.RGBA, gl.FLOAT, up);
@@ -1688,7 +1726,7 @@ function idleDrop(now, dt) {
     const s = Math.sin(st.t * Math.PI);
     const px = st.x0 + st.dx * st.t + st.px * s * st.amp;
     const py = st.y0 + st.dy * st.t + st.py * s * st.amp;
-    splat(px, py, st.vx * dt, st.vy * dt, st.dye * dt * 9, 0.85, 0);
+    splat(px, py, st.vx * dt, st.vy * dt, st.dye * dt * 9, 0.85, 0, 0.35);
     return;
   }
   if (now < nextDrop) return;
@@ -1757,6 +1795,7 @@ function step(dt) {
   blit(velocity.write); velocity.swap();
 
   gl.useProgram(progAdvect.p);
+  gl.uniform1f(progAdvect.uni.uWetDecay, 1.1);   // 湿度蒸发速率（半衰期 ~0.6s）
   gl.uniform2f(progAdvect.uni.texelSize, velocity.texelSizeX, velocity.texelSizeY);
   gl.uniform2f(progAdvect.uni.sourceTexelSize, velocity.texelSizeX, velocity.texelSizeY);
   gl.uniform1i(progAdvect.uni.uVelocity, velocity.read.attach(0));
@@ -1843,7 +1882,7 @@ function captureTick(dt) {
     const dur = k.t1 - k.t0;
     const vx = (k.x1 - k.x0) / dur * 900 * k.vmul;
     const vy = (k.y1 - k.y0) / dur * 900 * k.vmul;
-    splat(x, y, vx * dt, vy * dt, k.dye * dt * 9, k.rad || 0.9, 0);
+    splat(x, y, vx * dt, vy * dt, k.dye * dt * 9, k.rad || 0.9, 0, 0.4);
   }
   capDemo.st.textContent = 'CAP ' + capDemo.t.toFixed(1) + 's';
   if (capDemo.t > 16) {
@@ -1884,6 +1923,18 @@ function frame(now) {
   }
   idleDrop(now, dt);
   captureTick(dt);
+  /* 悬停滴墨：按住不动时，墨随时间在笔尖积聚、缓缓洇开（水笔则持续化墨） */
+  if (pointerDown && !sealMode && !panning && pointers.size <= 1 && brushType !== 2) {
+    const held = now - lastT;
+    if (held > 300) {
+      const pool = Math.min(1, (held - 300) / 4000);   // 4 秒积满一滴
+      const damp = brushType === 3 ? -0.04 : inkDensity * 0.06 * (0.3 + pool);
+      splat(lastX, lastY,
+            (Math.random() - 0.5) * 7, (Math.random() - 0.5) * 7,
+            damp * dt * 6, 1.05 + pool * 0.5,
+            undefined, brushType === 3 ? 0.9 : 0.5 * dt * 6);
+    }
+  }
   // 极速 + 静置：隔帧跳过模拟与绘制（慢扩散减半负载；preserveDrawingBuffer 保持画面）
   frameNo++;
   if (ecoMode && !benchOut && !autoStroke && washFrames <= 0 &&

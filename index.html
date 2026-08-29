@@ -146,7 +146,7 @@
   .em-scape { position: relative; width: 90px; height: 90px; }
   .em-scape .sky {
     position: absolute; inset: 0; border-radius: 10px; overflow: hidden;
-    animation: themeCycle 12s ease-in-out infinite;
+    animation: themeCycle 14s ease-in-out infinite;
   }
   .em-scape .sunmoon {
     position: absolute; left: 50%; width: 18px; height: 18px; border-radius: 50%;
@@ -161,22 +161,24 @@
     animation: themeIcon 12s steps(1) infinite;
   }
   @keyframes themeCycle {
-    0%   { background: linear-gradient(180deg, #2a3d5c, #c98d5a 62%, #31435e); }   /* 山 */
-    16.6%{ background: linear-gradient(180deg, #1a3a5c, #4a90a4 55%, #0d1f3c); }   /* 海 */
-    33.3%{ background: linear-gradient(180deg, #1a1a2e, #343460 50%, #0d0d1a); }   /* 城 */
-    50%  { background: linear-gradient(180deg, #4a6a8a, #b8cce0 65%, #d0e0f0); }   /* 雪原 */
-    66.6%{ background: linear-gradient(180deg, #4a3020, #c4a060 60%, #8a6840); }   /* 大漠 */
-    83.3%{ background: linear-gradient(180deg, #050510, #1a1a3a 50%, #0a0a20); }   /* 太空 */
-    100% { background: linear-gradient(180deg, #2a3d5c, #c98d5a 62%, #31435e); }   /* 回山 */
+    0%    { background: linear-gradient(180deg, #2a3d5c, #c98d5a 62%, #31435e); }   /* 山 */
+    14.28%{ background: linear-gradient(180deg, #1a3a5c, #4a90a4 55%, #0d1f3c); }  /* 海 */
+    28.57%{ background: linear-gradient(180deg, #1a1a2e, #343460 50%, #0d0d1a); }  /* 城 */
+    42.85%{ background: linear-gradient(180deg, #4a6a8a, #b8cce0 65%, #d0e0f0); }  /* 雪原 */
+    57.14%{ background: linear-gradient(180deg, #4a3020, #c4a060 60%, #8a6840); }  /* 大漠 */
+    71.42%{ background: linear-gradient(180deg, #050510, #1a1a3a 50%, #0a0a20); }  /* 太空 */
+    85.71%{ background: linear-gradient(180deg, #1a2e1e, #2e5530 55%, #14251a); }  /* 雨林 */
+    100%  { background: linear-gradient(180deg, #2a3d5c, #c98d5a 62%, #31435e); }  /* 回山 */
   }
   @keyframes themeIcon {
-    0%   { content: '⛰'; }
-    16.6%{ content: '🌊'; }
-    33.3%{ content: '🏙'; }
-    50%  { content: '❄'; }
-    66.6%{ content: '🏜'; }
-    83.3%{ content: '🛸'; }
-    100% { content: '⛰'; }
+    0%    { content: '⛰'; }
+    14.28%{ content: '🌊'; }
+    28.57%{ content: '🏙'; }
+    42.85%{ content: '❄'; }
+    57.14%{ content: '🏜'; }
+    71.42%{ content: '🛸'; }
+    85.71%{ content: '🌿'; }
+    100%  { content: '⛰'; }
   }
   @keyframes dayNight { 0% { background-position: 0 0%; } 100% { background-position: 0 100%; } }
   @keyframes arc { 0% { top: 62%; } 100% { top: 12%; } }

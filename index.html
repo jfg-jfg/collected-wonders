@@ -434,7 +434,7 @@ function workStat(en) {
         const c = (s.statsExt && s.statsExt.clears) || 0;
         const a = s.ach ? Object.keys(s.ach).length : 0;
         const w = s.wells ? Object.keys(s.wells).length : 0;
-        return lang === 'zh' ? `通关 ${c} 次 · 灯 ${a}/12 · 名井 ${w}/3` : `${c} clears · ${a}/12 lamps · ${w}/3 wells`;
+        return lang === 'zh' ? `通关 ${c} 次 · 灯 ${a}/13 · 名井 ${w}/3` : `${c} clears · ${a}/13 lamps · ${w}/3 wells`;
       }
       case 'SCAPE': {
         const s = JSON.parse(localStorage.getItem('scape-stats') || '{}');

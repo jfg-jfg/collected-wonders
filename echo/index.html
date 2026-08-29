@@ -437,6 +437,8 @@ const I18N = {
     lockMsg: '🔒 门纹丝不动。守灯人的日记写过：「钥匙挂在门后第三颗钉子上。」',
     keyMsg: '🗝 一枚黄铜钥匙，比井水还凉。天光之门认得它。',
     chargeHint: '长按声呐蓄力：照得更远——但游魂也听得更清。',
+    breathOut: '气息耗尽——你咳出一声。黑暗里的东西，都听见了。',
+    nicheHint: '🕯 壁龛可以藏身，游魂触不到你——但气息有限，屏息过久会咳出声。',
     locked: '未至', best: '最佳',
     lvSub: ['你从一场不属于你的梦中醒来，井口是唯一的出口。', '水声在石壁间折返。你开始怀疑，回应你的不是回声。', '这里曾有人居住。他们留下的不是废墟，是一封封寄不出的信。', '你走过一条路，它就消失一条。迷津记得每一个放弃的人。', '巨殿的柱子刻满了名字。你的指尖抚过时，有一个位置是空的。', '你开始辨认方向了。这座城认得你——它在你身上留下了记号。', '钟声从遥远的上方传来。十二下。这座城在被谁计时？', '街道尽头是海。海的那边是光。你忽然明白了为什么信寄不出去。', '门没有锁。你推开它的那一刻，听见了第一个真正的声音——自己的呼吸。', '门后没有海，是旋梯。你往上数台阶——九十九级。守灯人的日记里写过这个数字。', '油路堵着，焦黑的灯芯卡在管口。你把它抽出来，像从时间里抽出一截烧尽的芯。', '天窗推开的那刻，海在很远的下面，静得像睡着了。你替谁点了一下头。然后，你醒了。'],
     daily: '每 日 深 潜', dailyDone: '今日已抵达 · 明日再来', dailyTitle: '每日深潜', dailySub: '同一日，全城同一个迷宫。',
@@ -454,7 +456,8 @@ const I18N = {
       { id: 'ghostless', ico: '🛡', n: '暗影无伤', d: '有游魂的层零迷失通关' },
       { id: 'streak3', ico: '✹', n: '三灯连燃', d: '连续三关三盏灯' },
       { id: 'abyss', ico: '⌘', n: '无底之井', d: '无尽下潜抵达第十层' },
-      { id: 'keyroom', ico: '🗝', n: '灯室来客', d: '拾起第一枚钥匙' }
+      { id: 'keyroom', ico: '🗝', n: '灯室来客', d: '拾起第一枚钥匙' },
+      { id: 'breathless', ico: '🫁', n: '屏息者', d: '壁龛屏息时，让游魂擦身而过' }
     ]
   },
   en: {
@@ -500,6 +503,8 @@ const I18N = {
     lockMsg: '🔒 The gate will not move. The keeper\'s diary: "the key hangs on the third nail behind the door."',
     keyMsg: '🗝 A brass key, colder than well water. The daylight gate will know it.',
     chargeHint: 'Hold the echo to charge: farther light — but the ghosts hear it clearer too.',
+    breathOut: 'Out of breath — you cough, once. Everything in the dark hears it.',
+    nicheHint: '🕯 A niche hides you; no ghost can touch you there — but breath is short, and held too long it escapes.',
     locked: 'locked', best: 'best',
     lvSub: ['You wake from a dream that was never yours. The well mouth is the only exit.', 'Water echoes between stone walls. You begin to wonder if it is echo that answers.', 'People lived here once. What they left behind is not ruins, but letters that cannot be sent.', 'The path vanishes behind you as you walk. The labyrinth remembers everyone who gave up.', 'The pillars of the great hall are carved with names. One space is empty — the right size for yours.', 'You can read the walls now. This city knows you — it has left its mark inside your bones.', 'A bell tolls from far above. Twelve times. Who is counting down for this city?', 'The street ends at the sea. Beyond the sea, light. You suddenly understand why the letters never arrived.', 'The gate has no lock. As you push it open, you hear the first true sound — your own breathing.', 'Beyond the gate, no sea — a spiral stair. You count the steps upward. Ninety-nine. The keeper\'s diary counted them first.', 'The oil line is choked, a charred wick jammed in the pipe. You draw it out like a burned length of time.', 'As the skylight swings open, the sea lies far below, still as sleep. You nod, once, for someone. Then — you wake.'],
     daily: 'DAILY DIVE', dailyDone: 'ARRIVED TODAY · COME BACK TOMORROW', dailyTitle: 'Daily Dive', dailySub: 'One maze per day, same for everyone.',
@@ -517,7 +522,8 @@ const I18N = {
       { id: 'ghostless', ico: '🛡', n: 'Untouched', d: 'clear a ghost depth without being lost' },
       { id: 'streak3', ico: '✹', n: 'Triple Flame', d: 'three 3-lantern clears in a row' },
       { id: 'abyss', ico: '⌘', n: 'The Bottomless', d: 'reach endless depth Ⅹ' },
-      { id: 'keyroom', ico: '🗝', n: 'Guest of the Lamp Room', d: 'pick up your first key' }
+      { id: 'keyroom', ico: '🗝', n: 'Guest of the Lamp Room', d: 'pick up your first key' },
+      { id: 'breathless', ico: '🫁', n: 'Breath Holder', d: 'let a ghost pass within arm\'s reach while holding your breath' }
     ]
   }
 };
@@ -1062,6 +1068,40 @@ function sndLocked() {
   o.connect(f); f.connect(g); g.connect(ac.destination);
   o.start(t); o.stop(t + 0.22);
 }
+/* 屏息心跳：越憋越快越响 */
+function sndThump(vol) {
+  const ac = audio(); if (!ac || !save.snd) return;
+  const t = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(58, t);
+  o.frequency.exponentialRampToValueAtTime(40, t + 0.09);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+  o.connect(g); g.connect(ac.destination);
+  o.start(t); o.stop(t + 0.18);
+}
+/* 气息耗尽的咳出：一声闷咳 + 呼气噪声 */
+function sndExhale() {
+  const ac = audio(); if (!ac || !save.snd) return;
+  const t = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain();
+  const f = ac.createBiquadFilter();
+  o.type = 'sawtooth'; o.frequency.setValueAtTime(140, t);
+  o.frequency.exponentialRampToValueAtTime(86, t + 0.1);
+  f.type = 'lowpass'; f.frequency.value = 500;
+  g.gain.setValueAtTime(0.11, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+  o.connect(f); f.connect(g); g.connect(ac.destination);
+  o.start(t); o.stop(t + 0.26);
+  const len = 0.3, buf = ac.createBuffer(1, ac.sampleRate * len, ac.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) * 0.5;
+  const s = ac.createBufferSource(); s.buffer = buf;
+  const f2 = ac.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.value = 900; f2.Q.value = 0.8;
+  const g2 = ac.createGain(); g2.gain.value = 0.07;
+  s.connect(f2); f2.connect(g2); g2.connect(ac.destination);
+  s.start(t + 0.08);
+}
 function sndStep() {
   const ac = audio(); if (!ac || !save.snd) return;
   const t = ac.currentTime;
@@ -1144,6 +1184,8 @@ let niches = null;      // 壁龛：死路格，玩家的躲避处
 let lastPingCell = null;   // 游魂的趋向目标
 let hasKey = false, needKey = false, keyCell = null;   // 钥匙与天光之门
 let pingPower = 0, chargeStart = 0;                    // 蓄力声呐的声浪余威
+let breath = 1, breathHeld = 0, breathSpent = false;   // 壁龛屏息：藏身气息有限
+let breathThumpT = 0;
 /* 游魂分型：趋声魂（循声）/ 游荡魂（充耳不闻，自行漂移）/ 守灯魂（守在碎片与出口旁） */
 const GHOST_KINDS = {
   hunter:   { near: '214,72,72',  core: '236,110,96',  map: '224,122,95' },
@@ -1337,6 +1379,9 @@ function moveGhosts(dt) {
       [g.dx, g.dy] = best;
       g.x += g.dx; g.y += g.dy;
       checkGhostHit();
+      // 屏息者：壁龛屏息 ≥0.5s 时，游魂走到一臂之内
+      if (isNiche(px, py) && breathHeld > 0.5 && Math.hypot(g.x - px, g.y - py) < 1.8)
+        award('breathless');
     }
   }
 }
@@ -1433,6 +1478,7 @@ function loadLevel(i, daily) {
   findNiches();
   lastPingCell = null;
   hasKey = false; needKey = false; keyCell = null; chargeStart = 0; pingPower = 0;
+  breath = 1; breathHeld = 0; breathSpent = false; breathThumpT = 0;
   // 塔层与无尽每五层：天光之门上锁
   if (!isCustom && !isDaily && (li === 9 || li === 10 || li === 11 ||
       (li >= LEVELS.length && (li - LEVELS.length) % 5 === 4))) placeKey();
@@ -1476,6 +1522,11 @@ function showLevelCard() {
         hint = `<div class="sb" style="margin-top:12px;color:rgba(232,150,110,0.9)">${T().ghostHints[k]}</div>`;
         break;
       }
+    }
+    // 壁龛首遇：屏息规则一次性介绍（有游魂且有壁龛的层）
+    if (!hint && !save.nicheIntro && ghosts.length && niches && niches.size) {
+      save.nicheIntro = 1; persist();
+      hint = `<div class="sb" style="margin-top:12px;color:rgba(127,216,208,0.85)">${T().nicheHint}</div>`;
     }
   }
   lc.innerHTML = `<div class="no">${no}</div><div class="nm">${nm.split(' · ')[isDaily || endless ? 0 : 1] || nm}</div><div class="sb">${sb}</div>${hint}`;
@@ -1801,6 +1852,7 @@ function enterCustomPlay(map, parVal, name, ghostCount) {
   findNiches();
   lastPingCell = null;
   hasKey = false; needKey = false; keyCell = null; chargeStart = 0; pingPower = 0;
+  breath = 1; breathHeld = 0; breathSpent = false; breathThumpT = 0;
   litWalls = new Set();
   totalWalls = 0;
   for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++)
@@ -2243,6 +2295,14 @@ function render(dt) {
     ctx.fillStyle = `rgba(160,30,30,${(Math.max(0, ghostFlash) * 0.32).toFixed(3)})`;
     ctx.fillRect(0, 0, W, H);
   }
+  // 屏息暗角：气息越浅，四野越黑
+  if (ghosts.length && breath < 1) {
+    const vr = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.16, W / 2, H / 2, Math.max(W, H) * 0.6);
+    vr.addColorStop(0, 'rgba(4,6,10,0)');
+    vr.addColorStop(1, `rgba(4,6,10,${((1 - breath) * 0.6).toFixed(3)})`);
+    ctx.fillStyle = vr;
+    ctx.fillRect(0, 0, W, H);
+  }
 }
 
 function roundRectC(x, y, w, h, r) {
@@ -2641,6 +2701,32 @@ function frame(now) {
     elapsed = performance.now() - startTime;
     if (Math.floor(elapsed / 1000) % 2 === 0) updateHud();
     pingPower = Math.max(0, pingPower - dt / 2.2);   // 声浪余威衰减
+    // 壁龛屏息：藏身时气息 6.5s 耗尽——强制咳出一道微声波，暴露位置
+    if (ghosts.length) {
+      if (isNiche(px, py)) {
+        breath = Math.max(0, breath - dt / 6.5);
+        breathHeld += dt;
+        // 心跳：屏息 1.2s 后开始，越憋越快越响
+        if (breathHeld > 1.2 && AC && save.snd) {
+          breathThumpT -= dt;
+          if (breathThumpT <= 0) {
+            sndThump(0.04 + (1 - breath) * 0.07);
+            breathThumpT = Math.max(0.3, 0.95 - (1 - breath) * 0.6);
+          }
+        }
+        if (breath <= 0 && !breathSpent) {
+          breathSpent = true;
+          sndExhale();
+          ripples.push({ x: px + 0.5, y: py + 0.5, r: 0, maxR: 3.6, soft: true });
+          lastPingCell = [px + 0.5, py + 0.5];   // 黑暗里的东西都听见了
+          showFrag(T().breathOut, false);
+        }
+      } else {
+        breath = Math.min(1, breath + dt / 3);
+        breathHeld = 0;
+        breathSpent = false;
+      }
+    }
     propagate(dt);
     updateGhostHum(now);
     moveGhosts(dt);

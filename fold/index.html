@@ -65,6 +65,16 @@
   }
   .hint.gone { opacity: 0; }
 
+  /* 观测手记 toast：深度里程碑 / 纪元跨越 */
+  .toast {
+    position: fixed; top: 72px; left: 50%; transform: translate(-50%, -8px);
+    z-index: 8; max-width: 86vw; text-align: center;
+    color: var(--gold); font-size: 13px; letter-spacing: 0.24em; line-height: 1.9;
+    text-shadow: 0 0 18px rgba(0,0,0,0.9);
+    opacity: 0; transition: opacity 1.2s, transform 1.2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
   button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   #errbox { position: fixed; inset: auto 0 0 0; z-index: 99; background: #401414; color: #ffb4b4; font-size: 12px; padding: 8px 12px; display: none; }
@@ -112,6 +122,7 @@
 </div>
 
 <div class="hint" id="hint"></div>
+<div class="toast" id="toast"></div>
 <a class="home-link" href="../index.html" title="拾遗 · 序">序</a>
 <div class="places" id="places"></div>
 <div id="errbox"></div>
@@ -135,15 +146,16 @@ const I18N = {
     juliaOn: '儒', juliaOff: '曼', shipName: '舰',
     juliaTipOn: '切换到儒利亚集合（以当前中心为 c）', juliaTipOff: '回到曼德博集合',
     palTip: '切换调色板', shot: '存图', shotOk: '✓ 已保存',
-    places: [
-      { name: '母港', x: -0.6, y: 0, s: 1.4 },
-      { name: '海马谷', x: -0.746806, y: 0.108665, s: 0.006 },
-      { name: '鹦鹉螺湾', x: -0.74364388703, y: 0.13182590421, s: 2.2e-7 },
-      { name: '双螺旋角', x: 0.28693186889504513, y: 0.014286693904085048, s: 8e-10 },
-      { name: '象谷', x: 0.2755, y: 0.0065, s: 0.008 },
-      { name: '银龙针', x: -1.7686112281649, y: 0.0017551024881, s: 4e-8 },
-      { name: '尘埃驿站', x: -1.940157343, y: 0.0000008, s: 3e-7 }
-    ]
+    epochs: ['浅海纪', '尘埃纪', '洇墨纪', '灯下纪'],
+    enterEpoch: e => `—— 入 ${e} ——`,
+    deepest: '灯下',
+    badges: [
+      { k: 'm3', mag: 1e3, line: '第一千层。浪声退成很远的背景。' },
+      { k: 'm6', mag: 1e6, line: '一百万。光走到这里，也要歇一歇。' },
+      { k: 'm9', mag: 1e9, line: '十亿。安静得能听见自己在数。' },
+      { k: 'm12', mag: 1e12, line: '万亿。像有人在更深处，替你把数续上了。' }
+    ],
+    badgeTip: '深度手记：1e3 / 1e6 / 1e9 / 1e2'
   },
   en: {
     sub: 'Fractal Planet',
@@ -155,15 +167,16 @@ const I18N = {
     juliaOn: 'JULIA', juliaOff: 'MSET', shipName: 'SHIP',
     juliaTipOn: 'switch to the Julia set (c = current center)', juliaTipOff: 'back to the Mandelbrot set',
     palTip: 'cycle palette', shot: 'SHOT', shotOk: '✓ saved',
-    places: [
-      { name: 'Home Port', x: -0.6, y: 0, s: 1.4 },
-      { name: 'Seahorse Valley', x: -0.746806, y: 0.108665, s: 0.006 },
-      { name: 'Nautilus Bay', x: -0.74364388703, y: 0.13182590421, s: 2.2e-7 },
-      { name: 'Twin Spiral Cape', x: 0.28693186889504513, y: 0.014286693904085048, s: 8e-10 },
-      { name: 'Elephant Valley', x: 0.2755, y: 0.0065, s: 0.008 },
-      { name: 'Silver Dragon Needle', x: -1.7686112281649, y: 0.0017551024881, s: 4e-8 },
-      { name: 'Dust Waystation', x: -1.940157343, y: 0.0000008, s: 3e-7 }
-    ]
+    epochs: ['Shallows', 'Dust', 'Ink', 'Under the Lamp'],
+    enterEpoch: e => `—— INTO THE ${e.toUpperCase()} ——`,
+    deepest: 'Under the Lamp',
+    badges: [
+      { k: 'm3', mag: 1e3, line: 'One thousand deep. The sound of waves recedes into a far background.' },
+      { k: 'm6', mag: 1e6, line: 'A million. Even light, coming this far, needs to rest.' },
+      { k: 'm9', mag: 1e9, line: 'A billion. Quiet enough to hear yourself counting.' },
+      { k: 'm12', mag: 1e12, line: 'A trillion. As if someone deeper down were counting on for you.' }
+    ],
+    badgeTip: 'depth notes: 1e3 / 1e6 / 1e9 / 1e12'
   }
 };
 let lang = localStorage.getItem('fold-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
@@ -174,29 +187,32 @@ const T = () => I18N[lang];
 const canvas = document.getElementById('gl');
 const gl = canvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });
 if (!gl) { document.getElementById('errbox').style.display = 'block'; document.getElementById('errbox').textContent = 'WebGL2 unavailable'; throw new Error('no webgl2'); }
+const hasFloatFB = !!gl.getExtension('EXT_color_buffer_float');
 
 const VERT = `#version 300 es
 precision highp float;
 const vec2 verts[3] = vec2[3](vec2(-1.0,-1.0), vec2(3.0,-1.0), vec2(-1.0,3.0));
 void main(){ gl_Position = vec4(verts[gl_VertexID], 0.0, 1.0); }`;
 
-/* 双精度模拟（double-single）曼德博：Dekker/Knuth 技术
-   使缩放可达 ~10^13 而不糊成像素 */
-const FRAG_MAIN = `#version 300 es
+/* ---------- Pass 1：迭代 ----------
+   输出数据纹理（编码为 0..1，RGBA8 回退亦可用）：
+   R = fract(0.12·t) 逃逸相位 | fract(0.08·i) 内部相位
+   G = 条纹平均值（逃逸）| exp(-0.015·i) 内部辉光
+   B = fract(0.5·log2(DE/像素)) 褶皱等距线相位（非全纯模式为 0）
+   A = exp(-0.03·t) 边界辉光兼逃逸标志（>=0.004 为逃逸） */
+const FRAG_ITER = `#version 300 es
 precision highp float;
 out vec4 fragColor;
 uniform vec2 uCenterX;
 uniform vec2 uCenterY;
 uniform float uScale;
-uniform float uAspect;
-uniform float uIter;
-uniform float uPhase;
 uniform vec2 uRes;
+uniform float uIter;
 uniform float uJulia;
 uniform vec2 uCx;
 uniform vec2 uCy;
-uniform float uPal;
 uniform float uMode;   /* 0 曼德博 1 儒利亚 2 燃烧之舰 */
+uniform float uTier;   /* 0 单精度（浅层提速） 1 df64 */
 
 vec2 ds_add(vec2 a, vec2 b) {
   float t1 = a.x + b.x;
@@ -213,8 +229,7 @@ vec2 ds_mul(vec2 a, vec2 b) {
   float a_hi = ca - (ca - a.x), b_hi = cb - (cb - b.x);
   float a_lo = a.x - a_hi, b_lo = b.x - b_hi;
   float c11 = a_hi * b_hi;
-  /* 修正项 = 交叉和 + 低位积（~2^-13 量级）——绝不可乘 SPLIT：
-     旧版此处误乘 8193 把修正项放大到主项量级，渲染的是错误映射 */
+  /* 修正项 = 交叉和 + 低位积（~2^-13 量级）——绝不可乘 SPLIT */
   float c21 = (a_hi * b_lo + a_lo * b_hi) + a_lo * b_lo;
   float t1 = c11 + c21;
   vec2 r;
@@ -222,6 +237,120 @@ vec2 ds_mul(vec2 a, vec2 b) {
   r.y = c21 - (t1 - c11);
   return r;
 }
+
+void main() {
+  vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
+  float pix = 2.0 * uScale / uRes.y;
+  bool ship = uMode > 1.5;
+  bool julia = uJulia > 0.5;
+  /* c（df64 构造，两档共用：像素坐标的绝对精度永远走双单） */
+  vec2 cxc = ds_add(uCenterX, vec2(uv.x * uScale, 0.0));
+  vec2 cyc = ds_add(uCenterY, vec2(uv.y * uScale, 0.0));
+
+  float t = 0.0;         /* 平滑逃逸计数 / 内部计数 */
+  float stripe = 0.0;    /* 条纹累加 */
+  float gout = 0.0;      /* 内部辉光 */
+  float lg = 0.0;        /* log2(DE/pix) */
+  bool esc = false;
+  float escA = 0.0;
+
+  if (uTier < 0.5) {
+    /* ---- 单精度档：浅层（倍率 < 1e5），普通 float 迭代 ---- */
+    vec2 z, c;
+    vec2 dz = vec2(julia ? 1.0 : 0.0);   /* 复导数（全纯模式） */
+    if (julia) { z = vec2(cxc.x, cyc.x); c = vec2(uCx.x, uCy.x); }
+    else { z = vec2(0.0); c = vec2(cxc.x, cyc.x); }
+    float sum = 0.0, n = 0.0, dd = 0.0;
+    for (int k = 0; k < 2048; k++) {
+      if (float(k) >= uIter) break;
+      if (ship) { z = abs(z); }
+      vec2 zn = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;
+      if (!ship) { dz = vec2(2.0 * (z.x * dz.x - z.y * dz.y) + (julia ? 0.0 : 1.0),
+                             2.0 * (z.x * dz.y + z.y * dz.x)); }
+      z = zn;
+      dd = dot(z, z);
+      sum += 0.5 + 0.5 * sin(atan(z.y, z.x) * 3.0);
+      n += 1.0;
+      if (dd > 65536.0) { t = float(k) + 1.0 - log2(log2(dd) * 0.5); esc = true; break; }
+    }
+    if (esc) {
+      stripe = sum / max(n, 1.0);
+      escA = exp(-t * 0.03);
+      if (!ship) {
+        float az = sqrt(dd);
+        float de = az * log(az) / max(length(dz), 1e-30);
+        lg = log2(max(de, 1e-30) / pix);
+      }
+    } else {
+      t = n; gout = exp(-n * 0.015);
+    }
+  } else {
+    /* ---- df64 档：深层（1e5 ~ 1e13） ---- */
+    vec2 zx, zy, Cx, Cy;
+    if (julia) { zx = cxc; zy = cyc; Cx = uCx; Cy = uCy; }
+    else { zx = vec2(0.0); zy = vec2(0.0); Cx = cxc; Cy = cyc; }
+    vec2 dz = vec2(julia ? 1.0 : 0.0);   /* 复导数走单精度（hi 分量，供 DE 等距线） */
+    float sum = 0.0, n = 0.0, dd = 0.0;
+    for (int k = 0; k < 2048; k++) {
+      if (float(k) >= uIter) break;
+      if (ship) {
+        zx = vec2(abs(zx.x), abs(zx.y));
+        zy = vec2(abs(zy.x), abs(zy.y));
+      }
+      vec2 xx = ds_mul(zx, zx);
+      vec2 yy = ds_mul(zy, zy);
+      vec2 xy = ds_mul(zx, zy);
+      vec2 nx = ds_add(ds_add(xx, vec2(-yy.x, -yy.y)), Cx);
+      vec2 ny = ds_add(ds_add(xy, xy), Cy);
+      if (!ship) {
+        float zhx = zx.x, zhy = zy.x;
+        dz = vec2(2.0 * (zhx * dz.x - zhy * dz.y) + (julia ? 0.0 : 1.0),
+                  2.0 * (zhx * dz.y + zhy * dz.x));
+      }
+      zx = nx; zy = ny;
+      dd = zx.x * zx.x + zy.x * zy.x;
+      sum += 0.5 + 0.5 * sin(atan(zy.x, zx.x) * 3.0);
+      n += 1.0;
+      if (dd > 65536.0) { t = float(k) + 1.0 - log2(log2(dd) * 0.5); esc = true; break; }
+    }
+    if (esc) {
+      stripe = sum / max(n, 1.0);
+      escA = exp(-t * 0.03);
+      if (!ship) {
+        float az = sqrt(dd);
+        float de = az * log(az) / max(length(dz), 1e-30);
+        lg = log2(max(de, 1e-30) / pix);
+      }
+    } else {
+      t = n; gout = exp(-n * 0.015);
+    }
+  }
+
+  float R, G, B, A;
+  if (esc) {
+    R = fract(0.12 * t);
+    G = clamp(stripe, 0.0, 1.0);
+    B = ship ? 0.0 : fract(lg * 0.5);
+    A = clamp(escA, 0.0, 1.0);
+  } else {
+    R = fract(0.08 * t);
+    G = clamp(gout, 0.0, 1.0);
+    B = 0.0;
+    A = 0.0;
+  }
+  fragColor = vec4(R, G, B, A);
+}`;
+
+/* ---------- Pass 2：着色 ----------
+   迭代数据只算一遍，调色相位 / 地质层 / 调色板切换近乎免费 */
+const FRAG_COLOR = `#version 300 es
+precision highp float;
+out vec4 fragColor;
+uniform sampler2D uData;
+uniform float uPhase;
+uniform float uPal;
+uniform float uStratum;   /* 0 浅 … 1 深（log10(mag)/13）：地质层 */
+
 vec3 palette(float t) {
   /* 四套调色板：0墨 1极光 2炉火 3素宣 */
   if (uPal < 0.5) {
@@ -238,61 +367,34 @@ vec3 palette(float t) {
     return a + b * cos(6.28318 * (t + d));
   }
 }
+/* 地质层：越深越近单色冷墨（浅海青绿 → 墨渊近墨） */
+vec3 strata(vec3 c) {
+  float m = dot(c, vec3(0.299, 0.587, 0.114));
+  vec3 mono = m * vec3(0.94, 0.97, 1.05);
+  return mix(c, mono, uStratum * 0.72) * (1.0 - uStratum * 0.10);
+}
 void main() {
-  vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
-  // c = center + uv * scale（df64 加法保精度）
-  vec2 cxc = ds_add(uCenterX, vec2(uv.x * uScale, 0.0));
-  vec2 cyc = ds_add(uCenterY, vec2(uv.y * uScale, 0.0));
-  vec2 zx, zy, Cx, Cy;
-  if (uJulia > 0.5) {
-    zx = cxc; zy = cyc;       // Julia：z 从像素点出发
-    Cx = uCx; Cy = uCy;       // c 固定
-  } else {
-    zx = vec2(0.0); zy = vec2(0.0);
-    Cx = cxc; Cy = cyc;
-  }
-  if (uMode > 1.5) {
-    /* 燃烧之舰：先取模再平方 */
-    zx = vec2(abs(zx.x), abs(zx.y));
-    zy = vec2(abs(zy.x), abs(zy.y));
-  }
-  float i = 0.0;
-  float dd = 0.0;
-  for (int k = 0; k < 2048; k++) {
-    if (float(k) >= uIter) break;
-    if (uMode > 1.5) {
-      zx = vec2(abs(zx.x), abs(zx.y));
-      zy = vec2(abs(zy.x), abs(zy.y));
-    }
-    vec2 xx = ds_mul(zx, zx);
-    vec2 yy = ds_mul(zy, zy);
-    vec2 xy = ds_mul(zx, zy);
-    vec2 nx = ds_add(ds_add(xx, vec2(-yy.x, -yy.y)), Cx);
-    vec2 ny = ds_add(ds_add(xy, xy), Cy);
-    zx = nx; zy = ny;
-    dd = zx.x * zx.x + zy.x * zy.x;
-    if (dd > 65536.0) { i = float(k); break; }
-    i = float(k) + 0.5;
-  }
-  if (dd > 65536.0) {
-    /* 逃逸区：密集颜色循环 */
-    float t = i + 1.0 - log2(log2(dd) * 0.5);
-    vec3 col = palette(0.12 * t + uPhase);
+  vec4 d = texelFetch(uData, ivec2(gl_FragCoord.xy), 0);
+  bool esc = d.a >= 0.004;
+  vec3 col;
+  if (esc) {
+    float hue = d.r + uPhase;
+    col = strata(palette(hue));
+    /* 条纹织物：轨道统计赋予流动质感 */
+    col *= 0.72 + 0.56 * d.g;
+    /* 褶皱墨线：DE 等距线（距边界越近越浓） */
+    float tri = abs(d.b - 0.5) * 2.0;
+    float line = 1.0 - smoothstep(0.0, 0.22, tri);
+    col = mix(col, col * 0.22, line * clamp(d.a * 4.0, 0.0, 1.0) * 0.8);
     /* 边界辉光 */
-    float edge = exp(-t * 0.03);
-    col += palette(uPhase + 0.5) * edge * 0.3;
-    fragColor = vec4(col, 1.0);
+    col += palette(uPhase + 0.5) * d.a * 0.28;
   } else {
-    /* 内部：可见的图案与色彩（非纯黑） */
-    float zn = sqrt(dd);
-    float bands = sin(i * 0.8 + zn * 20.0) * 0.5 + 0.5;
-    float glow2 = exp(-i * 0.015);
-    vec3 base = palette(0.08 * i + uPhase);
-    vec3 inner_col = base * (0.12 + 0.20 * bands + glow2 * 0.5);
-    /* 近边界微光 */
-    inner_col += vec3(0.04, 0.03, 0.05) * glow2;
-    fragColor = vec4(inner_col, 1.0);
+    float bands = 0.5 + 0.5 * sin(6.28318 * 10.0 * d.r);
+    vec3 base = strata(palette(d.r + uPhase * 0.5));
+    col = base * (0.12 + 0.20 * bands + d.g * 0.5);
+    col += vec3(0.04, 0.03, 0.05) * d.g;
   }
+  fragColor = vec4(col, 1.0);
 }`;
 
 function compile(type, src) {
@@ -302,14 +404,38 @@ function compile(type, src) {
     throw new Error('shader: ' + gl.getShaderInfoLog(s));
   return s;
 }
-const prog = gl.createProgram();
-gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
-gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG_MAIN));
-gl.linkProgram(prog);
-if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error('link: ' + gl.getProgramInfoLog(prog));
-gl.useProgram(prog);
-const U = {};
-['uCenterX','uCenterY','uScale','uAspect','uIter','uPhase','uRes','uJulia','uCx','uCy','uPal'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+function makeProgram(frag) {
+  const p = gl.createProgram();
+  gl.attachShader(p, compile(gl.VERTEX_SHADER, VERT));
+  gl.attachShader(p, compile(gl.FRAGMENT_SHADER, frag));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('link: ' + gl.getProgramInfoLog(p));
+  return p;
+}
+const progIter = makeProgram(FRAG_ITER);
+const progColor = makeProgram(FRAG_COLOR);
+const UI = {}, UC = {};
+['uCenterX','uCenterY','uScale','uRes','uIter','uJulia','uCx','uCy','uMode','uTier'].forEach(n => UI[n] = gl.getUniformLocation(progIter, n));
+['uData','uPhase','uPal','uStratum'].forEach(n => UC[n] = gl.getUniformLocation(progColor, n));
+
+/* ---------- 数据纹理 FBO ---------- */
+let dataTex = null, fbo = null;
+function allocData() {
+  if (dataTex) { gl.deleteTexture(dataTex); gl.deleteFramebuffer(fbo); }
+  dataTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, dataTex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  if (hasFloatFB) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, canvas.width, canvas.height, 0, gl.RGBA, gl.HALF_FLOAT, null);
+  else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, canvas.width, canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, dataTex, 0);
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error('fbo incomplete');
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
 
 /* ============ 视图状态 ============ */
 const view = { x: -0.6, y: 0, s: 1.4 };   // 中心与半高
@@ -334,52 +460,96 @@ function resize() {
   let w = innerWidth * dpr, h = innerHeight * dpr;
   const m = Math.max(w, h) / maxDim;
   if (m > 1) { w /= m; h /= m; }
+  const ow = canvas.width, oh = canvas.height;
   canvas.width = Math.round(w); canvas.height = Math.round(h);
-  gl.viewport(0, 0, canvas.width, canvas.height);
+  if (canvas.width !== ow || canvas.height !== oh) allocData();
 }
 window.addEventListener('resize', resize);
 resize();
 
-function render() {
+/* ============ 渲染：Pass1 迭代 → Pass2 着色 ============ */
+let lastIter = 0;
+let lastRenderT = 0;
+function renderIter() {
   const [xh, xl] = split64(view.x);
   const [yh, yl] = split64(view.y);
-  // 交互期降迭代：拖拽/缩放进行中减负，静止后恢复全质量
   const busy = dragStart !== null || fly !== null || Math.abs(view.s - target.s) / target.s > 0.01;
   const iter = Math.min(2000, Math.round((160 + 42 * Math.log2(3 / view.s) * 0.5 + 80) * (busy ? 0.45 : 1)));
   const [cxh, cxl] = split64(juliaC.x);
   const [cyh, cyl] = split64(juliaC.y);
-  gl.uniform2f(U.uCenterX, xh, xl);
-  gl.uniform2f(U.uCenterY, yh, yl);
-  gl.uniform1f(U.uScale, view.s);
-  gl.uniform1f(U.uAspect, canvas.width / canvas.height);
-  gl.uniform1f(U.uIter, iter);
-  gl.uniform1f(U.uPhase, 0.0);
-  gl.uniform2f(U.uRes, canvas.width, canvas.height);
-  gl.uniform1f(U.uJulia, juliaOn ? 1.0 : 0.0);
-  gl.uniform2f(U.uCx, cxh, cxl);
-  gl.uniform2f(U.uCy, cyh, cyl);
-  gl.uniform1f(U.uPal, palIdx);
-  gl.uniform1f(U.uMode, shipMode ? 2.0 : 0.0);
-  gl.uniform1f(U.uPhase, phaseT);
+  const mag = 1.4 / view.s;
+  gl.useProgram(progIter);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.uniform2f(UI.uCenterX, xh, xl);
+  gl.uniform2f(UI.uCenterY, yh, yl);
+  gl.uniform1f(UI.uScale, view.s);
+  gl.uniform2f(UI.uRes, canvas.width, canvas.height);
+  gl.uniform1f(UI.uIter, iter);
+  gl.uniform1f(UI.uJulia, juliaOn ? 1.0 : 0.0);
+  gl.uniform2f(UI.uCx, cxh, cxl);
+  gl.uniform2f(UI.uCy, cyh, cyl);
+  gl.uniform1f(UI.uMode, shipMode ? 2.0 : 0.0);
+  gl.uniform1f(UI.uTier, mag < 3e4 ? 0.0 : 1.0);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   lastIter = iter;
   lastRenderT = performance.now();
+}
+function renderColor() {
+  const mag = 1.4 / view.s;
+  gl.useProgram(progColor);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, dataTex);
+  gl.uniform1i(UC.uData, 0);
+  gl.uniform1f(UC.uPhase, phaseT);
+  gl.uniform1f(UC.uPal, palIdx);
+  gl.uniform1f(UC.uStratum, Math.min(1, Math.max(0, Math.log10(Math.max(mag, 1)) / 13)));
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+function render() {
+  renderIter();
+  renderColor();
   updateCoords();
 }
-let lastIter = 0;
-let lastRenderT = 0;
 
 /* ============ HUD ============ */
 const coordsEl = document.getElementById('coords');
+let stats = null;
+function loadStats() {
+  try { stats = JSON.parse(localStorage.getItem('fold-stats') || '{"maxMag":0,"badges":{}}'); }
+  catch (e) { stats = { maxMag: 0, badges: {} }; }
+  stats.badges = stats.badges || {};
+}
+function saveStats() { try { localStorage.setItem('fold-stats', JSON.stringify(stats)); } catch (e) {} }
+loadStats();
+
+let toastTimer = null;
+function showToast(txt, ms) {
+  const t = document.getElementById('toast');
+  t.textContent = txt;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), ms || 4200);
+}
+
+let curEpoch = -1;
 function updateCoords() {
   const mag = 1.4 / view.s;
-  try {
-    const fs = JSON.parse(localStorage.getItem('fold-stats') || '{"maxMag":0}');
-    if (mag > (fs.maxMag || 0)) {
-      fs.maxMag = mag;
-      localStorage.setItem('fold-stats', JSON.stringify(fs));
+  if (mag > (stats.maxMag || 0)) { stats.maxMag = mag; saveStats(); }
+  /* 深度手记：跨越数量级授记 */
+  let lit = 0;
+  for (const b of T().badges) {
+    if (mag >= b.mag) {
+      lit++;
+      if (!stats.badges[b.k]) {
+        stats.badges[b.k] = Date.now();
+        saveStats();
+        showToast('◈ ' + b.line, 5200);
+      }
     }
-  } catch (e) { /* 忽略 */ }
+  }
   const magStr = mag >= 1e8 ? (mag / 1e8).toFixed(1) + '×10⁸'
     : mag >= 1e4 ? (mag / 1e4).toFixed(1) + '×10⁴'
     : mag >= 100 ? mag.toFixed(0)
@@ -388,29 +558,64 @@ function updateCoords() {
     ? `<br>J c = ${juliaC.x.toFixed(8)}, ${juliaC.y.toFixed(8)}`
     : '';
   const pl = `<br>${T().palette} ${PAL_NAMES[lang][palIdx]} · ${lastIter || ''} iter`;
-  const zone = deepZoneName(mag, view.x, view.y);
+  const dots = `<span title="${T().badgeTip}" style="color:var(--gold);letter-spacing:0.3em">${'◆'.repeat(lit)}${'◇'.repeat(Math.max(0, T().badges.length - lit))}</span>`;
+  const zone = deepZoneName(mag, view.x, view.y, view.s);
   coordsEl.innerHTML =
-    `RE ${view.x.toFixed(12).slice(0, 12)}<br>IM ${view.y.toFixed(12).slice(0, 12)}<br>${T().zoom} ${magStr}${jl}${pl}${zone}`;
+    `RE ${view.x.toFixed(12).slice(0, 12)}<br>IM ${view.y.toFixed(12).slice(0, 12)}<br>${T().zoom} ${magStr} ${dots}${jl}${pl}${zone}`;
 }
-/* 深度地名：按倍率阈值+坐标哈希生成玄名 */
-function deepZoneName(mag, x, y) {
-  if (mag < 100) return '';
-  const h = Math.abs(Math.sin(x * 1e7) * Math.cos(y * 1e7) * 1e5) | 0;
-  let pool;
-  if (mag < 1e4) pool = lang === 'zh'
-    ? ['浅海', '近岸', '潮间', '帆影', '鸟居']
-    : ['Shallows', 'Near Shore', 'Tideline', 'Sail Shadow', 'Torii'];
-  else if (mag < 1e7) pool = lang === 'zh'
-    ? ['螺旋臂', '尘埃带', '星轨', '珊瑚枝', '迷宫口']
-    : ['Spiral Arm', 'Dust Belt', 'Star Track', 'Coral Branch', 'Labyrinth Mouth'];
-  else if (mag < 1e10) pool = lang === 'zh'
-    ? ['微尘之眼', '无限回廊', '墨渊', '钟乳洞', '神经元']
-    : ['Eye of Dust', 'Infinite Corridor', 'Ink Abyss', 'Stalactite Cave', 'Neuron'];
-  else pool = lang === 'zh'
-    ? ['空', '元初', '寂', '归零', '彼岸']
-    : ['Void', 'Origin', 'Stillness', 'Zero Point', 'Far Shore'];
-  const name = pool[h % pool.length];
-  return `<br><span style="color:var(--gold);font-size:11px;letter-spacing:0.2em">◈ ${name}</span>`;
+
+/* ============ 纪元分层命名 ============ */
+/* 量化格：格 = 1.6×半高；父格共享词根（姓），平移稳定不闪烁 */
+const ZONE_POOLS = {
+  zh: [
+    { roots: ['白帆', '退潮', '鸟居', '礁环', '月洲', '晚风'], tails: ['屿', '湾', '门', '滩', '洲', '岬'] },
+    { roots: ['悬尘', '旧星', '碎屑', '流轨', '絮语', '远屑'], tails: ['带', '原', '沟', '站', '漠', '环'] },
+    { roots: ['宿墨', '一线', '干毫', '沉墨', '夜痕', '未干'], tails: ['井', '痕', '渊', '层', '底', '隙'] },
+    { roots: ['将尽', '冷油', '残焰', '芯影', '半明', '守夜'], tails: ['芯', '海', '焰', '影', '塔', '域'] }
+  ],
+  en: [
+    { roots: ['White Sail', 'Ebb', 'Torii', 'Reef Ring', 'Moon Isle', 'Evening Wind'], tails: [' Isle', ' Bay', ' Gate', ' Flat', 's', ' Cape'] },
+    { roots: ['Hanging Dust', 'Old Star', 'Debris', 'Flow Track', 'Murmur', 'Far Grit'], tails: [' Belt', ' Plain', ' Trench', ' Station', ' Desert', ' Ring'] },
+    { roots: ['Lodged Ink', 'One Thread', 'Dry Brush', 'Sunken Ink', 'Night Mark', 'Un dried'], tails: [' Well', ' Trace', ' Abyss', ' Layer', ' Floor', ' Crevice'] },
+    { roots: ['Waning', 'Cold Oil', 'Ember', 'Wick Shadow', 'Half Lit', 'Night Watch'], tails: [' Wick', ' Sea', ' Flame', ' Shadow', ' Tower', ' Reach'] }
+  ]
+};
+function h32(a, b, c) {
+  let h = (Math.imul(a, 374761393) + Math.imul(b, 668265263) + Math.imul(c, 1274126177)) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1103515245) | 0;
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+function epochOf(mag) {
+  if (mag >= 1e13) return 4;   // 触底
+  if (mag >= 1e10) return 3;
+  if (mag >= 1e7) return 2;
+  if (mag >= 1e4) return 1;
+  if (mag >= 100) return 0;
+  return -1;
+}
+function deepZoneName(mag, x, y, s) {
+  const ep = epochOf(mag);
+  if (ep < 0) return '';
+  /* 纪元跨越提示（一次性小字） */
+  if (curEpoch !== ep) {
+    if (curEpoch >= 0 && ep > curEpoch && ep <= 3) {
+      const h = document.getElementById('hint');
+      h.textContent = T().enterEpoch(T().epochs[ep]);
+      h.classList.remove('gone');
+      setTimeout(() => h.classList.add('gone'), 2600);
+    }
+    curEpoch = ep;
+  }
+  if (ep === 4) {
+    return `<br><span style="color:var(--gold);font-size:11px;letter-spacing:0.2em">◈ ${T().deepest}</span>`;
+  }
+  const cell = Math.max(1.6 * s, 1e-13);
+  const ix = Math.floor(x / cell), iy = Math.floor(y / cell);
+  const px2 = Math.floor(ix / 12), py2 = Math.floor(iy / 12);
+  const pool = ZONE_POOLS[lang][ep];
+  const root = pool.roots[Math.floor(h32(px2, py2, ep) * pool.roots.length)];
+  const tail = pool.tails[Math.floor(h32(ix, iy, ep + 7) * pool.tails.length)];
+  return `<br><span style="color:var(--gold);font-size:11px;letter-spacing:0.2em">◈ ${root}${tail}</span>`;
 }
 
 /* ============ 交互 ============ */
@@ -650,19 +855,20 @@ function updateJuliaBtn() {
   juliaBtn.textContent = shipMode ? T().shipName : (juliaOn ? T().juliaOff : T().juliaOn);
   juliaBtn.title = T().juliaTipOn;
 }
-/* 色相缓移：低频重绘让调色板缓缓流动 */
+/* 色相缓移：两遍架构下只重跑着色遍——迭代数据不再重算 */
 const REDUCED_PHASE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 setInterval(() => {
   if (REDUCED_PHASE) return;
   phaseT += 0.004;
-  requestRender();
+  requestColor();
 }, 160);
 const palBtn = document.getElementById('palBtn');
 palBtn.addEventListener('click', () => {
   palIdx = (palIdx + 1) % 4;
   palBtn.textContent = T().palette + ' ' + PAL_NAMES[lang][palIdx];
   palBtn.title = T().palTip;
-  requestRender();
+  requestColor();
+  updateCoords();
 });
 const shotBtn = document.getElementById('shotBtn');
 shotBtn.addEventListener('click', () => {
@@ -717,11 +923,16 @@ let lastInteractF = performance.now();
   window.addEventListener(ev, () => { lastInteractF = performance.now(); }, { passive: true }));
 
 /* ============ 渲染循环 ============ */
-let renderPending = false;
+let renderPending = false, colorPending = false;
 function requestRender() {
   if (renderPending) return;
   renderPending = true;
   requestAnimationFrame(() => { renderPending = false; render(); });
+}
+function requestColor() {
+  if (colorPending) return;
+  colorPending = true;
+  requestAnimationFrame(() => { colorPending = false; renderColor(); });
 }
 let prev = performance.now();
 let foldHidden = false;
@@ -771,7 +982,7 @@ if (hm) {
   view.x = +hm[1]; view.y = +hm[2]; view.s = +hm[3];
   target.x = view.x; target.y = view.y; target.s = view.s;
 }
-// #julia 或 #julia,cx,gy 测试直达
+// #julia 或 #julia,cx,cy 测试直达
 const jm = location.hash.match(/julia(?:,([-\d.e+]+),([-\d.e+]+))?/);
 if (jm) {
   juliaOn = true;
@@ -787,7 +998,7 @@ if (location.hash.includes('dbg')) {
   gl.readPixels(Math.floor(canvas.width/2)-5, Math.floor(canvas.height/2)-5, 10, 10, gl.RGBA, gl.UNSIGNED_BYTE, px);
   let sum = 0; for (let i = 0; i < px.length; i++) sum += px[i];
   const el = document.getElementById('coords');
-  el.innerHTML = `DBG sum=${sum} err=${gl.getError()} c=${canvas.width}x${canvas.height} ` + el.innerHTML;
+  el.innerHTML = `DBG sum=${sum} err=${gl.getError()} c=${canvas.width}x${canvas.height} fbo=${hasFloatFB ? '16F' : '8'} ` + el.innerHTML;
 }
 requestAnimationFrame(frame);
 </script>

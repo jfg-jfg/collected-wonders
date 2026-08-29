@@ -323,6 +323,7 @@
     <div class="ov-actions" style="margin-top:24px">
       <button class="btn-main" id="nextBtn" data-t="next"></button>
       <button class="btn-sub" id="retryBtn" data-t="retry"></button>
+      <button class="btn-sub" id="shareCardBtn">📸</button>
       <button class="btn-sub" id="clearMenuBtn" data-t="toMenu"></button>
     </div>
   </div>
@@ -2579,6 +2580,64 @@ function drawHeat() {
   }
 }
 function keyOf() { return isDaily ? 'daily' : li; }
+
+/* 通关分享卡：灯数 + 战绩 + 足迹热力 合成 PNG */
+document.getElementById('shareCardBtn').addEventListener('click', () => {
+  const heat = document.getElementById('heatCv');
+  const c = document.createElement('canvas');
+  const W = 560, H = 860;
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const bg = g.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0b0e14');
+  bg.addColorStop(1, '#131a26');
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  g.strokeStyle = 'rgba(157,176,201,0.25)'; g.lineWidth = 1;
+  g.strokeRect(14.5, 14.5, W - 29, H - 29);
+  g.textAlign = 'center';
+  g.fillStyle = '#e8c07a';
+  g.font = '600 30px Georgia, "Songti SC", serif';
+  g.fillText(T().clearTitle, W / 2, 74);
+  g.font = '15px Georgia, "Songti SC", serif';
+  g.fillStyle = 'rgba(157,176,201,0.9)';
+  const nm = isDaily ? T().dailyTitle : (isCustom ? customName : lvName(li));
+  g.fillText(nm, W / 2, 104);
+  // 灯数
+  const score = steps <= par ? 3 : steps <= par * 1.5 ? 2 : 1;
+  const LN = T().lantern;
+  g.font = '34px serif';
+  g.fillStyle = '#e8c07a';
+  for (let i = 0; i < 3; i++) {
+    g.globalAlpha = i < score ? 1 : 0.18;
+    g.fillText(LN[i] || '◆', W / 2 + (i - 1) * 26, 162);
+  }
+  g.globalAlpha = 1;
+  // 战绩
+  g.font = '16px Georgia, "Songti SC", serif';
+  g.fillStyle = '#d6dfea';
+  const expPct = Math.round(litWalls.size / Math.max(1, totalWalls) * 100);
+  const lines = [
+    `${T().steps} ${steps} / ${T().par} ${par}`,
+    `${T().pings} ${pings} · ${T().time} ${fmtTime(elapsed)}`,
+    `${T().exp} ${expPct}%` + (ghosts.length ? ` · ${T().lost} ${lostCount}` : '')
+  ];
+  lines.forEach((s2, i) => g.fillText(s2, W / 2, 212 + i * 30));
+  // 足迹热力
+  if (heat.width) {
+    const hw = W - 80, hh = Math.round(hw * heat.height / heat.width);
+    g.drawImage(heat, 40, 330, hw, hh);
+    g.strokeStyle = 'rgba(157,176,201,0.3)';
+    g.strokeRect(40.5, 330.5, hw, hh);
+  }
+  g.font = '13px Georgia, serif';
+  g.fillStyle = 'rgba(157,176,201,0.55)';
+  g.fillText('拾遗 · ECHO — Collected Wonders', W / 2, H - 40);
+  const a = document.createElement('a');
+  a.download = `echo-card-${Date.now()}.png`;
+  a.href = c.toDataURL('image/png');
+  a.click();
+  showFrag(lang === 'zh' ? '📸 卡片已保存' : '📸 card saved', false);
+});
 
 function showEnding() {
   state = 'end';

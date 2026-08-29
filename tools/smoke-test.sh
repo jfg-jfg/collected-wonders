@@ -16,8 +16,9 @@ EDGE="C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
 BASE="$(cd "$(dirname "$0")/.." && pwd)"
 PASS=0; FAIL=0
 
-for rel in "index.html" "ink/index.html" "echo/index.html#lv0" \
-           "scape/index.html" "letters/index.html#p=lighthouse&n=n2" "fold/index.html"; do
+for rel in "index.html" "ink/index.html" "ink/index.html#dbg=album" "echo/index.html#lv0" \
+           "echo/index.html#dbg=daily" "scape/index.html" \
+           "letters/index.html#p=lighthouse&n=n2" "letters/index.html#dbg=editor" "fold/index.html"; do
   err=$("$EDGE" --headless --disable-gpu-sandbox --window-size=800,600 \
         --virtual-time-budget=4000 --dump-dom "file:///$BASE/$rel" 2>/dev/null \
         | tr -d '\000' | grep -aoE 'ERR: [^<"]*' | grep -v 'e\.message' | head -1)

@@ -936,7 +936,7 @@ function draw(dt) {
     ctx.beginPath();
     ctx.arc(eCx, eCy, eR, 0, Math.PI * 2);
     ctx.fill();
-    /* 地球云层（简单噪声带） */
+    /* 地球云层（缓慢漂移的噪声带） */
     ctx.save();
     ctx.beginPath();
     ctx.arc(eCx, eCy, eR, 0, Math.PI * 2);
@@ -944,10 +944,24 @@ function draw(dt) {
     for (let i = 0; i < 4; i++) {
       const cy2 = H * (0.82 + i * 0.04);
       const cw = W * (0.3 + (i % 2) * 0.3);
+      const cxOff = ((frameTime * (2 + i * 1.5)) % (W + cw * 2)) - cw;  /* 漂移 */
       ctx.fillStyle = `rgba(255,255,255,${(0.08 + i * 0.02).toFixed(2)})`;
       ctx.beginPath();
-      ctx.ellipse(W * 0.3 + i * W * 0.2, cy2, cw, 4 + i * 2, 0.1 * (i % 2 ? 1 : -1), 0, Math.PI * 2);
+      ctx.ellipse(cxOff + i * W * 0.2, cy2, cw, 4 + i * 2, 0.1 * (i % 2 ? 1 : -1), 0, Math.PI * 2);
       ctx.fill();
+      /* 补一条从左边续入的（无缝循环） */
+      ctx.beginPath();
+      ctx.ellipse(cxOff - (W + cw * 2) + i * W * 0.2, cy2, cw, 4 + i * 2, 0.1 * (i % 2 ? 1 : -1), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    /* 夜面城市灯光（暖色小点集群） */
+    const cityRnd = mulberry32(999);
+    for (let i = 0; i < 12; i++) {
+      const lx2 = eCx + (cityRnd() - 0.5) * eR * 0.6;
+      const ly2 = H * 0.9 + cityRnd() * H * 0.08;
+      const la = 0.3 + 0.4 * Math.sin(frameTime * 0.5 + i * 2.3);
+      ctx.fillStyle = `rgba(255,200,120,${la.toFixed(3)})`;
+      ctx.fillRect(lx2, ly2, 1.5 + cityRnd() * 2, 1.5);
     }
     ctx.restore();
     /* 大气辉光（地球边缘） */

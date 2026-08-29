@@ -1540,7 +1540,14 @@ function exportPostcard() {
   const a = document.createElement('a');
   a.download = `fold-postcard-${Date.now()}.png`;
   a.href = out.toDataURL('image/png');
-  a.click();
+  if (location.hash.includes('preview')) {
+    /* #preview：明信片留在屏幕上供无头验证 */
+    out.style.cssText = 'position:fixed;inset:0;z-index:99;object-fit:contain;width:100%;height:100%';
+    document.body.appendChild(out);
+    setTimeout(() => { out.remove(); }, 8000);
+  } else {
+    a.click();
+  }
   flashTitle(shotBtn, T().shotOk);
 }
 shotBtn.addEventListener('click', exportPostcard);
@@ -1807,6 +1814,10 @@ if (location.hash.includes('bench')) {
     setTimeout(benchNext, 50);
   }
   benchNext();
+}
+// #postcard：自动生成明信片预览（#preview 留屏）
+if (location.hash.includes('postcard')) {
+  setTimeout(exportPostcard, 1200);
 }
 // #newton：牛顿分形直达
 if (location.hash.includes('newton')) {

@@ -235,7 +235,7 @@
   button:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
 
   @media (max-width: 640px) {
-    .hud { gap: 12px; font-size: 13.5px; letter-spacing: 0.14em; top: 14px; }
+    .hud { gap: 12px; font-size: 13.5px; letter-spacing: 0.14em; top: 14px; flex-wrap: wrap; white-space: normal; }
     .topbar { top: 12px; right: 12px; }
     .levels { grid-template-columns: repeat(2, 1fr); }
     .ach-wall { grid-template-columns: repeat(2, 1fr); }
@@ -2336,7 +2336,9 @@ applyI18n();
 updSnd();
 updRecall();
 const m = location.hash.match(/^#lv(\d+)/);
-if (m && +m[1] < LEVELS.length) loadLevel(+m[1]);
+if (m) loadLevel(+m[1]);   // N ≥ 12 → 无尽层
+// #dbg=daily：无头自检直达每日深潜
+if (location.hash.includes('dbg=daily')) loadLevel(0, true);
 // #edit 或 #edit=<关卡码> 直达编辑器
 const em = location.hash.match(/^#edit(?:=([A-Za-z0-9+/=]+))?$/);
 if (em) {

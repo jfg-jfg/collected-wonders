@@ -1509,6 +1509,20 @@ document.getElementById('albumBtn').addEventListener('click', async () => {
   buildAlbum();
   albumOv.classList.add('show');
 });
+// #dbg=album：无头自检直达画册（含溢出硬测量）
+if (location.hash.includes('dbg=album')) {
+  buildAlbum(); albumOv.classList.add('show');
+  setTimeout(() => {
+    const box = document.querySelector('.album .box');
+    const slots = document.querySelector('.album .slots');
+    const b = document.createElement('div');
+    b.style.cssText = 'position:fixed;top:0;left:0;z-index:99;background:#000;color:#0f0;font:11px monospace;padding:6px;pointer-events:none';
+    b.textContent = `DBG doc=${document.documentElement.scrollWidth} win=${innerWidth} ` +
+      `box=${box.scrollWidth}>${box.clientWidth} slots=${slots.scrollWidth}>${slots.clientWidth} ` +
+      `cols=${getComputedStyle(slots).gridTemplateColumns} n=${slots.children.length}`;
+    document.body.appendChild(b);
+  }, 300);
+}
 document.getElementById('albumClose').addEventListener('click', () => albumOv.classList.remove('show'));
 /* 长卷导出：所有页纵向拼合 */
 document.getElementById('albumScroll').addEventListener('click', async () => {

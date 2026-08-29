@@ -252,6 +252,7 @@ function loadPack(p) {
   save = Object.assign({node:null, read:0, endings:[], readNodes:[], snd:true, readEver:0},
     JSON.parse(localStorage.getItem(key) || '{}'));
   applyStyle();
+  startAmbience(p.id);
   const sb = document.getElementById('sndBtn');
   sb.textContent = save.snd ? T('声 · 开', 'SND · ON') : T('声 · 关', 'SND · OFF');
 }
@@ -327,6 +328,61 @@ function sndChime() { /* 结局：双音钟 */
     o.connect(g); g.connect(c.destination);
     o.start(t0); o.stop(t0 + 2.8);
   });
+}
+
+/* ---------- 每故事环境音：低音量底噪 + 慢呼吸，随信箱切换交叉淡入 ---------- */
+const AMBIENCE = {
+  lighthouse:  { freq: 300,  type: 'lowpass',  q: 0.4, gain: 0.030, lfoHz: 0.08, lfoAmt: 0.55, tick: 0 },     // 远处海浪
+  train:       { freq: 900,  type: 'bandpass', q: 0.8, gain: 0.020, lfoHz: 0.5,  lfoAmt: 0.3,  tick: 0.62 },  // 车轮行进
+  radio:       { freq: 5200, type: 'highpass', q: 0.5, gain: 0.015, lfoHz: 0.16, lfoAmt: 0.4,  tick: 0 },     // 洋流沙沙
+  clockwork:   { freq: 700,  type: 'lowpass',  q: 0.6, gain: 0.017, lfoHz: 0.42, lfoAmt: 0.25, tick: 1.0 },   // 钟摆滴答
+  observatory: { freq: 420,  type: 'bandpass', q: 1.1, gain: 0.023, lfoHz: 0.11, lfoAmt: 0.6,  tick: 0 },     // 山台风
+  wreck:       { freq: 240,  type: 'lowpass',  q: 0.5, gain: 0.020, lfoHz: 0.05, lfoAmt: 0.35, tick: 0 }      // 档案室底噪
+};
+let amb = null, ambTick = null;
+function stopAmbience() {
+  if (ambTick) { clearInterval(ambTick); ambTick = null; }
+  if (amb && ACtx) {
+    const a = amb;
+    amb = null;
+    try {
+      a.g.gain.setTargetAtTime(0.0001, ACtx.currentTime, 0.7);
+      setTimeout(() => { try { a.src.stop(); a.lfo.stop(); } catch (e) {} }, 2400);
+    } catch (e) { amb = null; }
+  }
+}
+function startAmbience(storyId) {
+  stopAmbience();
+  if (!save || !save.snd) return;
+  const cfg = AMBIENCE[storyId];
+  if (!cfg) return;
+  const c = ac();
+  if (!c) return;
+  const len = Math.floor(c.sampleRate * 2);
+  const buf = c.createBuffer(1, len, c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  const src = c.createBufferSource();
+  src.buffer = buf; src.loop = true;
+  const f = c.createBiquadFilter();
+  f.type = cfg.type; f.frequency.value = cfg.freq; f.Q.value = cfg.q;
+  const g = c.createGain();
+  g.gain.value = 0.0001;
+  g.gain.setTargetAtTime(cfg.gain, c.currentTime, 1.8);
+  const lfo = c.createOscillator(), lfoG = c.createGain();
+  lfo.frequency.value = cfg.lfoHz;
+  lfoG.gain.value = cfg.gain * cfg.lfoAmt;
+  lfo.connect(lfoG); lfoG.connect(g.gain);
+  src.connect(f); f.connect(g); g.connect(c.destination);
+  src.start(); lfo.start();
+  amb = { src, g, lfo };
+  // 规律轻叩：列车车轮 / 钟摆
+  if (cfg.tick) {
+    ambTick = setInterval(() => {
+      if (!save.snd || !ACtx || !amb) return;
+      noiseBurst(ACtx, 0.045, 'bandpass', cfg.tick > 0.8 ? 2300 : 900, 2.2, 0.024, 0);
+    }, Math.round(cfg.tick * 1000));
+  }
 }
 
 /* ---------- 通用弹层 / 提示 ---------- */
@@ -1306,7 +1362,8 @@ document.getElementById('langBtn').addEventListener('click', () => {
 document.getElementById('sndBtn').addEventListener('click', () => {
   save.snd = !save.snd; persist();
   document.getElementById('sndBtn').textContent = save.snd ? T('声 · 开', 'SND · ON') : T('声 · 关', 'SND · OFF');
-  if (save.snd) sndSeal();
+  if (save.snd) { sndSeal(); startAmbience(pack.id); }
+  else stopAmbience();
 });
 document.getElementById('stackBtn').addEventListener('click', openStack);
 document.getElementById('shareStoryBtn').addEventListener('click', shareStory);

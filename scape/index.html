@@ -1350,8 +1350,8 @@ themeBtn.addEventListener('click', () => {
 });
 
 /* 心境 */
-const MOODS = ['山雨欲来', '雪夜炉火', '城市黄昏', '海雾清晨', '樱花午后', '极夜深城', '盛夏夜'];
-const MOODS_EN = { '山雨欲来': 'Storm Coming', '雪夜炉火': 'Fire & Snow', '城市黄昏': 'City Dusk', '海雾清晨': 'Sea Fog Dawn', '樱花午后': 'Petal Afternoon', '极夜深城': 'Polar Night City', '盛夏夜': 'Midsummer Night' };
+const MOODS = ['山雨欲来', '雪夜炉火', '城市黄昏', '海雾清晨', '樱花午后', '极夜枯林', '盛夏夜', '大漠孤烟', '轨道黎明', '暴风雪原'];
+const MOODS_EN = { '山雨欲来': 'Storm Coming', '雪夜炉火': 'Fire & Snow', '城市黄昏': 'City Dusk', '海雾清晨': 'Sea Fog Dawn', '樱花午后': 'Petal Afternoon', '极夜枯林': 'Polar Wither', '盛夏夜': 'Midsummer Night', '大漠孤烟': 'Desert Smoke', '轨道黎明': 'Orbit Dawn', '暴风雪原': 'Blizzard' };
 document.getElementById('moodBtn').addEventListener('click', () => {
   const m = MOODS[Math.floor(Math.random() * MOODS.length)];
   const map = {
@@ -1360,8 +1360,11 @@ document.getElementById('moodBtn').addEventListener('click', () => {
     '城市黄昏': { wind: .2, birds: .3, time: 18.2, theme: 2 },
     '海雾清晨': { rain: .15, wind: .3, stream: .5, birds: .4, time: 6.5, theme: 1 },
     '樱花午后': { wind: .25, stream: .3, birds: .5, petal: .85, time: 14, theme: 0 },
-    '极夜深城': { rain: .3, wind: .3, snow: .8, bell: .3, time: 23, theme: 2 },
-    '盛夏夜': { cricket: .8, wind: .12, fire: .25, bell: .1, time: 22.2, theme: 0 }
+    '极夜枯林': { wind: .4, snow: .85, cricket: .1, bell: .15, time: 22, theme: 3 },
+    '盛夏夜': { cricket: .8, wind: .12, fire: .25, bell: .1, time: 22.2, theme: 0 },
+    '大漠孤烟': { wind: .5, cricket: .2, bell: .2, time: 19, theme: 4 },
+    '轨道黎明': { bell: .35, wind: .08, time: 5.5, theme: 5 },
+    '暴风雪原': { wind: .8, snow: 1, time: 20, theme: 3 }
   };
   applyState(map[m]);
   curPreset = null;

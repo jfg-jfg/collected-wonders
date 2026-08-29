@@ -424,13 +424,13 @@ function applyI18n() {
     const k = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
     let h = 0;
     for (const ch of k) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-    const scenes = ['雪夜炉火', '山雨欲来', '海雾清晨', '樱花午后', '极夜枯林', '炉边听风', '雨林夜雨', '轨道黄昏'];
-    const scenesEn = ['Fire & Snow', 'Storm Coming', 'Sea Fog Dawn', 'Petal Afternoon', 'Polar Night', 'Fireside', 'Rainforest Night', 'Orbit Dusk'];
+    const scenes = ['雪夜炉火', '山雨欲来', '海雾清晨', '樱花午后', '极夜枯林', '大漠星夜', '炉边听风', '雨林夜雨', '轨道黄昏'];
+    const scenesEn = ['Fire & Snow', 'Storm Coming', 'Sea Fog Dawn', 'Petal Afternoon', 'Polar Night', 'Desert Stars', 'Fireside', 'Rainforest Night', 'Orbit Dusk'];
     const dl = document.createElement('div');
     dl.className = 'global-stat';
     dl.innerHTML = lang === 'zh'
-      ? `今日：造境气象 <b>${scenes[h % 8]}</b> · 褶皱星球已就位 <b>☄</b>`
-      : `today: scape weather <b>${scenesEn[h % 8]}</b> · fold planet is waiting <b>☄</b>`;
+      ? `今日：造境气象 <b>${scenes[h % 9]}</b> · 褶皱星球已就位 <b>☄</b>`
+      : `today: scape weather <b>${scenesEn[h % 9]}</b> · fold planet is waiting <b>☄</b>`;
     grid.appendChild(dl);
   }
   // 上次到访（跨站记忆）+ 键盘提示

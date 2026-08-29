@@ -386,7 +386,7 @@ const I18N = {
     brushes: ['圆笔', '硬笔', '泼墨', '水笔'],
     inkNames: ['玄墨', '花青', '靛青', '石绿', '藤黄', '赭石', '紫檀', '朱砂'],
     inkCustom: '长按自定墨色',
-    papers: ['生宣', '熟宣', '绢本']
+    papers: ['生宣', '熟宣', '绢本', '毛边']
   },
   en: {
     subtitle: 'Ink Flow Studio',
@@ -412,7 +412,7 @@ const I18N = {
     brushes: ['Round', 'Hard', 'Splash', 'Water'],
     inkNames: ['Black', 'Cyanine', 'Indigo', 'Malachite', 'Gamboge', 'Ochre', 'Sandalwood', 'Cinnabar'],
     inkCustom: 'hold to customize this ink',
-    papers: ['Raw Xuan', 'Sized Xuan', 'Silk']
+    papers: ['Raw Xuan', 'Sized Xuan', 'Silk', 'Rag Paper']
   }
 };
 let lang = localStorage.getItem('ink-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
@@ -903,7 +903,8 @@ function makePaper(size, seed, fiberStrength) {
 const PAPERS = [
   { seed: 20260821, fiber: 1.0,  curl: 22, force: 0.75, dyeDiss: 0.0002, splatMul: 1.0, tint: [1, 1, 1] },
   { seed: 7301,     fiber: 0.45, curl: 10, force: 0.4,  dyeDiss: 0.0001, splatMul: 0.8, tint: [1, 1, 1] },
-  { seed: 4413,     fiber: 0.7,  curl: 16, force: 0.6,  dyeDiss: 0.00015,splatMul: 0.9, tint: [1.015, 0.985, 0.915] }
+  { seed: 4413,     fiber: 0.7,  curl: 16, force: 0.6,  dyeDiss: 0.00015,splatMul: 0.9, tint: [1.015, 0.985, 0.915] },
+  { seed: 9021,     fiber: 1.3,  curl: 26, force: 0.8,  dyeDiss: 0.00022,splatMul: 1.1, tint: [1.0, 0.99, 0.965] }
 ];
 let paperIdx = 0;
 const paperTex = gl.createTexture();

@@ -420,7 +420,7 @@ const I18N = {
       fragTitle: '碎 片 台 词', fragTip: '每行一句（按放置顺序对应）。空行 = 用默认台词。',
       fragClose: '关 闭',
       kinds: ['👻 混编', '👻 趋声', '👻 游荡', '👻 守灯'],
-      wall: '墙', floor: '通路', start: '起点', goal: '出口', frag: '碎片',
+      wall: '墙', floor: '通路', start: '起点', goal: '出口', frag: '碎片', key: '钥',
       noteValid: '点「试玩」检验连通性',
       noteNoSG: '缺少起点或出口', noteUnreachable: '出口不可达！', noteOk: '通路距离 N 步 · 可以试玩',
       shareTitle: '关 卡 码', shareTip: '复制发给朋友，或在下方粘贴后点「导入」。',
@@ -494,7 +494,7 @@ const I18N = {
       fragTitle: 'FRAGMENT LINES', fragTip: 'One per line (in placement order). Empty = default.',
       fragClose: 'CLOSE',
       kinds: ['👻 mixed', '👻 listeners', '👻 drifters', '👻 wardens'],
-      wall: 'Wall', floor: 'Path', start: 'Start', goal: 'Exit', frag: 'Frag',
+      wall: 'Wall', floor: 'Path', start: 'Start', goal: 'Exit', frag: 'Frag', key: 'Key',
       noteValid: 'press TEST to validate',
       noteNoSG: 'missing start or exit', noteUnreachable: 'exit unreachable!', noteOk: 'path is N steps · ready to test',
       shareTitle: 'LEVEL CODE', shareTip: 'Copy it to a friend, or paste one below and press IMPORT.',
@@ -1741,7 +1741,7 @@ function edExit() {
 function buildEdTools() {
   const row = document.getElementById('edTools');
   row.querySelectorAll('.ed-t').forEach(x => x.remove());
-  const tools = ['wall', 'floor', 'start', 'goal', 'frag'];
+  const tools = ['wall', 'floor', 'start', 'goal', 'frag', 'key'];
   tools.forEach(t => {
     const b = document.createElement('button');
     b.className = 'ed-t' + (editor.tool === t ? ' on' : '');
@@ -1796,6 +1796,9 @@ function edPaint(e) {
     }
   } else if (editor.tool === 'frag') {
     if (!border) editor.map[y][x] = cur === '*' ? '.' : '*';
+  } else if (editor.tool === 'key') {
+    // 钥匙：放了钥匙，天光之门就上锁（先寻钥匙才能出）
+    if (!border) editor.map[y][x] = cur === 'K' ? '.' : 'K';
   }
   edValidate();
 }
@@ -1840,6 +1843,11 @@ function renderEditor() {
       ctx.beginPath();
       ctx.moveTo(fx, fy - s * 1.6); ctx.lineTo(fx + s, fy); ctx.lineTo(fx, fy + s * 1.6); ctx.lineTo(fx - s, fy);
       ctx.closePath(); ctx.fill();
+    }
+    if (c === 'K') {
+      ctx.font = `${Math.round(cell * 0.46)}px serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('🗝', rx + cell / 2, ry + cell / 2 + 1);
     }
   }
   // 悬停高亮
@@ -1899,6 +1907,7 @@ function enterCustomPlay(map, parVal, name, ghostCount, ghostKind) {
   for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
     if (grid[y][x] === 'S') { px = x; py = y; }
     if (grid[y][x] === '*') FRAG_CELLS.push([x, y]);
+    if (grid[y][x] === 'K') { needKey = true; keyCell = [x, y]; }   // 造井者的钥匙
   }
   steps = 0; pings = 0; elapsed = 0; lostCount = 0; ghostFlash = 0; startTime = performance.now();
   ripples = [];

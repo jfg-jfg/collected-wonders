@@ -1,6 +1,6 @@
 # 拾遗 · Collected Wonders — 总体设计文档
 
-> v4 · 2026-08-29 · 零依赖纯原生 HTML/CSS/JS · 中英双语
+> v5 · 2026-08-30 · 零依赖纯原生 HTML/CSS/JS · 中英双语
 > 在线版：<https://jfg-jfg.github.io/collected-wonders/> · 源码：<https://github.com/jfg-jfg/collected-wonders>
 
 ## 约定

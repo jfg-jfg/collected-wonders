@@ -50,6 +50,8 @@ run "ink bench"        "ink/index.html#bench"
 
 # 纸间
 run "letters story"    "letters/index.html#p=lighthouse&n=n2"
+run "letters obs n1"   "letters/index.html#p=observatory&n=n1"
+run "letters obs n8"   "letters/index.html#p=observatory&n=n8"
 run "letters editor"   "letters/index.html#dbg=editor"
 run "letters ai"       "letters/index.html#dbg=ai"
 run "letters import"   "letters/index.html#dbg=import"

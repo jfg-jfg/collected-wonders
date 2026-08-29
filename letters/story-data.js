@@ -1,4 +1,4 @@
-/* 拾遗·纸间 故事数据 v4 —— 三内置故事 + 导入规范
+/* 拾遗·纸间 故事数据 v5 —— 五内置故事 + 导入规范
    本文件同时是「AI 生成故事」的 schema 参考实现 */
 'use strict';
 
@@ -428,4 +428,85 @@ const STORY_CLOCK = {
   }
 };
 
-const BUILTIN_STORIES = [STORY_LIGHTHOUSE, STORY_TRAIN, STORY_RADIO, STORY_CLOCK];
+/* ============ 故事五：观星台（含隐藏结局） ============ */
+const STORY_OBS = {
+  id: 'observatory',
+  title: '观星台', titleEn: 'The Observatory',
+  kicker: '一盏灯等了二十七年', kickerEn: 'A LAMP THAT WAITED TWENTY-SEVEN YEARS',
+  desc: '拆除前的最后三个月，你上山清点一座废弃的观星台。<br>抽屉里是一捆贴好邮票、从未寄出的信，<br>和一盏没人关过的红灯。',
+  descEn: 'Three months before demolition, you are sent to catalog a dead observatory.<br>In the drawer: a bundle of stamped, never-sent letters —<br>and a red lamp nobody ever switched off.',
+  order: ['n1','n2','n3','n4','n5','n6','n7','n8','E1','E2','E3','E4','E5'],
+  hiddenEnding: { id: 'E5', require: ['n2','n5','n7'], replace: 'E1' },
+  style: {
+    font: '"FangSong","STFangsong","FangSong_GB2312","KaiTi",Georgia,serif',
+    paper: '#e9edf5', paper2: '#dde4f0',
+    ink: '#2b3450', seal: '#3d5a92', gold: '#8fb0dd',
+    ruling: 'rgba(80,105,150,0.11)', bg1: '#090f1e', bg2: '#131e36'
+  },
+  letters: {
+    zh: {
+      n1: { year: '二〇二六 · 三月', title: '上台 · 致小满', age: 0.06, postcard: true, text: `小满：\n寄得到明信片的地方就看不见星星，所以姐到没有地址的地方来了。\n鹊山观星台，海拔一千九百米，一九九九年冬天下班，此后再没醒过。我的差事是拆除前清点：登记、装箱、贴标签，三个月。\n圆顶卡死了，电也断了。灰有指节厚，一脚踏进去，整间屋子像下了一场无声的雪。\n但值班室的书桌上摊着一封没写完的信，落款一九九九年十一月。抽屉里还有一捆信——每一封都贴好了邮票，每一封都没有寄出。\n对了，台上还剩一盏红灯亮着，不知接在哪块电池上。姐先干活去了。\n——阿澄`, replies: [
+        { label: '先去把电闸合上——圆顶得先转起来。', flag: 'warm', to: 'n2' },
+        { label: '先读桌上那封没写完的信。', flag: 'probe', to: 'n3' }
+      ]},
+      n2: { year: '二〇二六 · 三月', title: '电闸', age: 0.06, text: `小满：\n电闸在地下室楼梯口，锈得像块化石。合上的一瞬间，整座山台的旧灯管依次炸灭了三根，第四根活了下来。\n圆顶的马达咳嗽了半夜，凌晨转开一道缝——二十七年来的第一道星光落在地板正中央，一条笔直的银线。\n地下室还有一只铁皮柜，一柜子的信按年份扎好。我抽了最上面一扎：一九九九年十二月。\n还有那盏红灯——接在一组老铅酸电池上，不走总闸。走的人没有关它。我查了台账，电池是一九九八年换的。\n九八年的电池，亮到今天。姐不知道该把它记进哪一栏。`, cont: '拆开一九九九年十二月的信', contTo: 'n4' },
+      n3: { year: '一九九九 · 十一月', title: '未写完的信', age: 0.42, text: `砚秋：\n你走后第七天，C/1999 Y2 过了近地点。我在底片上量了三次尾长，每一次都不一样——不是它变了，是夜空在呼吸。\n轨道根数我重算了两遍。周期二十七年。它回来的时候是二〇二六年的春天，四月上旬，从仙后座的方向来。\n砚秋，我算不出我们台的春天。经费的文说"原则上保留，逐步撤并"——人事处的文，比星历准。\n如果它回来那天，这里已经没有`, cont: '去地下室，翻找抽屉里那捆信', contTo: 'n4' },
+      n4: { year: '一九九九 · 十二月', title: '青梧', age: 0.4, text: `砚秋：\n批复下来了。台里养不起两个人——这是原话。我说，那至少养得起一盏灯。人事处的人没有笑，他在公函上盖了章，动作很轻，像是怕惊动什么。\n你不用回这封信。城南天文馆很好，穹顶是真的圆，椅子是真的软。我这边的圆顶漏风，恰好证明天还在外面。\n入冬前我把观测手簿都誊清了。彗星的底片编到四十七张。等它回来，我要用同一架镜子、同一个底片盒，给它拍第四十八张。\n两个周期前是它来，一个周期前是你走。下一次它来——\n砚秋，下一次它来，我五十四岁。眼睛，应该还够用。\n青梧\n十二月初九 · 晴 · 视宁度三`, replies: [
+        { label: '按日期，把整捆信一封封读完。', flag: 'warm', to: 'n5' },
+        { label: '先核对她的轨道计算——彗星真的会回来吗？', flag: 'probe', to: 'n6' }
+      ]},
+      n5: { year: '二〇二六 · 三月', title: '回信', age: 0.06, text: `小满：\n姐做了一件清点报告里没有栏目可填的事：我回信了。\n在那本誊清用的观测手簿的最后一页，用台里仅剩的铅笔，给一个一九九九年的人写信。\n我告诉她：轨道你算对了，周期二十七点四年，过近日点在二〇二六年四月十一日。我告诉她台还在，五月才动工，来得及。我告诉她红灯没有灭——她那块电池创造了某种工程学的奇迹。\n写完我读了三遍。信写在旧手簿上，我的字挤着她的字，像隔着二十七年，坐在同一张桌子前。\n小满，最奇怪的是什么吗？写的时候，我一点也不觉得她收不到。`, cont: '继续清点——移交清单', contTo: 'n7' },
+      n6: { year: '二〇二六 · 三月', title: '星历', age: 0.06, text: `小满：\n我把星历和她的四十七张底片都翻出来，从头算了一遍。过程给你省略：她全对。\n过近日点：二〇二六年四月十一日，凌晨两点到四点，北天，仙后座下方，肉眼可见。亮度预计二等——城里看不见，山上恰好可以。\n还有一件事，是在拆除工期的公函里看到的：鹊山观星台拆除工程，开工日期，五月。\n彗星四月回来，台五月拆。你说这是巧合吗？天文上管这叫"可观测窗口"：一颗星和一双眼睛，必须在同一个夜里同时存在。\n小满，她把自己算成了那个窗口的一部分。`, cont: '继续清点——移交清单', contTo: 'n7' },
+      n7: { year: '二〇〇〇 · 元月', title: '移交清单', age: 0.38, text: `致接手的人（如果有的话）：\n不是不放心，是习惯。观测员的职业病：一切要有记录，记录要有下家。\n清单如下——\n主镜：一九七二年蔡司。赤纬轴微动有旷量，已注。\n底片：C/1999 Y2 专题四十七张，编号与手簿对应，已誊。\n红灯：不列入移交。它接的是独立电池，不走总闸。我走的时候没有关它，你也别关——一个台，总得有点一直开着的东西。\n它二〇二六年回来。我算过很多遍，是四月。\n我不托你别的，只托一件事：那天夜里，如果这台还在，替我看它一眼。就一眼。看完是你的，等过的这些年是我的。\n沈青梧\n二〇〇〇年元月 · 交台之日 · 晴`, replies: [
+        { label: '留下来。等四月十一日。', flag: 'warm', to: 'n8' },
+        { label: '把信整箱移交档案馆，按期下山。', flag: 'letgo', to: 'E2' }
+      ]},
+      n8: { year: '二〇二六 · 四月十一日', title: '彗星夜', age: 0.06, text: `小满：\n四月十一日，晴，视宁度二。她的格式，我借用一下。\n凌晨一点，圆顶开到最大。主镜的赤纬轴果然有旷量，我垫了一张票根。底片盒里装了新底片，编号：四十八。\n两点十四分，仙后座下方，它出来了。\n尾长我量了三次，每一次都不一样。不是它变了，是夜空在呼吸——她二十七年前写下的句子，原来是这个意思。\n现在是两点五十分。彗星在视野正中，离天亮还有三个小时。我困得眼睛发涩，桌上红灯稳稳地亮着。\n小满，最后这一夜怎么守，你来替姐选——`, replies: [
+        { label: '点亮所有能亮的灯，守到天亮。', flag: 'light', to: 'E1' },
+        { label: '写一封信，放进那只抽屉，留给下一个人。', flag: 'keep', to: 'E3' },
+        { label: '就靠一会儿……就一会儿。', flag: 'sleep', to: 'E4' }
+      ]}
+    },
+    en: {
+      n1: { year: '2026 · MARCH', title: 'Arrival · for Xiaoman', age: 0.06, postcard: true, text: `Xiaoman —\nAnywhere a postcard can reach, you cannot see the stars. So your sister has gone where there is no address.\nQue Mountain Observatory, 1,900 meters up. It closed for the winter of 1999 and never woke again. My job: the final inventory before demolition. Register, crate, label. Three months.\nThe dome is seized and the power is dead. The dust is a knuckle deep; one step and the whole room falls like soundless snow.\nBut on the duty desk lies an unfinished letter, dated November 1999. And in the drawer, a bundle of letters — every one stamped, every one never sent.\nOne more thing: a small red lamp is still burning up here, wired to who knows what. Your sister had better get to work.\n— Acheng`, replies: [
+        { label: 'Throw the main breaker first — the dome must turn.', flag: 'warm', to: 'n2' },
+        { label: 'Read the unfinished letter first.', flag: 'probe', to: 'n3' }
+      ]},
+      n2: { year: '2026 · MARCH', title: 'The Breaker', age: 0.06, text: `Xiaoman —\nThe breaker was at the basement stair, rusted like a fossil. When I threw it, three old tubes blew out in sequence; the fourth survived.\nThe dome motor coughed half the night, and toward dawn the slit opened a crack — the first starlight in twenty-seven years fell across the floor: one straight silver line.\nDown in the basement, a tin cabinet: a whole drawer of letters, bundled by year. I drew the top bundle — December 1999.\nAnd that red lamp: it runs off an old lead-acid battery, off the main switch. Whoever left did not turn it off. I checked the ledger — the battery was installed in 1998.\nA battery from '98, still burning tonight. I cannot find the column for that in the inventory.`, cont: 'Open the December 1999 letter', contTo: 'n4' },
+      n3: { year: '1999 · NOVEMBER', title: 'The Unfinished Letter', age: 0.42, text: `Yanqiu —\nSeven days since you left. C/1999 Y2 passed perigee. I measured the tail three times on the plate, and got three lengths — the comet is not changing; the night sky is breathing.\nI recomputed the elements twice. Period: twenty-seven years. It returns in the spring of 2026 — early April, out of Cassiopeia.\nYanqiu, what I cannot compute is this observatory's spring. The funding memo says "retained in principle, wound down in steps" — the personnel office writes better ephemerides than the almanac.\nIf, the night it returns, no one is left here—`, cont: 'Go down to the basement, search the drawer', contTo: 'n4' },
+      n4: { year: '1999 · DECEMBER', title: 'Qingwu', age: 0.4, text: `Yanqiu —\nThe reply came down. "The station cannot keep two observers" — their exact words. I said: then it can at least keep one lamp. The man from personnel did not laugh. He stamped the document, very lightly, as if afraid of waking something.\nYou need not answer this. The planetarium in the south of the city suits you — the dome is genuinely round, the chairs genuinely soft. Mine leaks wind, which proves the sky is still outside.\nBefore winter I copied the whole observing book fair. The comet plates run to forty-seven. When it comes back, I will take the forty-eighth — same telescope, same plate holder.\nTwo periods ago it arrived; one period ago, you left. The next time it comes—\nYanqiu, the next time it comes, I will be fifty-four. My eyes should still serve.\nQingwu\nDecember 9th · clear · seeing III`, replies: [
+        { label: 'Read the whole bundle, letter by letter, in order.', flag: 'warm', to: 'n5' },
+        { label: 'Check her orbital work first — will the comet truly return?', flag: 'probe', to: 'n6' }
+      ]},
+      n5: { year: '2026 · MARCH', title: 'The Reply', age: 0.06, text: `Xiaoman —\nYour sister has done a thing no inventory has a column for: I wrote back.\nOn the last page of that fair-copied observing book, with the observatory's last pencil, I wrote to a woman from 1999.\nI told her: your orbit was right — period 27.4 years, perihelion April 11th, 2026. I told her the station still stands; demolition begins in May; there is time. I told her the red lamp never went out — her battery has worked a small engineering miracle.\nWhen I finished, I read it three times over. The letter sits in her old book, my handwriting crowded against hers — like sitting at one desk across twenty-seven years.\nXiaoman, do you know the strangest part? While I wrote, I never once felt she would not receive it.`, cont: 'On with the inventory — the handover list', contTo: 'n7' },
+      n6: { year: '2026 · MARCH', title: 'The Ephemeris', age: 0.06, text: `Xiaoman —\nI dug out the ephemeris and her forty-seven plates and worked the orbit from the top. I will spare you the arithmetic: she was right, all the way down.\nPerihelion: April 11th, 2026, between two and four in the morning, northern sky, below Cassiopeia, naked-eye. Expected magnitude two — invisible from the city; from this mountain, just visible.\nAnd one more thing, from the demolition schedule: Que Mountain Observatory, demolition works, commencement — May.\nThe comet returns in April; the observatory falls in May. Coincidence? In astronomy we call this an observation window: one star and one pair of eyes must exist in the same night.\nXiaoman — she computed herself into that window.`, cont: 'On with the inventory — the handover list', contTo: 'n7' },
+      n7: { year: '2000 · JANUARY', title: 'Handover List', age: 0.38, text: `To whoever takes over (if anyone does):\nNot distrust — habit. An observer's occupational disease: everything must be recorded, and every record must have a successor.\nThe list:\nMain telescope: Zeiss, 1972. Play in the declination slow-motion; noted.\nPlates: C/1999 Y2 series, forty-seven; numbered to the book; fair-copied.\nThe red lamp: not listed for handover. It runs on its own battery, off the main switch. I did not switch it off when I left, and neither should you — a station must keep one thing that is always on.\nIt returns in 2026. I have worked it many times: April.\nI ask nothing else of you, only this: that night, if this station still stands, watch it for me. Once is enough. What you see is yours; the years of waiting were mine.\nShen Qingwu\nJanuary 2000 · the day of handover · clear`, replies: [
+        { label: 'Stay. Wait for April the eleventh.', flag: 'warm', to: 'n8' },
+        { label: 'Crate the letters for the archive, and descend on schedule.', flag: 'letgo', to: 'E2' }
+      ]},
+      n8: { year: '2026 · APRIL 11', title: 'Comet Night', age: 0.06, text: `Xiaoman —\nApril 11th, clear, seeing II. Her format — I am borrowing it.\nOne in the morning, the dome at full opening. The declination axis has its play, as promised; I shimmed it with a ticket stub. A fresh plate in the holder. Number: forty-eight.\nAt 2:14, below Cassiopeia — it came.\nI measured the tail three times, and three times it differed. Not the comet changing; the sky breathing — that sentence she wrote twenty-seven years ago, it meant this.\nIt is now 2:50. The comet sits centered; dawn is three hours off. My eyes are stinging with sleep, and the red lamp burns steady on the desk.\nXiaoman — how to keep this last night is yours to choose for me—`, replies: [
+        { label: 'Light every lamp that will light, and keep watch till dawn.', flag: 'light', to: 'E1' },
+        { label: 'Write one more letter, and leave it in the drawer for the next person.', flag: 'keep', to: 'E3' },
+        { label: 'Just lean back a moment… only a moment.', flag: 'sleep', to: 'E4' }
+      ]}
+    }
+  },
+  endings: {
+    zh: {
+      E1: { title: '灯与彗星', text: `你把台里每一盏还活着的灯都点亮了：走廊的白炽灯、圆顶内侧的检修灯、书桌上那盏黄铜台灯。\n红灯在正中央，像一枚守夜的火种。\n五点四十七分，晨光从山脊线漫上来，彗星淡进天色里。你取下底片，在边缘用铅笔写：接沈青梧 · C/1999 Y2 · 二〇二六·四·十一 · 晴。\n五月，拆除队上山。移交清单的末尾多了一行不属于任何模板的字：\n"主镜底片四十八张。红灯一枚，电池一九九八年出厂，仍在工作。建议一并保留。"` },
+      E2: { title: '归档', text: `你按期下山。信、手簿、底片，连同那盏红灯，编号装箱，移交区档案馆。\n档案员在"状态"一栏填了两个字：完整。\n四月十一日你在城里，凌晨两点自然醒来。窗帘缝漏进橙色路灯光。你走到窗前，朝仙后座的方向望了很久——光污染把星星全部没收了，天上什么也没有。\n四月过后，你收到归档回执。附注栏里，有人用铅笔写了一行很小的字：\n"手簿第四十八页起，是二十七年前就留好的空白。"` },
+      E3: { title: '下一个人的抽屉', text: `天亮之前，你把信写完了。\n"给下一个人（如果有的话）：\n如果你在拆除之前、或拆除之后的瓦砾里，找到这只抽屉——\n这台在二〇二六年四月十一日晴。彗星回来了，肉眼可见；尾长三次测量不一致，原因见一九九九年十一月的信。\n底片编号到四十八，就压在这台的手簿里。红灯还亮着；电池是一九九八年的。别关，它会自己决定。\n一个台，总得有点一直开着的东西。\n——二〇二六年四月当班的人"\n你把它放进抽屉最上层，没有贴邮票。\n和那四十七封信，放在一起。` },
+      E4: { title: '靠一会儿', text: `你在黄铜台灯边的椅子上坐下。就一会儿。\n醒来时天已大亮。彗星走了，晨光平平地铺满圆顶。底片盒里，第四十八张没有曝光——乳白的一面，还是乳白的。\n你怔了很久，然后笑了。她说过的：等过的这些年是我的，看完是你的。你没有看完——但等过这一夜的，也有你。\n台灯还亮着。红灯也亮着。\n有些错过不需要原谅。台五月拆；抽屉里还有一封没写完的信，等着谁来写完。` },
+      E5: { title: '灯还亮着', text: `你点亮了所有的灯。三点整，去地下室取备用灯泡时，铁皮柜最底层滑出一只你没登记过的信封——牛皮纸的，比其余的信都新。\n信封上一行字：交二〇二六年四月十一日当班的人。落款处，盖着山下保管处的代存章。\n"当班的：\n说明你留下来了。谢谢。\n这封信写于二〇〇七年，托保管处代存：若我等不到，就等它回来那天，交给替我当班的人。\n医生说我的眼睛在退，退得比预算快。我重新学了一遍星图——用手，摸盲文的那一套。摸着摸着就明白了：其实早就背下来了。\n我等了八年，没等到它。剩下的一半路，交给灯。\n灯还亮着，就轮得到有人看。\n沈青梧"\n背面还有一行小字，铅笔的，很淡，像是后来添上去的：\n"如果红灯还没灭——替我谢谢那块电池。"\n你把信举到红灯下。窗外，彗星正走过仙后座下方，不慌不忙，像一位终于等到交接的人。` }
+    },
+    en: {
+      E1: { title: 'Lamps and Comet', text: `You lit every lamp in the station that would still light: the corridor tubes, the dome's service lights, the brass desk lamp.\nAt the center of it all, the red one — a night-watch ember.\nAt 5:47 dawn slid over the ridge, and the comet faded into daylight. You drew the plate and wrote on its edge in pencil: after Shen Qingwu · C/1999 Y2 · 2026.4.11 · clear.\nIn May the demolition crew came up the mountain. At the end of the handover list stood one line no template provides for:\n"Telescope plates: forty-eight. One red lamp, battery manufactured 1998, still in service. Recommend preserving both."` },
+      E2: { title: 'Filed', text: `You came down on schedule. Letters, book, plates — and the red lamp — numbered, crated, transferred to the district archive.\nUnder "condition," the archivist wrote a single word: complete.\nOn April 11th you woke by yourself at two in the morning, in the city. Orange streetlight seeped through the curtain gap. You stood at the window a long time, facing Cassiopeia — the light pollution had confiscated every star; the sky held nothing.\nAfter April the receipt arrived. In the notes column, in small pencil, someone had written:\n"From page 48, the observing book is blank — ruled and waiting, twenty-seven years ago."` },
+      E3: { title: 'The Next Drawer', text: `Before dawn, you finished the letter.\n"To the next person (if there is one):\nIf you find this drawer before the demolition — or in the rubble after —\nthis station was clear on April 11th, 2026. The comet returned, naked-eye; the tail measured differently three times; see the letter of November 1999 for why.\nThe plates run to forty-eight, pressed in this station's book. The red lamp still burns; the battery is from 1998. Do not switch it off. It will decide for itself.\nA station must keep one thing that is always on.\n— the one on duty, April 2026"\nYou laid it on top of the drawer, unstamped.\nTogether with the other forty-seven.` },
+      E4: { title: 'A Moment Only', text: `You sat down in the chair beside the brass lamp. Just a moment.\nYou woke in broad daylight. The comet was gone; morning lay flat across the dome. In the plate holder, the forty-eighth sat unexposed — its milky face still milky.\nYou sat still a long while, and then smiled. She had said it: the years of waiting were mine; the seeing is yours. You did not see it through — but the waiting that night was yours too.\nThe desk lamp was still on. The red one as well.\nSome misses need no forgiving. The station falls in May; and in the drawer, an unfinished letter waits for whoever will finish it.` },
+      E5: { title: 'The Lamp Is Still Lit', text: `You lit every lamp. At three, going down for a spare bulb, the bottom tray of the tin cabinet slid out an envelope you had never logged — kraft paper, newer than all the rest.\nOne line on the face: for the one on duty, April 11th, 2026. Beside it, the holding seal of the valley keepers.\n"To the one on duty:\nSo you stayed. Thank you.\nThis letter was written in 2007 and left in the keepers' keeping: if I cannot last, then on the night it returns, hand it to whoever keeps my shift.\nThe doctors say my sight is failing faster than budgeted. I learned the star charts again — by hand, the Braille edition. Somewhere in the learning I understood: I had known them by heart all along.\nI waited eight years; it was not enough. The second half of the watch I leave to the lamp.\nAs long as the lamp is lit, it is someone's turn to look.\nShen Qingwu"\nOn the back, one small pencil line, faint, added afterward:\n"If the red lamp still burns — thank that battery for me."\nYou held the letter up to the red light. Outside the slit, the comet was passing below Cassiopeia, unhurried, like someone who had finally been relieved of the watch.` }
+    }
+  }
+};
+
+const BUILTIN_STORIES = [STORY_LIGHTHOUSE, STORY_TRAIN, STORY_RADIO, STORY_CLOCK, STORY_OBS];

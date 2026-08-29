@@ -2443,7 +2443,8 @@ function checkAchs() {
 }
 function buildAchWall() {
   const wall = document.getElementById('achWall');
-  wall.innerHTML = `<div style="grid-column:1/-1;font-size:12px;letter-spacing:0.4em;color:var(--dim,#9db0c9);opacity:.7">${T().achTitle}</div>`;
+  const got = T().achs.filter(a => save.ach[a.id]).length;
+  wall.innerHTML = `<div style="grid-column:1/-1;font-size:12px;letter-spacing:0.4em;color:var(--dim,#9db0c9);opacity:.7">${T().achTitle}　${got} / ${T().achs.length}</div>`;
   for (const a of T().achs) {
     const d = document.createElement('div');
     d.className = 'ach' + (save.ach[a.id] ? ' got' : '');
@@ -2534,9 +2535,14 @@ function levelClear() {
   document.getElementById('lanterns').innerHTML =
     L.map((c, i) => `<span class="${i < score ? '' : 'off'}">${c}</span>`).join('');
   const nm = isDaily ? T().dailyTitle : lvName(li);
+  // 本关最佳（prev 为更新前的纪录）：打破时挂新纪录标
+  const isRecord = prev && (steps + pings < prev.s + prev.p);
+  const bestLine = prev
+    ? `<br>${isRecord ? '★ ' : ''}${T().best}：${prev.s}${T().steps} · ${prev.p}${T().pings} · ${fmtTime(prev.t)}`
+    : '';
   document.getElementById('clearStats').innerHTML =
     `${T().steps}：${steps}　·　${T().pings}：${pings}　·　${T().time}：${fmtTime(elapsed)}<br>` +
-    `${T().exp}：${exp}%　·　${nm}`;
+    `${T().exp}：${exp}%　·　${nm}${bestLine}`;
   if (!isDaily && li >= LEVELS.length + 9) award('abyss');   // 无底之井第十层
   document.getElementById('nextBtn').textContent =
     isDaily ? T().toMenu

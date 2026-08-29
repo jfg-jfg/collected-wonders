@@ -424,8 +424,8 @@ function applyI18n() {
     const k = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
     let h = 0;
     for (const ch of k) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-    const scenes = ['雪夜炉火', '山雨欲来', '海雾清晨', '樱花午后', '极夜深城', '炉边听风', '山涧清晨', '城市黄昏'];
-    const scenesEn = ['Fire & Snow', 'Storm Coming', 'Sea Fog Dawn', 'Petal Afternoon', 'Polar Night City', 'Fireside', 'Dawn', 'City Dusk'];
+    const scenes = ['雪夜炉火', '山雨欲来', '海雾清晨', '樱花午后', '极夜枯林', '炉边听风', '雨林夜雨', '轨道黄昏'];
+    const scenesEn = ['Fire & Snow', 'Storm Coming', 'Sea Fog Dawn', 'Petal Afternoon', 'Polar Night', 'Fireside', 'Rainforest Night', 'Orbit Dusk'];
     const dl = document.createElement('div');
     dl.className = 'global-stat';
     dl.innerHTML = lang === 'zh'

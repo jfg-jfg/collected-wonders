@@ -355,6 +355,9 @@
     <select id="edGhosts" style="background:rgba(7,9,13,0.8);color:var(--pale);border:1px solid var(--hairline);border-radius:4px;padding:4px 6px;font-family:inherit;font-size:12px;outline:none">
       <option value="0">👻 0</option><option value="1">👻 1</option><option value="2">👻 2</option><option value="3">👻 3</option><option value="4">👻 4</option>
     </select>
+    <select id="edGhostKind" style="background:rgba(7,9,13,0.8);color:var(--pale);border:1px solid var(--hairline);border-radius:4px;padding:4px 6px;font-family:inherit;font-size:12px;outline:none">
+      <option value="mix">👻 混编</option><option value="hunter">👻 趋声</option><option value="wanderer">👻 游荡</option><option value="warden">👻 守灯</option>
+    </select>
     <button class="ed-t" id="edClear" data-e="clear"></button>
     <button class="ed-t" id="edShare" data-e="share"></button>
   </div>
@@ -415,6 +418,7 @@ const I18N = {
       customLbl: '自定', fragTxt: '碎片台词',
       fragTitle: '碎 片 台 词', fragTip: '每行一句（按放置顺序对应）。空行 = 用默认台词。',
       fragClose: '关 闭',
+      kinds: ['👻 混编', '👻 趋声', '👻 游荡', '👻 守灯'],
       wall: '墙', floor: '通路', start: '起点', goal: '出口', frag: '碎片',
       noteValid: '点「试玩」检验连通性',
       noteNoSG: '缺少起点或出口', noteUnreachable: '出口不可达！', noteOk: '通路距离 N 步 · 可以试玩',
@@ -488,6 +492,7 @@ const I18N = {
       customLbl: 'custom', fragTxt: 'Fragment lines',
       fragTitle: 'FRAGMENT LINES', fragTip: 'One per line (in placement order). Empty = default.',
       fragClose: 'CLOSE',
+      kinds: ['👻 mixed', '👻 listeners', '👻 drifters', '👻 wardens'],
       wall: 'Wall', floor: 'Path', start: 'Start', goal: 'Exit', frag: 'Frag',
       noteValid: 'press TEST to validate',
       noteNoSG: 'missing start or exit', noteUnreachable: 'exit unreachable!', noteOk: 'path is N steps · ready to test',
@@ -1750,6 +1755,15 @@ function buildEdTools() {
     const k = el.getAttribute('data-e');
     if (T().ed[k] !== undefined) el.textContent = T().ed[k];
   });
+  // 游魂分型下拉（双语选项）
+  const gk = document.getElementById('edGhostKind');
+  if (gk) {
+    const kinds = T().ed.kinds || ['👻 混编', '👻 趋声', '👻 游荡', '👻 守灯'];
+    const vals = ['mix', 'hunter', 'wanderer', 'warden'];
+    const cur = gk.value || 'mix';
+    gk.innerHTML = vals.map((v, i) => `<option value="${v}">${kinds[i]}</option>`).join('');
+    gk.value = cur;
+  }
 }
 function edCellAt(e) {
   const cx = Math.floor((e.clientX - ox) / cell);
@@ -1871,7 +1885,7 @@ function edDecode(str) {
 }
 /* 试玩 / 名井：以自定义地图进入游戏 */
 let customName = '', customFrom = 'editor', curWell = -1;
-function enterCustomPlay(map, parVal, name, ghostCount) {
+function enterCustomPlay(map, parVal, name, ghostCount, ghostKind) {
   isCustom = true;
   isDaily = false;
   li = 0;
@@ -1899,8 +1913,10 @@ function enterCustomPlay(map, parVal, name, ghostCount) {
   totalWalls = 0;
   for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++)
     if (grid[y][x] === '#') totalWalls++;
-  // 游魂（名井可带）：按数量混编三型
-  spawnGhosts(ghostMixForCount(ghostCount || 0));
+  // 游魂（名井可带）：按数量混编，或指定单一分型（趋声/游荡/守灯）
+  spawnGhosts(ghostKind && ghostKind !== 'mix'
+    ? Array.from({ length: ghostCount || 0 }, () => ghostKind)
+    : ghostMixForCount(ghostCount || 0));
   state = 'play';
   editor.on = false;
   document.getElementById('edBar').classList.remove('show');
@@ -1917,7 +1933,8 @@ function edPlay() {
   customFrom = 'editor';
   curWell = -1;
   const gCount = +document.getElementById('edGhosts').value || 0;
-  enterCustomPlay(editor.map.map(r => r.join('')), Math.round(d * 1.2) + 4, T().edCustomName, gCount);
+  const gKind = (document.getElementById('edGhostKind') || {}).value;
+  enterCustomPlay(editor.map.map(r => r.join('')), Math.round(d * 1.2) + 4, T().edCustomName, gCount, gKind);
 }
 function playWell(i) {
   const w = WELL_PACK[i];

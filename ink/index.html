@@ -1923,7 +1923,8 @@ function startCapture() {
         { t0: 4.2, t1: 5.5, x0: .42, y0: .72, x1: .445, y1: .32, bow: -.07, dye: .30, vmul: 1.0 }, // 疾行竖——淡/飞白
         { t0: 5.9, t1: 8.4, x0: .50, y0: .34, x1: .635, y1: .62, bow: .08, dye: .36, vmul: .35 },  // 硬笔挑——出锋
         { t0: 8.8, t1: 10.3, x0: .665, y0: .60, x1: .71, y1: .38, bow: .04, dye: .32, vmul: .5 },
-        { t0: 10.8, t1: 11.6, x0: .57, y0: .50, x1: .585, y1: .485, bow: 0, dye: .9, vmul: .2, rad: 2.4 } // 泼墨点
+        { t0: 10.8, t1: 11.6, x0: .57, y0: .50, x1: .585, y1: .485, bow: 0, dye: .9, vmul: .2, rad: 2.4 }, // 泼墨点
+        { t0: 12.0, t1: 14.6, x0: .64, y0: .30, x1: .64, y1: .30, bow: 0, dye: .5, vmul: 0, drip: true }  // 悬停滴墨——积聚洇开
       ]
     };
   } catch (e) {
@@ -1936,6 +1937,12 @@ function captureTick(dt) {
   for (const k of capDemo.strokes) {
     if (capDemo.t < k.t0 || capDemo.t > k.t1) continue;
     const p = (capDemo.t - k.t0) / (k.t1 - k.t0);
+    if (k.drip) {
+      // 悬停滴墨镜头：墨滴缓缓积聚洇开（半径随时间长大，湿度高——湿边可见）
+      splat(k.x0, k.y0, (Math.random() - .5) * 6, (Math.random() - .5) * 6,
+            k.dye * dt * (2.2 + p * 2.5), 1.0 + p * 0.9, 0, 0.85);
+      continue;
+    }
     const arc = Math.sin(p * Math.PI);
     const x = k.x0 + (k.x1 - k.x0) * p + k.bow * arc;
     const y = k.y0 + (k.y1 - k.y0) * p;

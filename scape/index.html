@@ -246,6 +246,23 @@ function rebuildScenery() {
     makeRidge(W, H, 73, H * 0.74, H * 0.08, 'rgba(0,0,0,0.66)')
   ];
 }
+/* 主题过渡：切换时快照旧帧渐隐 */
+let themeFadeCanvas = null, themeFadeT = 0;
+function snapshotTheme() {
+  if (!themeFadeCanvas) {
+    themeFadeCanvas = document.createElement('canvas');
+  }
+  themeFadeCanvas.width = W; themeFadeCanvas.height = H;
+  themeFadeCanvas.getContext('2d').drawImage(cv, 0, 0);
+  themeFadeT = 1;
+}
+function drawThemeFade() {
+  if (themeFadeT <= 0 || !themeFadeCanvas) return;
+  ctx.globalAlpha = themeFadeT;
+  ctx.drawImage(themeFadeCanvas, 0, 0);
+  ctx.globalAlpha = 1;
+}
+
 /* 预渲染精灵与渐变缓存（手机性能：替代逐帧 createRadialGradient/LinearGradient） */
 let glowSprite = null, auroraStrips = null, vigGrad = null, skyCache = { key: '', grad: null };
 function resize() {
@@ -1098,6 +1115,11 @@ function draw(dt) {
   ctx.fillRect(0, 0, W, H);
 
   bellT = Math.max(0, bellT - dt * 0.55);
+  /* 主题过渡渐隐 */
+  if (themeFadeT > 0) {
+    drawThemeFade();
+    themeFadeT -= dt * 1.8;
+  }
 }
 
 /* ---------- 事件调度（雷/钟/鸟） ---------- */
@@ -1345,6 +1367,7 @@ const THEMES = ['⛰ 山', '🌊 海', '🏙 城', '❄ 雪原', '🏜 大漠', 
 const THEMES_EN = ['⛰ MTN', '🌊 SEA', '🏙 CITY', '❄ SNOW', '🏜 DESERT', '🛸 SPACE'];
 function updTheme() { themeBtn.textContent = lang === 'zh' ? THEMES[theme] : THEMES_EN[theme]; }
 themeBtn.addEventListener('click', () => {
+  snapshotTheme();
   theme = (theme + 1) % 6;
   updTheme(); saveStateSoon();
 });
@@ -1596,7 +1619,7 @@ window.addEventListener('keydown', e => {
     toast(lang === 'zh' ? `今日气象 · ${ds.name}` : `today · ${ds.nameEn}`);
   }
   /* T = 主题切换 */
-  else if (k === 't') { theme = (theme + 1) % 6; updTheme(); saveStateSoon(); }
+  else if (k === 't') { snapshotTheme(); theme = (theme + 1) % 6; updTheme(); saveStateSoon(); }
   /* M = 心境随机 */
   else if (k === 'm') { document.getElementById('moodBtn').click(); }
   /* F = 时光流转 */

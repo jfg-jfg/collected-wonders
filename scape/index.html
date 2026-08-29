@@ -104,6 +104,12 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
+  /* 横屏/矮屏：声道板限高可滚，预设行收紧，保住画面 */
+  @media (max-height: 540px) {
+    .board { max-height: 42vh; overflow-y: auto; scrollbar-width: thin; }
+    .presets .chip { font-size: 11px; padding: 5px 12px; }
+    .dock { bottom: 8px; gap: 6px; }
+  }
   @media (max-width: 720px) {
     .board { gap: 2px; padding: 8px 6px 6px; }
     .ch { width: 66px; }

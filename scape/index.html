@@ -1131,20 +1131,23 @@ const PRESETS = {
   fireside:{ rain: 0.3, wind: 0.28, fire: 0.75, stream: 0, cricket: 0.2, thunder: 0, birds: 0, bell: 0.15, snow: 0, petal: 0, time: 20.5 },
   valley:  { rain: 0, wind: 0.38, fire: 0, stream: 0.32, cricket: 0, thunder: 0, birds: 0.5, bell: 0, snow: 0, petal: 0, time: 14 },
   winter:  { rain: 0, wind: 0.22, fire: 0.55, stream: 0, cricket: 0, thunder: 0, birds: 0, bell: 0.3, snow: 0.85, petal: 0, time: 21.5 },
-  blossom: { rain: 0, wind: 0.2, fire: 0, stream: 0.25, cricket: 0, thunder: 0, birds: 0.45, bell: 0.15, snow: 0, petal: 0.85, time: 15 }
+  blossom: { rain: 0, wind: 0.2, fire: 0, stream: 0.25, cricket: 0, thunder: 0, birds: 0.45, bell: 0.15, snow: 0, petal: 0.85, time: 15 },
+  polar:    { rain: 0, wind: 0.35, fire: 0, stream: 0, cricket: 0.15, thunder: 0, birds: 0, bell: 0.1, snow: 0.9, petal: 0, time: 22, theme: 3 },
+  dune:     { rain: 0, wind: 0.25, fire: 0, stream: 0, cricket: 0.25, thunder: 0, birds: 0.15, bell: 0.2, snow: 0, petal: 0, time: 23, theme: 4 },
+  orbit:    { rain: 0, wind: 0.1, fire: 0, stream: 0, cricket: 0, thunder: 0, birds: 0, bell: 0.4, snow: 0, petal: 0, time: 0, theme: 5 }
 };
-const PRESET_ZH = { rainy: '雨夜读书', morning: '山涧清晨', fireside: '炉边听风', valley: '午后山谷', winter: '冬夜围炉', blossom: '花信风' };
-const PRESET_EN = { rainy: 'Rainy Night', morning: 'Dawn', fireside: 'Fireside', valley: 'Valley', winter: 'Winter', blossom: 'Blossom' };
+const PRESET_ZH = { rainy: '雨夜读书', morning: '山涧清晨', fireside: '炉边听风', valley: '午后山谷', winter: '冬夜围炉', blossom: '花信风', polar: '极夜枯林', dune: '大漠星夜', orbit: '轨道' };
+const PRESET_EN = { rainy: 'Rainy Night', morning: 'Dawn', fireside: 'Fireside', valley: 'Valley', winter: 'Winter', blossom: 'Blossom', polar: 'Polar Night', dune: 'Desert Stars', orbit: 'Orbit' };
 /* 每日气象：日期种子选一处境（与褶皱每日星球同机制，全城同日同境） */
 const DAILY_SCENES = [
   { name: '雪夜炉火', nameEn: 'Fire & Snow', s: { fire: .8, snow: .9, wind: .15, time: 21.5, theme: 0 } },
   { name: '山雨欲来', nameEn: 'Storm Coming', s: { rain: .5, wind: .4, thunder: .3, time: 16, theme: 0 } },
   { name: '海雾清晨', nameEn: 'Sea Fog Dawn', s: { rain: .15, wind: .3, stream: .5, birds: .4, time: 6.5, theme: 1 } },
   { name: '樱花午后', nameEn: 'Petal Afternoon', s: { wind: .25, stream: .3, birds: .5, petal: .85, time: 14, theme: 0 } },
-  { name: '极夜深城', nameEn: 'Polar Night City', s: { rain: .3, wind: .3, snow: .8, bell: .3, time: 23, theme: 2 } },
+  { name: '极夜枯林', nameEn: 'Polar Night', s: { wind: .35, snow: .9, cricket: .15, bell: .1, time: 22, theme: 3 } },
+  { name: '大漠星夜', nameEn: 'Desert Stars', s: { wind: .25, cricket: .25, birds: .15, bell: .2, time: 23, theme: 4 } },
   { name: '炉边听风', nameEn: 'Fireside', s: { rain: .3, wind: .28, fire: .75, bell: .15, time: 20.5, theme: 0 } },
-  { name: '山涧清晨', nameEn: 'Dawn', s: { wind: .12, stream: .6, cricket: .35, birds: .4, time: 6.2, theme: 0 } },
-  { name: '城市黄昏', nameEn: 'City Dusk', s: { wind: .2, birds: .3, time: 18.2, theme: 2 } }
+  { name: '轨道黄昏', nameEn: 'Orbit Dusk', s: { bell: .4, wind: .1, time: 0, theme: 5 } }
 ];
 function dailyScene() {
   const d = new Date();
@@ -1571,8 +1574,8 @@ function loop(now) {
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   const k = e.key.toLowerCase();
-  /* 1-7 预设 */
-  if (k >= '1' && k <= '6') {
+  /* 1-9 预设 */
+  if (k >= '1' && k <= '9') {
     const keys = Object.keys(PRESETS);
     const idx = +k - 1;
     if (keys[idx]) {

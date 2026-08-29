@@ -1880,6 +1880,45 @@ if (location.hash.includes('newton')) {
 }
 // #grid=1：构图网格直达
 if (location.hash.includes('grid=1')) document.getElementById('grid').classList.add('on');
+// #lab：微扰引擎数值自检——数据纹理直读三档（内部点/外部点/深潜微扰点）
+if (location.hash.includes('lab')) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;top:8px;left:8px;z-index:99;background:#1a1420;color:#fff;font:11px monospace;padding:6px 10px;border-radius:6px;white-space:pre';
+  el.textContent = 'LAB …';
+  document.body.appendChild(el);
+  const readCenter = () => {
+    const px = hasFloatFB ? new Float32Array(4) : new Uint8Array(4);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.readPixels(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1,
+      gl.RGBA, hasFloatFB ? gl.FLOAT : gl.UNSIGNED_BYTE, px);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    const f = i => hasFloatFB ? px[i] : px[i] / 255;
+    return [f(0), f(1), f(2), f(3)];
+  };
+  const setView = (x, y, s, xl = 0, yl = 0) => {
+    view.x = x; view.y = y; view.s = s; view.xl = xl; view.yl = yl;
+    target.x = x; target.y = y; target.s = s; target.xl = xl; target.yl = yl;
+    fly = null;
+  };
+  const probe = (x, y, s) => { setView(x, y, s); render(); return readCenter(); };
+  try {
+    const interior = probe(-0.6, 0, 1.4);
+    const exterior = probe(2.0, 0, 1.4);
+    // 经典迷你心形中心（深潜视频通用内部坐标）：1e-10 应为内部，1e-13 应数值有限
+    const deep = probe(-0.7436438870371587, 0.1318259042053119, 1e-10);
+    const ultra = probe(-0.7436438870371587, 0.1318259042053119, 1e-13);
+    const okInterior = interior[3] < 0.004;          // c=-0.6 主心形内部：不逃逸
+    const okExterior = exterior[3] >= 0.004;         // c=2 外部：快速逃逸
+    const okDeep = deep.every(v => Number.isFinite(v)) && deep[3] < 0.004;
+    const okUltra = ultra.every(v => Number.isFinite(v));
+    el.textContent =
+      `LAB ${okInterior && okExterior && okDeep && okUltra ? 'PASS' : 'FAIL'} ` +
+      `int=${interior.map(v => v.toFixed(3)).join(',')} ` +
+      `ext=${exterior.map(v => v.toFixed(3)).join(',')} ` +
+      `deep1e-10=${deep.map(v => v.toFixed(3)).join(',')} ` +
+      `ultra1e-13=${ultra.every(v => Number.isFinite(v)) ? 'finite' : ultra.join(',')} fbo=${hasFloatFB ? '16F' : '8'}`;
+  } catch (e) { el.textContent = 'LAB ERR ' + e.message; }
+}
 // #dbg: 无头自检——读取像素证据写入 DOM（不影响正常使用）
 if (location.hash.includes('dbg')) {
   const px = new Uint8Array(4 * 100);

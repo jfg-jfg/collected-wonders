@@ -31,6 +31,7 @@ echo "=== 全站 hash 回归 ==="
 
 # 褶皱
 run "fold 默认"        "fold/index.html"
+run "fold lab"         "fold/index.html#lab"
 run "fold dbg"         "fold/index.html#dbg"
 run "fold deep 1e15"   "fold/index.html#dbg&x=-0.7435,y=0.1314,s=1.4e-15"
 run "fold newton"      "fold/index.html#dbg&newton"

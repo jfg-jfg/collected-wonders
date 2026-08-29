@@ -429,6 +429,13 @@ const I18N = {
       '水声很近了。像有人在耳边翻动一页纸。',
       '再往下，连黑暗也是一种光。'
     ],
+    milestones: [
+      '第五层。井壁上开始出现同一行刻痕——每一道，都是一次到达。',
+      '第十层。你数了数：你已经比这座城沉下去的部分，更深了。',
+      '第十五层。这里的黑暗有了重量，压在肩上，像一件湿透的大衣。',
+      '第二十层。声呐传回来的不再是回声，是这座城的心跳。',
+      '第二十五层。往下已经没有名字了。你是第一个给这里留下脚印的人。'
+    ],
     ghostHints: {
       hunter: '👻 趋声魂循声而来——安静潜行，或用一声回声把它引开。',
       wanderer: '👻 游荡魂对你的声音充耳不闻，只循自己的路线漂移。',
@@ -494,6 +501,13 @@ const I18N = {
       'You can no longer tell: are you lighting the city, or is it lighting you.',
       'The water is very near now. Like someone turning a page at your ear.',
       'Farther down, even the dark is a kind of light.'
+    ],
+    milestones: [
+      'Depth five. The shaft wall carries tally marks — one for every arrival.',
+      'Depth ten. You have gone deeper now than the part of the city that sank.',
+      'Depth fifteen. The dark has weight here; it rests on your shoulders like a soaked coat.',
+      'Depth twenty. What returns is no longer echo. It is the city\'s heartbeat.',
+      'Depth twenty-five. No names remain below. Yours will be the first.'
     ],
     ghostHints: {
       hunter: '👻 A listener hunts by your sound — move quiet, or lure it away with a ping.',
@@ -1526,9 +1540,12 @@ function showLevelCard() {
   const lc = document.getElementById('levelcard');
   const endless = !isCustom && li >= LEVELS.length;
   const nm = isDaily ? T().dailyTitle : lvName(li);
+  // 无尽每五层出里程碑专属句（5/10/15/20/25），其余层循环氛围句
+  const edDepth = li - LEVELS.length + 1;
+  const mile = endless && T().milestones && edDepth % 5 === 0 ? T().milestones[edDepth / 5 - 1] : null;
   const sb = isCustom ? T().ed.playSub
     : isDaily ? T().dailySub
-    : endless ? T().endlessSubs[(li - LEVELS.length) % T().endlessSubs.length]
+    : endless ? (mile || T().endlessSubs[(li - LEVELS.length) % T().endlessSubs.length])
     : T().lvSub[li];
   const CN = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
   const ROM = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];

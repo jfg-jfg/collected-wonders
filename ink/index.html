@@ -1030,21 +1030,24 @@ function snapshotDye() {
   gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, t.fbo);
   gl.blitFramebuffer(0, 0, dye.width, dye.height, 0, 0, dye.width, dye.height,
                      gl.COLOR_BUFFER_BIT, gl.NEAREST);
-  undoStack.push(t);
+  undoStack.push({ tex: t, seals: seals.slice() });   // 印章随染料一并快照
   if (undoStack.length > 8) {
     const old = undoStack.shift();
-    gl.deleteTexture(old.texture); gl.deleteFramebuffer(old.fbo);
+    gl.deleteTexture(old.tex.texture); gl.deleteFramebuffer(old.tex.fbo);
   }
   updateUndoBtn();
 }
 function undo() {
   if (!undoStack.length) return;
-  const t = undoStack.pop();
+  const snap = undoStack.pop();
+  const t = snap.tex;
   gl.bindFramebuffer(gl.READ_FRAMEBUFFER, t.fbo);
   gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, dye.read.fbo);
   gl.blitFramebuffer(0, 0, dye.width, dye.height, 0, 0, dye.width, dye.height,
                      gl.COLOR_BUFFER_BIT, gl.NEAREST);
   gl.deleteTexture(t.texture); gl.deleteFramebuffer(t.fbo);
+  seals = snap.seals.slice();   // 洗纸清掉的印章，撤销时一并恢复
+  renderSeals();
   updateUndoBtn();
 }
 function updateUndoBtn() {

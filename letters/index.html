@@ -205,6 +205,7 @@
   <div class="en-text" id="enText"></div>
   <div class="ts-actions" style="margin-top:34px">
     <button class="btn-main" id="againBtn">再 读 一 遍</button>
+    <button class="btn-sub" id="endCardBtn">📸</button>
     <button class="btn-sub" id="endBackBtn" style="display:none">← 信 箱</button>
   </div>
 </div>
@@ -718,6 +719,58 @@ function showEnding(eid) {
   document.getElementById('endingNote').classList.add('show');
   sndChime();
 }
+
+/* 结局分享卡：故事名 + 结局题 + 尾段 + 结局点，合成 PNG */
+document.getElementById('endCardBtn').addEventListener('click', () => {
+  const en = document.getElementById('enTitle').textContent;
+  const tx = document.getElementById('enText').textContent;
+  const c = document.createElement('canvas');
+  const W = 560, H = 800;
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const bg = g.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#12181f');
+  bg.addColorStop(1, '#1c2530');
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  g.strokeStyle = 'rgba(217,181,124,0.3)'; g.lineWidth = 1;
+  g.strokeRect(16.5, 16.5, W - 33, H - 33);
+  g.strokeRect(22.5, 22.5, W - 45, H - 45);
+  g.textAlign = 'center';
+  g.fillStyle = 'rgba(217,181,124,0.75)';
+  g.font = '13px Georgia, "Songti SC", serif';
+  g.fillText(T('结 局', 'A N  E N D I N G'), W / 2, 78);
+  g.fillStyle = '#ece5d2';
+  g.font = '600 34px Georgia, "Songti SC", serif';
+  g.fillText((lang === 'zh' ? pack.title : (pack.titleEn || pack.title)) + ' · ' + en, W / 2, 126, W - 80);
+  // 正文尾段（最后 4 行内、每行 22 字）
+  const paras = tx.split('\n').map(s => s.trim()).filter(Boolean);
+  const tail = paras.slice(-4);
+  g.font = '16px Georgia, "Songti SC", serif';
+  g.fillStyle = 'rgba(236,229,210,0.82)';
+  tail.forEach((p, i) => {
+    const lines = p.length > 24 ? [p.slice(0, 24), p.slice(24, 48)].filter(Boolean) : [p];
+    lines.forEach((ln, j) => g.fillText(ln, W / 2, 200 + (i * 2 + j) * 34, W - 90));
+  });
+  // 结局点（金色 = 已抵达）
+  const all = pack.order.filter(x => String(x).startsWith('E'));
+  const r = 7, gap = 24;
+  all.forEach((k, i) => {
+    const cx = W / 2 + (i - (all.length - 1) / 2) * gap;
+    g.beginPath(); g.arc(cx, H - 150, r, 0, Math.PI * 2);
+    g.fillStyle = save.endings.includes(k) ? '#d9b57c' : 'rgba(236,229,210,0.15)';
+    g.fill();
+  });
+  g.font = '12px Georgia, serif';
+  g.fillStyle = 'rgba(217,181,124,0.6)';
+  g.fillText(`${save.endings.length} / ${all.length}`, W / 2, H - 108);
+  g.fillStyle = 'rgba(236,229,210,0.4)';
+  g.fillText('拾遗 · 纸间 — Collected Wonders', W / 2, H - 52);
+  const a = document.createElement('a');
+  a.download = `letters-ending-${Date.now()}.png`;
+  a.href = c.toDataURL('image/png');
+  a.click();
+  toast(T('📸 卡片已保存', '📸 card saved'));
+});
 
 /* ---------- 信堆（重读） ---------- */
 function openStack() {

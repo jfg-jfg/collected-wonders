@@ -1854,6 +1854,37 @@ if (location.hash.includes('capture')) {
     } catch (e) { st.textContent = 'CAP err ' + e.message; }
   }, 600);
 }
+
+/* #lab：主题像素断言——雨林昼=绿主导 / 太空=暗主导（Canvas2D 采样） */
+if (location.hash.includes('lab')) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;top:8px;left:8px;z-index:99;background:#0f1a18;color:#fff;font:11px monospace;padding:6px 10px;border-radius:6px;white-space:pre';
+  el.textContent = 'LAB …';
+  document.body.appendChild(el);
+  try {
+    const sample = () => {
+      const d = ctx.getImageData(0, 0, cv.width, cv.height).data;
+      let green = 0, dark = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4 * 9) {   // 每 9 像素采样
+        const r = d[i], g = d[i + 1], b = d[i + 2];
+        if (g > r + 8 && g > b + 8) green++;
+        if (r + g + b < 60) dark++;
+        n++;
+      }
+      return { green: green / n, dark: dark / n };
+    };
+    const setDraw = (th, t) => { theme = th; time = t; themeFadeT = 0; draw(0.016); };
+    setDraw(6, 14);   // 雨林白天
+    const jungle = sample();
+    setDraw(5, 0);    // 太空
+    const space = sample();
+    const okJungle = jungle.green > 0.12;    // 树冠层绿像素占比
+    const okSpace = space.dark > 0.4;        // 舷窗内大面积深空
+    el.textContent = `LAB ${okJungle && okSpace ? 'PASS' : 'FAIL'} ` +
+      `jungle.green=${(jungle.green * 100).toFixed(1)}% ` +
+      `space.dark=${(space.dark * 100).toFixed(1)}%`;
+  } catch (e) { el.textContent = 'LAB ERR ' + e.message; }
+}
 </script>
 </body>
 </html>

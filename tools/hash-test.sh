@@ -66,6 +66,7 @@ run "letters import"   "letters/index.html#dbg=import"
 # 造境
 run "scape 默认"       "scape/index.html"
 run " scape capture"   "scape/index.html#capture"
+run " scape lab"       "scape/index.html#lab"
 
 # 门户
 run "gallery EN"       "index.html#lang=en"

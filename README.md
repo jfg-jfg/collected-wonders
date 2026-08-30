@@ -75,7 +75,7 @@ toy/
 ## 开发
 
 - 冒烟测试：`bash tools/smoke-test.sh`（九状态 JS 错误检查；`--dump-dom` 会执行 JS，页面将错误写入 DOM 供捕获）
-- 数值实验室：`ink#lab`（湿度通道写入/蒸发/LUT 色相/readback 断言）· `fold#lab`（微扰引擎四档：内部/外部/1e-10 心形内部/1e-13 有限性）· `echo#lab`（玩法端到端：三型分魂/锁门/取钥/通关 BFS 走关）· `scape#lab`（主题像素断言）——实验室已抓获两个静默 bug（墨湿度被包装丢弃、游魂少生成）
+- 数值实验室：`ink#lab`（湿度写入/蒸发/真颜料占比/混色离带/readback）· `fold#lab`（微扰四档：内部/外部/1e-10 心形/1e-13 有限性）· `echo#lab`（玩法端到端：三型分魂/锁门/取钥/通关）· `scape#lab`（主题像素断言）· `letters#lab`（隐藏结局正反例）——实验室已抓获两个静默 bug（墨湿度被包装丢弃、游魂少生成）
 - 关卡验证：`node tools/validate-levels.mjs`（回声十二关 + 40 样本随机压力）
 - 故事验证：`node tools/validate-stories.mjs`（引用完整性 + 图可达性 + 隐藏结局）
 - 名井生成：`node tools/gen-wells.mjs`（与游戏内 v3 生成器同源）

@@ -400,7 +400,7 @@ window.addEventListener('error', e => {
 const I18N = {
   zh: {
     menuSub: '无光的深处，唯回声与你同行。<br>以声照路，走出这座沉没之城。', start: '入 井',
-    kbd: '<span>方向键 / WASD</span> 移动　<span>空格 / 点击</span> 发出回声　<span>长按</span> 蓄力声呐',
+    kbd: '<span>方向键 / WASD</span> 移动　<span>空格 / 点击</span> 发出回声　<span>长按</span> 蓄力　<span>双击 / Shift+点</span> 定向声呐',
     steps: '步', pings: '回声', par: '定额', time: '时', lost: '迷失',
     recallOn: '余像 · 开', recallOff: '余像 · 关',
     recallTip: '余像：照过的墙留下微光（辅助模式）',
@@ -474,7 +474,7 @@ const I18N = {
   },
   en: {
     menuSub: 'In the lightless deep, only echoes walk with you.<br>Sound out the dark. Climb out of the drowned city.', start: 'DESCEND',
-    kbd: '<span>Arrows / WASD</span> move　<span>Space / click</span> echo　<span>hold</span> to charge',
+    kbd: '<span>Arrows / WASD</span> move　<span>Space / click</span> echo　<span>hold</span> to charge　<span>double-click / Shift+click</span> directional',
     steps: 'steps', pings: 'echoes', par: 'par', time: 'time', lost: 'lost',
     recallOn: 'RECALL ON', recallOff: 'RECALL OFF',
     recallTip: 'Recall: lit walls leave a faint afterglow (assist mode)',
@@ -1657,15 +1657,24 @@ function tryMove(dx, dy) {
   updateHud();
 }
 
-function ping(cx, cy, power) {
+function ping(cx, cy, power, cone) {
   if (state !== 'play') return;
   pings++;
   const pw = Math.max(0, Math.min(1, power || 0));
   const gx = cx !== undefined ? cx : px + 0.5;
   const gy = cy !== undefined ? cy : py + 0.5;
-  ripples.push({ x: gx, y: gy, r: 0, maxR: 7.5 * (1 + pw * 0.85) });
+  if (cone) {
+    /* 定向声呐：沿瞄准方向的锥形波——照得更远（×1.6），但只有前方 ±50° */
+    const dl = Math.hypot(gx - (px + 0.5), gy - (py + 0.5)) + 1e-6;
+    ripples.push({
+      x: px + 0.5, y: py + 0.5, r: 0, maxR: 12,
+      cone: [(gx - (px + 0.5)) / dl, (gy - (py + 0.5)) / dl]
+    });
+  } else {
+    ripples.push({ x: gx, y: gy, r: 0, maxR: 7.5 * (1 + pw * 0.85) });
+  }
   sndPing(pw);
-  lastPingCell = [gx, gy];   // 游魂闻声而动
+  lastPingCell = cone ? [gx, gy] : [gx, gy];   // 游魂闻声而动（定向：声源在瞄准远端）
   if (pw > 0.1) pingPower = Math.max(pingPower, 0.35 + pw * 1.05);   // 声浪余威：游魂闻声疾行
   award('first');
   updateHud();
@@ -2091,6 +2100,11 @@ function propagate(dt) {
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
       const d = Math.hypot(x + 0.5 - rp.x, y + 0.5 - rp.y);
       if (Math.abs(d - rp.r) < 0.75 && d <= rp.maxR) {
+        /* 锥形波：仅照亮瞄准方向 ±50° 扇区 */
+        if (rp.cone) {
+          const dot = ((x + 0.5 - rp.x) * rp.cone[0] + (y + 0.5 - rp.y) * rp.cone[1]) / (d + 1e-6);
+          if (dot < Math.cos(Math.PI * 50 / 180)) continue;
+        }
         const inten = (1 - d / rp.maxR) * (rp.soft ? 0.35 : 1) * 0.95;
         const idx = y * cols + x;
         if (inten > lights[idx]) lights[idx] = inten;
@@ -2285,7 +2299,12 @@ function render(dt) {
     ctx.strokeStyle = `rgba(157,176,201,${a.toFixed(3)})`;
     ctx.lineWidth = rp.soft ? 1 : 1.6;
     ctx.beginPath();
-    ctx.arc(ox + rp.x * cell, oy + rp.y * cell, rp.r * cell, 0, Math.PI * 2);
+    if (rp.cone) {
+      const ang = Math.atan2(rp.cone[1], rp.cone[0]);
+      ctx.arc(ox + rp.x * cell, oy + rp.y * cell, rp.r * cell, ang - 0.87, ang + 0.87);
+    } else {
+      ctx.arc(ox + rp.x * cell, oy + rp.y * cell, rp.r * cell, 0, Math.PI * 2);
+    }
     ctx.stroke();
   }
 
@@ -2782,13 +2801,18 @@ cv.addEventListener('pointerup', e => {
       if (Math.abs(dx) > Math.abs(dy)) tryMove(Math.sign(dx), 0);
       else tryMove(0, Math.sign(dy));
     } else {
-      // 按住蓄力：长按释放更远的声浪
+      // 按住蓄力：长按释放更远的声浪；Shift+点击 = 定向锥
       const held = performance.now() - (touchStart[2] || 0);
       const pw = held > 300 ? Math.min(1, (held - 200) / 1000) : 0;
-      ping((e.clientX - ox) / cell, (e.clientY - oy) / cell, pw);
+      ping((e.clientX - ox) / cell, (e.clientY - oy) / cell, pw, e.shiftKey);
     }
   }
   touchStart = null;
+});
+/* 双击 = 定向声呐：前方锥形照亮更远（×1.6），侧后盲区；声源记在瞄准远端 */
+cv.addEventListener('dblclick', e => {
+  if (editor.on || state !== 'play') return;
+  ping((e.clientX - ox) / cell, (e.clientY - oy) / cell, 0, true);
 });
 
 /* ================= 按钮 ================= */
@@ -2947,15 +2971,26 @@ if (location.hash.includes('lab')) {
     const kindSet = new Set(ghosts.map(g => g.kind));
     res.push(`lv7ghosts=${ghosts.length}(${kinds6})`);
     const okKinds = ghosts.length === 3 && kindSet.has('hunter') && kindSet.has('wanderer') && kindSet.has('warden');
-    // ② 塔层：钥匙锁门 → 撞门被阻 → 取钥 → 开门通关
+    // ② 塔层：钥匙锁门 → 撞门被阻（不计步） → 取钥 → 开门通关
     loadLevel(9);
     const okLockSetup = needKey === true && !!keyCell;
     const g9 = find('G'), k9 = keyCell.slice();
-    let stepsBefore = steps;
-    walkTo(g9);                       // 无钥先走到门口（最后一步被弹）
-    const atDoorBlocked = !(px === g9[0] && py === g9[1]) && steps - stepsBefore < 400;
-    walkTo(k9);                       // 去取钥
-    const gotKey = hasKey === true && walkTo(g9) && state === 'clear';
+    const neighbor = (c) => [[1,0],[-1,0],[0,1],[0,-1]]
+      .map(([dx, dy]) => [c[0] + dx, c[1] + dy])
+      .find(([ax, ay]) => grid[ay] && grid[ay][ax] === '.');
+    const gN = neighbor(g9), kN = neighbor(k9);
+    // 撞门：站在门口相邻格，无钥硬闯
+    px = gN[0]; py = gN[1];
+    const steps0 = steps;
+    tryMove(g9[0] - px, g9[1] - py);
+    const atDoorBlocked = px === gN[0] && py === gN[1] && steps === steps0;
+    // 取钥：站在钥匙旁一步踏入
+    px = kN[0]; py = kN[1];
+    tryMove(k9[0] - px, k9[1] - py);
+    // 开门：回到门口，带钥而入
+    px = gN[0]; py = gN[1];
+    tryMove(g9[0] - px, g9[1] - py);
+    const gotKey = hasKey === true && state === 'clear';
     res.push(`lock=${okLockSetup ? 1 : 0} blocked=${atDoorBlocked ? 1 : 0} key=${gotKey ? 1 : 0}`);
     const okWreck = okLockSetup && atDoorBlocked && gotKey;
     el.textContent = `LAB ${okKinds && okWreck ? 'PASS' : 'FAIL'}  ${res.join('  ')}`;

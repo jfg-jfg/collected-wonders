@@ -1505,6 +1505,31 @@ loadPack(BUILTIN_STORIES[0]);
     else if (dm[1] === 'share') shareStory();
   } else showSelect();
 }
+/* #lab：隐藏结局引擎端到端——require 全读→replace 触发 / 缺一→常规结局 */
+if (location.hash.includes('lab')) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;top:8px;left:8px;z-index:99;background:#141c22;color:#fff;font:11px monospace;padding:6px 10px;border-radius:6px;white-space:pre';
+  el.textContent = 'LAB …';
+  document.body.appendChild(el);
+  try {
+    const endingShown = () => document.getElementById('endingNote').classList.contains('show')
+      ? document.getElementById('enTitle').textContent : '(none)';
+    // 守灯人：hidden E4 require n4+n7+n9 → replace E1
+    loadPack(BUILTIN_STORIES[0]);
+    document.getElementById('startBtn').click();
+    showLetter('n4'); showLetter('n7'); showLetter('n9');
+    gotoNode('E1');
+    const hidden = endingShown();
+    const okHidden = hidden === '第十三封信';
+    // 反例：只读 n4（缺 n7/n9）→ 常规 E1「灯仍亮」
+    document.getElementById('againBtn').click();
+    showLetter('n4');
+    gotoNode('E1');
+    const normal = endingShown();
+    const okNormal = normal === '灯仍亮';
+    el.textContent = `LAB ${okHidden && okNormal ? 'PASS' : 'FAIL'} hidden=${hidden} normal=${normal}`;
+  } catch (e) { el.textContent = 'LAB ERR ' + e.message; }
+}
 requestAnimationFrame(mframe);
 </script>
 </body>

@@ -55,6 +55,7 @@ run "ink lab"          "ink/index.html#lab"
 
 # 纸间
 run "letters story"    "letters/index.html#p=lighthouse&n=n2"
+run "letters lab"      "letters/index.html#lab"
 run "letters obs n1"   "letters/index.html#p=observatory&n=n1"
 run "letters obs n8"   "letters/index.html#p=observatory&n=n8"
 run "letters wreck n1" "letters/index.html#p=wreck&n=n1"

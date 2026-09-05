@@ -8,16 +8,20 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '24'
+          package-manager-cache: false
 
       - name: 纸间故事包验证（结构/悬挂引用/可达性/隐藏结局）
         run: node tools/validate-stories.mjs
 
       - name: 回声关卡验证（12 内置关 BFS 结构 + 随机压力）
         run: node tools/validate-levels.mjs
+
+      - name: 名井生成器可用性（防生成器断链）
+        run: node tools/gen-wells.mjs > /dev/null
 
       - name: 全站内联脚本语法检查
         run: |

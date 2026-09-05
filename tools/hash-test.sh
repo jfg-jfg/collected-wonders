@@ -30,7 +30,7 @@ run() {
 
 run_lab() {
   local name="$1" url="$2" dom err lab
-  dom=$(dump_dom "$url" 8000)
+  dom=$(dump_dom "$url" 8000 900)   # lab 计算重（fold BigInt 轨道 CI 上 >240s），超时放宽
   if ! grep -q '</html>' <<<"$dom"; then
     echo "  [FAIL] $name → 页面未渲染（dump 为空/截断）"
     FAIL=$((FAIL + 1)); return
@@ -79,7 +79,7 @@ run_lab "ink lab"          "ink/index.html#lab"
 
 # 纸间
 run "letters story"    "letters/index.html#p=lighthouse&n=n2"
-run_lab "letters lab"      "letters/index.html#lab"
+run_lab "letters lab"      "letters/index.html#lab&lang=zh"   # 钉中文：断言对照中文结局名，CI 浏览器是 en 环境
 run "letters obs n1"   "letters/index.html#p=observatory&n=n1"
 run "letters obs n8"   "letters/index.html#p=observatory&n=n8"
 run "letters wreck n1" "letters/index.html#p=wreck&n=n1"

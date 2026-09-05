@@ -53,20 +53,23 @@ init_browser() {
   fi
 }
 
-# dump_dom <rel-url> [virtual-time-budget-ms] → DOM 输出到 stdout（已去 \0）
-# 注意：fold lab 的 BigInt 参考轨道约需 55s 真实 CPU 时间，virtual-time
-# 预算加速不了同步计算——timeout 必须放宽，且空渲染重试一次（偶发）。
+# dump_dom <rel-url> [virtual-time-budget-ms] [timeout-s] → DOM 输出到 stdout（已去 \0）
+# 注意：fold lab 的 BigInt 参考轨道在 CI 2 核机上需 >240s 真实 CPU
+# （本地 ~55s），virtual-time 预算加速不了同步计算——lab 用大 timeout；
+# 空渲染只重试一次，且首试耗时长（=超时被杀）时不再重试。
 dump_dom() {
-  local rel="$1" budget="${2:-4000}" prof out t=timeout
+  local rel="$1" budget="${2:-4000}" tmo="${3:-240}" prof out started=0 t=timeout
   command -v timeout >/dev/null 2>&1 || t=
   prof="$(mktemp -d)" || return 1
   case "$(uname -s)" in
     MINGW*|MSYS*|CYGWIN*) prof="$(cygpath -m "$prof")" ;;
   esac
-  out=$($t 240 "$BROWSER" "${BFLAGS[@]}" --user-data-dir="$prof" \
+  started=$SECONDS
+  out=$($t "$tmo" "$BROWSER" "${BFLAGS[@]}" --user-data-dir="$prof" \
     --virtual-time-budget="$budget" --dump-dom "file://$BASE/$rel" 2>/dev/null | tr -d '\000')
-  if ! grep -q '</html>' <<<"$out"; then
-    out=$($t 240 "$BROWSER" "${BFLAGS[@]}" --user-data-dir="$prof" \
+  # 只重试"非超时"的空渲染（transient 启动抖动）；被 timeout 杀掉的重试也没意义
+  if ! grep -q '</html>' <<<"$out" && [ $((SECONDS - started)) -lt "$tmo" ]; then
+    out=$($t "$tmo" "$BROWSER" "${BFLAGS[@]}" --user-data-dir="$prof" \
       --virtual-time-budget="$budget" --dump-dom "file://$BASE/$rel" 2>/dev/null | tr -d '\000')
   fi
   rm -rf "$prof" 2>/dev/null || true

@@ -65,7 +65,7 @@
 - CI（GitHub Actions）：`validate` job = 故事/关卡验证 + 内联与外置脚本语法 + 公约数；`browser` job = 无头 Chrome 跑冒烟 + hash 全量
 - 经典脚本外置模式：`letters/story-data.js`、`echo/level-gen.js` 是仅有的两个非单文件——存在的唯一理由是"页面与 node 验证器同源直读"；页面以 `<script src>` 先于主脚本载入，顶层 const/function 以全局词法绑定可见
 - 测试直达 hash：`echo#lv0..#lvN(N≥12 无尽)/#edit[=码]/#dbg=daily` · `scape#w=<base64>` · `letters#p=<id>[&n=<节点>]`（`#dbg=editor/ai/import/stack/share`）· `fold#x=,y=,s=/#julia,cx,cy/#dbg` · `ink#bench/#dbg=album` · 全站 `#lang=en|zh` 语言直达
-- 无头须知：fold lab 的 BigInt 参考轨道约需 55s 真实 CPU 时间，virtual-time 预算加速不了同步计算——timeout 需放宽、空渲染需重试；headless 最窄视口约 518px，518 以下布局风险靠静态审计兜底
+- 无头须知：fold lab 的 BigInt 参考轨道 virtual-time 预算加速不了——本地 ~55s，CI 2 核机 >240s，lab timeout 放宽 900s；空渲染只重试"非 timeout 杀掉"的偶发；headless 最窄视口约 518px，518 以下布局风险靠静态审计兜底
 - 质量事故档案：着色器 varying 未声明 / 手作迷宫不可达→生成器化 / **1500 行静默 JS 错误致整站失效→从零重建+错误上报钩子** / v5 重建丢特性（录制/定时/彩蛋→v6 找回） / nextAfter 使 n2 链孤儿化→contTo / TDZ（resize 提前调 initParticles）/ bak 恢复链覆盖未提交代码（教训：**先提交再折腾**）/ **Edge 更新后 --dump-dom 静默输出空 → "查无 ERR: 即 OK" 全绿空转（修：渲染存活断言 + Chrome 优先 + 自动发现）** / **#lab 失败输出 `LAB FAIL/ERR` 与捕获正则 `ERR: ` 不匹配 → 实验室失败对回归脚本不可见（修：lab 正向断言 LAB PASS）**
 
 ## 五站公约数

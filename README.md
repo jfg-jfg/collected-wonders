@@ -62,6 +62,7 @@ toy/
 ├── letters/story-data.js       # 纸间 · 六个内置故事（含 AI schema）
 ├── fold/index.html             # 褶皱 · 分形星球
 ├── 404.html                    # 404 页（2 秒回门户）
+├── tools/_browser.sh           # 冒烟/hash 共用：浏览器发现 + 渲染存活 dump
 ├── tools/smoke-test.sh         # 冒烟测试（九状态渲染存活 + JS 错误检查）
 ├── tools/hash-test.sh          # 32 状态 hash 直达回归（lab 正向断言 LAB PASS）
 ├── tools/check-parity.sh       # 五站公约数检查（六站公共件齐备性）
@@ -82,7 +83,7 @@ toy/
 ## 给纸间写一个故事（AI 玩法）
 
 打开纸间 →「让 AI 写一个」→ 选题材/信数/结局数/笔调/通信关系 → 复制提示词发给任意 AI → 把生成的 JSON 粘回「导入故事」（自动校验，容错剥离 ```json 包裹）。
-也可以「✎ 手写故事」可视化编辑，或「改编当前故事」在底稿上重写。游戏内「分享此故事」可导出 JSON 或直达链接。schema 见 `letters/story-data.js`（四个完整示例，含隐藏结局与明信片/做旧参数）。
+也可以「✎ 手写故事」可视化编辑，或「改编当前故事」在底稿上重写。游戏内「分享此故事」可导出 JSON 或直达链接。schema 见 `letters/story-data.js`（六个内置故事即完整参考，含隐藏结局与明信片/做旧参数）。
 
 ## 开发
 

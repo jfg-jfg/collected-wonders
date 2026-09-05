@@ -3,9 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="refresh" content="2; url=index.html">
 <meta name="theme-color" content="#0c0f14">
 <title>404 · 拾遗</title>
+<script>
+/* 嵌套路径（如 /collected-wonders/a/b/）下相对 index.html 会再吃一次 404 死循环，
+   故 Pages 项目页直接回仓库根；file:// 本地无 404 场景，保留静态链接即可 */
+addEventListener('load', () => {
+  if (location.protocol === 'file:') return;
+  const i = location.pathname.indexOf('/collected-wonders/');
+  setTimeout(() => location.replace(
+    i >= 0 ? location.pathname.slice(0, i + '/collected-wonders/'.length) : '/'), 2000);
+});
+</script>
 <style>
   html { color-scheme: dark; }
   body {

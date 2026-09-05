@@ -1,27 +1,31 @@
 #!/usr/bin/env bash
 # ============================================================
-# 拾遗 · 冒烟测试 — 无头 Edge 逐站加载并检查 JS 错误
-# 用法：bash tools/smoke-test.sh   （需 Git Bash / 任何 bash + Edge）
-# 全部 OK = 六站无脚本错误
+# 拾遗 · 冒烟测试 — 无头浏览器逐站加载：渲染存活 + JS 错误检查
+# 用法：bash tools/smoke-test.sh
+#       （自动发现 Chrome/Edge；也可 BROWSER_BIN=/path/to/chrome 指定）
+# 全部 OK = 九个状态页面真实渲染（dump 含 </html>）且无脚本错误
 #
-# 视口须知：本机 Edge headless 最窄视口约 518 CSS px（--window-size
-# 小于该值会被钳制，新旧 headless 皆然）。要测真 390px 需真机/仿真器；
-# 518 以下布局风险靠静态审计（nowrap/固定宽）兜底。
+# 视口须知：本机 Chrome/Edge headless 最窄视口约 518 CSS px
+# （--window-size 小于该值会被钳制，新旧 headless 皆然）。
+# 要测真 390px 需真机/仿真器；518 以下布局风险靠静态审计
+# （nowrap/固定宽）兜底。
 # ============================================================
 set -u
-EDGE="C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
-[ -f "$EDGE" ] || EDGE="C:/Program Files/Microsoft/Edge/Application/msedge.exe"
-[ -f "$EDGE" ] || { echo "[FAIL] 未找到 Edge"; exit 1; }
-
-BASE="$(cd "$(dirname "$0")/.." && pwd)"
+. "$(dirname "$0")/_browser.sh"
+init_browser
 PASS=0; FAIL=0
 
 for rel in "index.html" "ink/index.html" "ink/index.html#dbg=album" "echo/index.html#lv0" \
            "echo/index.html#dbg=daily" "scape/index.html" \
            "letters/index.html#p=lighthouse&n=n2" "letters/index.html#dbg=editor" "fold/index.html"; do
-  err=$("$EDGE" --headless --disable-gpu-sandbox --window-size=800,600 \
-        --virtual-time-budget=4000 --dump-dom "file:///$BASE/$rel" 2>/dev/null \
-        | tr -d '\000' | grep -aoE 'ERR: [^<"]*' | grep -v 'e\.message' | head -1)
+  dom=$(dump_dom "$rel" 4000)
+  if ! grep -q '</html>' <<<"$dom"; then
+    echo "  [FAIL] $rel"
+    echo "         页面未渲染（dump 为空/截断——浏览器是否静默失败？）"
+    FAIL=$((FAIL + 1))
+    continue
+  fi
+  err=$(grep -aoE 'ERR: [^<"]*' <<<"$dom" | grep -v 'e\.message' | head -1)
   if [ -z "$err" ]; then
     echo "  [OK]   $rel"
     PASS=$((PASS + 1))

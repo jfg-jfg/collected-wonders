@@ -1,21 +1,8 @@
-/* 独立验证脚本：从 echo/index.html 提取关卡生成代码并复验全部内置关卡
-   （与页面内 buildLevels 同源同种子，双保险） */
+/* 独立验证脚本：直读 echo/level-gen.js 复验全部内置关卡
+   （页面 <script src> 与本脚本加载同一份生成器，同种子必同结果——
+    替代旧版"从 index.html 花括号计数抠函数"的脆弱抽取） */
 import { readFileSync } from 'fs';
-const code = readFileSync('echo/index.html', 'utf8');
-
-function extract(name) {
-  const start = code.indexOf(`function ${name}`);
-  if (start < 0) throw new Error(`function ${name} not found in echo/index.html`);
-  let depth = 0, end = start;
-  for (let i = start; i < code.length; i++) {
-    if (code[i] === '{') depth++;
-    if (code[i] === '}') { depth--; if (depth === 0) { end = i + 1; break; } }
-  }
-  return code.slice(start, end);
-}
-
-const names = ['mulberry32', 'genLevel', 'bfsDist', 'validateLevel', 'finishLevel', 'buildLevels'];
-const src = names.map(extract).join('\n');
+const src = readFileSync('echo/level-gen.js', 'utf8');
 const make = new Function(src + '; return { mulberry32, genLevel, validateLevel, finishLevel, buildLevels };')();
 const { buildLevels, validateLevel } = make;
 
@@ -47,3 +34,4 @@ for (let s = 1; s <= 40; s++) {
 }
 console.log(`随机压力：40 样本 ${stressFail} 个未过（页面内会自动换种子重试）`);
 console.log(allValid ? '\n全部通过 ✓' : '\n有失败 ✗');
+process.exit(allValid ? 0 : 1);

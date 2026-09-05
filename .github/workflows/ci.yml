@@ -26,8 +26,34 @@ jobs:
             awk '/^<script>$/{x=1;next} /^<\/script>$/{x=0} x' "$f" > /tmp/c.js
             node --check /tmp/c.js || { echo "FAIL $f"; exit 1; }
           done
-          node --check letters/story-data.js
           echo "all inline scripts OK"
+
+      - name: 外置脚本语法检查
+        run: |
+          node --check echo/level-gen.js
+          node --check letters/story-data.js
 
       - name: 404 页存在性
         run: test -f 404.html && echo "404 ok"
+
+      - name: 五站公约数检查（六站公共件齐备性）
+        run: bash tools/check-parity.sh
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: 冒烟测试（9 状态渲染存活 + JS 错误）
+        run: bash tools/smoke-test.sh
+        env:
+          BROWSER_BIN: ${{ steps.chrome.outputs.chrome-path }}
+
+      - name: hash 直达回归（32 状态，lab 正向断言 LAB PASS）
+        run: bash tools/hash-test.sh
+        env:
+          BROWSER_BIN: ${{ steps.chrome.outputs.chrome-path }}

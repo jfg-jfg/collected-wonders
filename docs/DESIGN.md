@@ -1,6 +1,6 @@
 # 拾遗 · Collected Wonders — 总体设计文档
 
-> v5 · 2026-08-30 · 零依赖纯原生 HTML/CSS/JS · 中英双语
+> v7.1 · 2026-09-06 · 零依赖纯原生 HTML/CSS/JS · 中英双语
 > 在线版：<https://jfg-jfg.github.io/collected-wonders/> · 源码：<https://github.com/jfg-jfg/collected-wonders>
 
 ## 约定
@@ -56,12 +56,31 @@
 
 ## 工程基建
 
-- `tools/smoke-test.sh`：无头 Edge 六站 JS 错误回归（`--dump-dom` 执行 JS，各站 window.onerror 将错误写入 DOM 供捕获；当前 6/6）
-- `tools/validate-levels.mjs`：从 echo 提取生成器复验十二关 + 40 样本随机压力
+- `tools/smoke-test.sh`：无头浏览器九状态回归（`--dump-dom` 执行 JS，各站 window error 钩子将错误写入 DOM 供捕获）。判定 = 页面真实渲染（dump 含 `</html>`）+ 无 `ERR:`；浏览器自动发现（Chrome 优先 → Edge → PATH，可 `BROWSER_BIN` 指定）
+- `tools/hash-test.sh`：32 状态 hash 直达回归。普通状态同冒烟判定；五个 `#lab` 状态**正向断言** `LAB PASS`——`LAB FAIL`/`LAB ERR`/断言没跑到都算失败
+- `tools/check-parity.sh`：五站公约数检查——错误钩子/`ERR:` DOM 沉淀/`#lang=` 直达/viewport/reduced-motion/color-scheme 等公共件在六站的齐备性
+- `tools/validate-levels.mjs`：**直读 `echo/level-gen.js`** 复验十二关 + 40 样本随机压力（页面 `<script src>` 与验证器加载同一份文件，同种子必同结果；不再从 index.html 花括号计数抽取）
 - `tools/validate-stories.mjs`：故事包图验证（order/回信/contTo 悬挂、双语文本、隐藏结局、可达性）——首跑即捕获守灯人六级孤儿信链
 - `tools/gen-wells.mjs`：名井关卡码生成器
+- CI（GitHub Actions）：`validate` job = 故事/关卡验证 + 内联与外置脚本语法 + 公约数；`browser` job = 无头 Chrome 跑冒烟 + hash 全量
+- 经典脚本外置模式：`letters/story-data.js`、`echo/level-gen.js` 是仅有的两个非单文件——存在的唯一理由是"页面与 node 验证器同源直读"；页面以 `<script src>` 先于主脚本载入，顶层 const/function 以全局词法绑定可见
 - 测试直达 hash：`echo#lv0..#lvN(N≥12 无尽)/#edit[=码]/#dbg=daily` · `scape#w=<base64>` · `letters#p=<id>[&n=<节点>]`（`#dbg=editor/ai/import/stack/share`）· `fold#x=,y=,s=/#julia,cx,cy/#dbg` · `ink#bench/#dbg=album` · 全站 `#lang=en|zh` 语言直达
-- 质量事故档案：着色器 varying 未声明 / 手作迷宫不可达→生成器化 / **1500 行静默 JS 错误致整站失效→从零重建+错误上报钩子** / v5 重建丢特性（录制/定时/彩蛋→v6 找回） / nextAfter 使 n2 链孤儿化→contTo / TDZ（resize 提前调 initParticles）/ bak 恢复链覆盖未提交代码（教训：**先提交再折腾**）
+- 无头须知：fold lab 的 BigInt 参考轨道约需 55s 真实 CPU 时间，virtual-time 预算加速不了同步计算——timeout 需放宽、空渲染需重试；headless 最窄视口约 518px，518 以下布局风险靠静态审计兜底
+- 质量事故档案：着色器 varying 未声明 / 手作迷宫不可达→生成器化 / **1500 行静默 JS 错误致整站失效→从零重建+错误上报钩子** / v5 重建丢特性（录制/定时/彩蛋→v6 找回） / nextAfter 使 n2 链孤儿化→contTo / TDZ（resize 提前调 initParticles）/ bak 恢复链覆盖未提交代码（教训：**先提交再折腾**）/ **Edge 更新后 --dump-dom 静默输出空 → "查无 ERR: 即 OK" 全绿空转（修：渲染存活断言 + Chrome 优先 + 自动发现）** / **#lab 失败输出 `LAB FAIL/ERR` 与捕获正则 `ERR: ` 不匹配 → 实验室失败对回归脚本不可见（修：lab 正向断言 LAB PASS）**
+
+## 五站公约数
+
+六站（门户+五作品）共同承载的公共件，改一处须六处同步，`tools/check-parity.sh` 守齐备性：
+
+1. `<html lang="zh">` + `name="viewport"`
+2. 错误钩子：`window.addEventListener('error')` → 把 `ERR: <message>` 写入 DOM（无头 dump-dom 靠它捕获错误）
+3. `#lang=en|zh` 直达：`location.hash.match(/lang=(\w{2})/)` + localStorage `<站名>-lang`
+4. 无障碍基线：`prefers-reduced-motion` / `color-scheme`（`focus-visible`、滚动区 `overscroll-behavior:contain` 为尽力基线，不作硬检查）
+
+## 版本与 tag 约定
+
+- 每轮迭代收口时打带注 tag `vX.Y`（`git tag -a v7.0`），tag 即该轮的回溯锚点；迭代史叙事（README/DESIGN）以 tag 为准
+- v4.0 之前未打 tag，从 v7.0 起补齐约定
 
 ## 迭代史摘要
 

@@ -1,0 +1,6 @@
+# 统一 LF：本仓库在 Windows 开发、Linux CI/Pages 运行——
+# .sh 必须保持 LF（CRLF 会直接弄挂 bash），文本类一律 LF 入库
+* text=auto eol=lf
+*.png binary
+*.webm binary
+*.mp4 binary

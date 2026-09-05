@@ -57,7 +57,7 @@ jobs:
         env:
           BROWSER_BIN: ${{ steps.chrome.outputs.chrome-path }}
 
-      - name: hash 直达回归（32 状态，lab 正向断言 LAB PASS）
+      - name: hash 直达回归（35 状态，lab 正向断言 LAB PASS）
         run: bash tools/hash-test.sh
         env:
           BROWSER_BIN: ${{ steps.chrome.outputs.chrome-path }}

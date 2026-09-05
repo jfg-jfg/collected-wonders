@@ -5,6 +5,8 @@
 #       （自动发现 Chrome/Edge；也可 BROWSER_BIN=/path/to/chrome 指定）
 # 判定：普通状态 = 页面真实渲染 + 无 JS 错误；
 #       lab 状态 = 另加正向断言 LAB PASS（FAIL/ERR/没跑到都算失败）
+# 注：ink#capture 不入回归——MediaRecorder 录制管线在无头下会挂起，
+#     属发帖物料专用（docs/POST-DRAFTS.md），非页面状态钩子。
 # ============================================================
 set -u
 . "$(dirname "$0")/_browser.sh"
@@ -59,6 +61,7 @@ run_lab "fold lab"         "fold/index.html#lab"
 run "fold dbg"         "fold/index.html#dbg"
 run "fold deep 1e15"   "fold/index.html#dbg&x=-0.7435,y=0.1314,s=1.4e-15"
 run "fold newton"      "fold/index.html#dbg&newton"
+run "fold julia"       "fold/index.html#julia,-0.7435,0.1314"
 run "fold grid"        "fold/index.html#grid=1"
 run "fold postcard"    "fold/index.html#postcard&preview"
 
@@ -85,13 +88,15 @@ run "letters obs n8"   "letters/index.html#p=observatory&n=n8"
 run "letters wreck n1" "letters/index.html#p=wreck&n=n1"
 run "letters wreck n4" "letters/index.html#p=wreck&n=n4"
 run "letters editor"   "letters/index.html#dbg=editor"
+run "letters stack"    "letters/index.html#dbg=stack"
+run "letters share"    "letters/index.html#dbg=share"
 run "letters ai"       "letters/index.html#dbg=ai"
 run "letters import"   "letters/index.html#dbg=import"
 
 # 造境
 run "scape 默认"       "scape/index.html"
-run " scape capture"   "scape/index.html#capture"
-run_lab " scape lab"       "scape/index.html#lab"
+run "scape capture"    "scape/index.html#capture"
+run_lab "scape lab"        "scape/index.html#lab"
 
 # 门户
 run "gallery EN"       "index.html#lang=en"

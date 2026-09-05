@@ -57,7 +57,7 @@
 ## 工程基建
 
 - `tools/smoke-test.sh`：无头浏览器九状态回归（`--dump-dom` 执行 JS，各站 window error 钩子将错误写入 DOM 供捕获）。判定 = 页面真实渲染（dump 含 `</html>`）+ 无 `ERR:`；浏览器自动发现（Chrome 优先 → Edge → PATH，可 `BROWSER_BIN` 指定）
-- `tools/hash-test.sh`：32 状态 hash 直达回归。普通状态同冒烟判定；五个 `#lab` 状态**正向断言** `LAB PASS`——`LAB FAIL`/`LAB ERR`/断言没跑到都算失败
+- `tools/hash-test.sh`：35 状态 hash 直达回归。普通状态同冒烟判定；五个 `#lab` 状态**正向断言** `LAB PASS`——`LAB FAIL`/`LAB ERR`/断言没跑到都算失败
 - `tools/check-parity.sh`：五站公约数检查——错误钩子/`ERR:` DOM 沉淀/`#lang=` 直达/viewport/reduced-motion/color-scheme 等公共件在六站的齐备性
 - `tools/validate-levels.mjs`：**直读 `echo/level-gen.js`** 复验十二关 + 40 样本随机压力（页面 `<script src>` 与验证器加载同一份文件，同种子必同结果；不再从 index.html 花括号计数抽取）
 - `tools/validate-stories.mjs`：故事包图验证（order/回信/contTo 悬挂、双语文本、隐藏结局、可达性）——首跑即捕获守灯人六级孤儿信链

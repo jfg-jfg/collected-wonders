@@ -1,20 +1,7 @@
 #!/usr/bin/env node
-/* 生成 ECHO「名井集」精选关卡码：与游戏内 v3 生成器同源（从 echo/index.html 提取） */
+/* 生成 ECHO「名井集」精选关卡码：与游戏内 v3 生成器同源（直读 echo/level-gen.js） */
 import { readFileSync } from 'fs';
-const code = readFileSync('echo/index.html', 'utf8');
-
-function extract(name) {
-  const start = code.indexOf(`function ${name}`);
-  if (start < 0) throw new Error(`function ${name} not found`);
-  let depth = 0, end = start;
-  for (let i = start; i < code.length; i++) {
-    if (code[i] === '{') depth++;
-    if (code[i] === '}') { depth--; if (depth === 0) { end = i + 1; break; } }
-  }
-  return code.slice(start, end);
-}
-
-const src = ['mulberry32', 'genLevel', 'bfsDist', 'validateLevel', 'finishLevel'].map(extract).join('\n');
+const src = readFileSync('echo/level-gen.js', 'utf8');
 const make = new Function(src + '; return { mulberry32, genLevel, validateLevel, finishLevel };')();
 const { mulberry32, genLevel, validateLevel, finishLevel } = make;
 

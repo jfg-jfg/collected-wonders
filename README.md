@@ -87,6 +87,7 @@ toy/
 
 ## 开发
 
+- 一键全检：`bash tools/check.sh`（下面全部串起来，一条命令出结论）
 - 冒烟测试：`bash tools/smoke-test.sh`（九状态：页面必须真实渲染 + 无 JS 错误；浏览器自动发现 Chrome/Edge，也可 `BROWSER_BIN=` 指定）
 - hash 回归：`bash tools/hash-test.sh`（35 状态；五个 `#lab` 实验室做**正向断言**——必须看到 `LAB PASS`，FAIL/ERR/没跑到都算失败）
 - 数值实验室：`ink#lab`（湿度写入/蒸发/真颜料占比/混色离带/readback）· `fold#lab`（微扰四档：内部/外部/1e-10 心形/1e-13 有限性）· `echo#lab`（玩法端到端：三型分魂/锁门/取钥/通关）· `scape#lab`（主题像素断言）· `letters#lab`（隐藏结局正反例）——实验室已抓获两个静默 bug（墨湿度被包装丢弃、游魂少生成）

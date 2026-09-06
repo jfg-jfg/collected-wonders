@@ -250,8 +250,10 @@ try { imports = JSON.parse(localStorage.getItem('letters-imports') || '[]'); } c
 function loadPack(p) {
   pack = p;
   const key = 'letters-save-' + p.id;
-  save = Object.assign({node:null, read:0, endings:[], readNodes:[], snd:true, readEver:0},
-    JSON.parse(localStorage.getItem(key) || '{}'));
+  save = {node:null, read:0, endings:[], readNodes:[], snd:true, readEver:0};
+  try {
+    Object.assign(save, JSON.parse(localStorage.getItem(key) || '{}'));
+  } catch (e) { /* 存档损坏 → 用默认值重新开始（公约数：读取必须容错） */ }
   applyStyle();
   startAmbience(p.id);
   const sb = document.getElementById('sndBtn');

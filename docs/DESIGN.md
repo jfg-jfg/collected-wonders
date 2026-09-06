@@ -76,7 +76,7 @@
 2. 错误钩子：`window.addEventListener('error')` → 把 `ERR: <message>` 写入 DOM（无头 dump-dom 靠它捕获错误）
 3. `#lang=en|zh` 直达：`location.hash.match(/lang=(\w{2})/)` + localStorage `<站名>-lang`
 4. 无障碍基线：`prefers-reduced-motion` / `color-scheme`（`focus-visible`、滚动区 `overscroll-behavior:contain` 为尽力基线，不作硬检查）
-5. 存档/导入读取必须 try 容错（`JSON.parse` 裸奔 = 存档损坏即整站变砖；损坏最多丢进度，不许砖站）
+5. 存档/导入读取必须 try 容错（`JSON.parse` 裸奔 = 存档损坏即整站变砖；损坏最多丢进度，不许砖站）；持久化写入带 `_v` 版本戳（回声先行），字段演进时 bump 并补迁移，读侧对未知 `_v` 原样保留勿降级覆写
 6. WebGL2 站（墨/褶皱）必须接 `webglcontextlost`（preventDefault + 提示）/ `webglcontextrestored`（GL 句柄全量重建）——移动端内存压力下真实发生，不接即永久黑屏
 
 ## 版本与 tag 约定

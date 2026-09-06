@@ -5,6 +5,8 @@
 > 五件小小的奇物 · Five small wonders
 > 零依赖 · 纯原生 HTML/CSS/JS · 双击即开 · 中英双语
 
+*English version: [README.en.md](README.en.md)（精炼英文版）*
+
 一批以"创意网站"为载体的独立小作品。没有构建步骤、没有框架、没有 CDN、没有图片资源——每个作品都是一个自包含的 HTML 文件，双击即可在浏览器中运行。
 
 **入口**：打开 `index.html`（序 · GALLERY 作品门户，含跨站使用统计）

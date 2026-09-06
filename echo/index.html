@@ -566,12 +566,15 @@ function applyI18n() {
 /* 关卡数据：生成器外置于 level-gen.js（与 tools/validate-levels.mjs 同源直读） */
 
 /* ================= 存档 ================= */
-/* 读取必须容错（DESIGN 五站公约数）：存档损坏最多丢进度，不能砖掉整站 */
+/* 读取必须容错（DESIGN 五站公约数）：存档损坏最多丢进度，不能砖掉整站。
+   写入带 _v 版本戳：未来字段演进时 bump 并补迁移（读侧 Object.assign
+   天然容忍旧档与新字段，旧版代码读到更高 _v 时应原样保留勿降级覆写） */
+const SAVE_V = 1;
 let save = { unlocked: 0, best: {}, frags: [], ach: {}, daily: {}, snd: true };
 try {
   Object.assign(save, JSON.parse(localStorage.getItem('echo-save') || '{}'));
 } catch (e) { /* 存档损坏 → 用默认值重新开始 */ }
-const persist = () => { try { localStorage.setItem('echo-save', JSON.stringify(save)); } catch (e) {} };
+const persist = () => { try { localStorage.setItem('echo-save', JSON.stringify({ ...save, _v: SAVE_V })); } catch (e) {} };
 
 /* ================= 音频（全合成） ================= */
 let AC = null;

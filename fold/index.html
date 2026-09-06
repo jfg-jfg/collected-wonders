@@ -186,6 +186,7 @@ window.addEventListener('error', e => {
 const I18N = {
   zh: {
     sub: '分形星球',
+    ctxLost: 'GPU 上下文丢失，正在恢复…',
     hint: '滚轮缩放 · 拖拽巡游 · 双击俯冲 · ? 帮助',
     helpTitle: '帮 助 · HELP',
     helpLines: [
@@ -270,6 +271,7 @@ const I18N = {
     logAscent: '↑ ASCEND', logAscentTip: 'slowly surface from deepest log entry back to home port (60s)',
     logImport: 'FISH BOTTLE', logImportOk: '✓ picked up {n} entries', logImportErr: 'not a valid log JSON',
     vigilLine: n => `while you were away, it went ${n} layers deeper`,
+    ctxLost: 'GPU context lost — restoring…',
     bottomLine: 'The lamp is still lit.\nNo one knows who tends it.',
     whispers: [
       ['The tide comes and goes; the patterns rhyme.', 'Shapes near shore will be met again far out.', 'Light is still generous here.'],
@@ -287,7 +289,7 @@ const T = () => I18N[lang];
 const canvas = document.getElementById('gl');
 const gl = canvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });
 if (!gl) { document.getElementById('errbox').style.display = 'block'; document.getElementById('errbox').textContent = 'WebGL2 unavailable'; throw new Error('no webgl2'); }
-const hasFloatFB = !!gl.getExtension('EXT_color_buffer_float');
+let hasFloatFB = !!gl.getExtension('EXT_color_buffer_float');
 
 const VERT = `#version 300 es
 precision highp float;
@@ -607,8 +609,9 @@ function makeProgram(frag) {
   if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('link: ' + gl.getProgramInfoLog(p));
   return p;
 }
-const progIter = makeProgram(FRAG_ITER);
-const progColor = makeProgram(FRAG_COLOR);
+/* 程序句柄用 let：GPU 上下文丢失恢复时整体重建（见 rebuildGL） */
+let progIter = makeProgram(FRAG_ITER);
+let progColor = makeProgram(FRAG_COLOR);
 const FRAG_TRAIL = `#version 300 es
 precision highp float;
 out vec4 fragColor;
@@ -623,16 +626,18 @@ void main() {
   float a = clamp((uK - 1.0) * 1.8, 0.0, 0.5);
   fragColor = vec4(p, a);
 }`;
-const progTrail = makeProgram(FRAG_TRAIL);
-const UT = {};
-['uPrev', 'uRes', 'uK', 'uPivot'].forEach(n => UT[n] = gl.getUniformLocation(progTrail, n));
-const UI = {}, UC = {};
-['uCenterX','uCenterY','uScale','uRes','uIter','uJulia','uCx','uCy','uMode','uTier','uOrbit','uOrbitN','uDRefX','uDRefY'].forEach(n => UI[n] = gl.getUniformLocation(progIter, n));
-/* 轨道采样器固定在单元 1，避免与 pass2 数据纹理（单元 0）形成渲染反馈环 */
-gl.useProgram(progIter);
-gl.uniform1i(UI.uOrbit, 1);
-gl.useProgram(progColor);
-['uData','uPhase','uPal','uStratum','uNewton'].forEach(n => UC[n] = gl.getUniformLocation(progColor, n));
+let progTrail = makeProgram(FRAG_TRAIL);
+const UT = {}, UI = {}, UC = {};
+function bindProgramUniforms() {
+  ['uPrev', 'uRes', 'uK', 'uPivot'].forEach(n => UT[n] = gl.getUniformLocation(progTrail, n));
+  ['uCenterX','uCenterY','uScale','uRes','uIter','uJulia','uCx','uCy','uMode','uTier','uOrbit','uOrbitN','uDRefX','uDRefY'].forEach(n => UI[n] = gl.getUniformLocation(progIter, n));
+  /* 轨道采样器固定在单元 1，避免与 pass2 数据纹理（单元 0）形成渲染反馈环 */
+  gl.useProgram(progIter);
+  gl.uniform1i(UI.uOrbit, 1);
+  gl.useProgram(progColor);
+  ['uData','uPhase','uPal','uStratum','uNewton'].forEach(n => UC[n] = gl.getUniformLocation(progColor, n));
+}
+bindProgramUniforms();
 
 /* ---------- 数据纹理 FBO + 拉丝前帧纹理 ---------- */
 let dataTex = null, fbo = null, prevTex = null;
@@ -780,6 +785,30 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 resize();
+
+/* GPU 上下文丢失恢复：程序/数据纹理全量重建；参考轨道纹理内容已失，
+   作废后由下次渲染自动重算（BigInt 轨道仍在 JS 侧，代价一次毫秒级） */
+function rebuildGL() {
+  hasFloatFB = !!gl.getExtension('EXT_color_buffer_float');
+  progIter = makeProgram(FRAG_ITER);
+  progColor = makeProgram(FRAG_COLOR);
+  progTrail = makeProgram(FRAG_TRAIL);
+  bindProgramUniforms();
+  dataTex = fbo = prevTex = null;   // 旧句柄已随上下文失效，置空跳过 delete 分支
+  allocData();
+  orbit = null; orbitTex = null;
+  requestRender();
+}
+canvas.addEventListener('webglcontextlost', e => {
+  e.preventDefault();
+  const b = document.getElementById('errbox');
+  b.style.display = 'block'; b.textContent = T().ctxLost;
+});
+canvas.addEventListener('webglcontextrestored', () => {
+  try { rebuildGL(); } catch (e) { window.dispatchEvent(new ErrorEvent('error', { error: e })); return; }
+  const b = document.getElementById('errbox');
+  b.style.display = 'none';
+});
 
 /* ============ 渲染：Pass1 迭代 → Pass2 着色 ============ */
 let lastIter = 0;

@@ -1931,11 +1931,19 @@ if (location.hash.includes('lab')) {
   };
   const probe = (x, y, s) => { setView(x, y, s); render(); return readCenter(); };
   try {
+    /* lab 只需中心一个像素：临时缩到 192×144（全幅的 1/18），
+       CI SwiftShader 下 fold lab 从 7~15 分钟降到秒级。四个断言走
+       A 通道逃逸标志与 isFinite，不受分辨率影响；G/B 条纹相位因
+       半像素偏移会有展示级微移（非断言项）。 */
+    const ow = canvas.width, oh = canvas.height;
+    canvas.width = 192; canvas.height = 144; allocData();
     const interior = probe(-0.6, 0, 1.4);
     const exterior = probe(2.0, 0, 1.4);
     // 经典迷你心形中心（深潜视频通用内部坐标）：1e-10 应为内部，1e-13 应数值有限
     const deep = probe(-0.7436438870371587, 0.1318259042053119, 1e-10);
     const ultra = probe(-0.7436438870371587, 0.1318259042053119, 1e-13);
+    canvas.width = ow; canvas.height = oh; allocData();   // 还原画布与母港视野
+    setView(-0.6, 0, 1.4);
     const okInterior = interior[3] < 0.004;          // c=-0.6 主心形内部：不逃逸
     const okExterior = exterior[3] >= 0.004;         // c=2 外部：快速逃逸
     const okDeep = deep.every(v => Number.isFinite(v)) && deep[3] < 0.004;
